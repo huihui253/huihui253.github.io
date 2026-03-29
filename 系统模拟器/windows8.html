@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 8 复刻版</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- GSAP 动画库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'win-blue': '#0078d7',
+                        'win-green': '#107c10',
+                        'win-red': '#d83b01',
+                        'win-orange': '#ffb900',
+                        'win-purple': '#5c2d91',
+                        'win-teal': '#00b7c3',
+                        'win-pink': '#e81123',
+                        'win-gray': '#6e7681',
+                        'win-dark': '#1e1e1e',
+                        'win-light': '#f2f2f2',
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'tile': '0 4px 0 0 rgba(0, 0, 0, 0.2)',
+                        'tile-hover': '0 6px 0 0 rgba(0, 0, 0, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .tile-transition {
+                transition: all 0.2s ease-in-out;
+            }
+            .tile-hover {
+                transform: translateY(-2px);
+            }
+            .charms-shadow {
+                box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+            }
+            .taskbar-shadow {
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            }
+            .window-shadow {
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            }
+            .glass-effect {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+        }
+    </style>
+    <style>
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            touch-action: manipulation;
+        }
+
+        /* 开始屏幕样式 */
+        #start-screen {
+            background: linear-gradient(135deg, #0078d7 0%, #005a9e 100%);
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* 磁贴样式 */
+        .tile {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease-in-out;
+            transform-origin: center;
+        }
+
+        .tile:hover {
+            transform: translateY(-2px) scale(1.05);
+            z-index: 10;
+        }
+
+        .tile:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* 动态磁贴动画 */
+        .live-tile {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /*  charms 边栏样式 */
+        #charms-bar {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        #charms-bar.active {
+            transform: translateX(0);
+        }
+
+        /* 任务栏样式 */
+        #taskbar {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* 开始按钮样式 */
+        #start-button {
+            transition: all 0.2s ease-in-out;
+        }
+
+        #start-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        #start-button:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 桌面窗口样式 */
+        .window {
+            border: 1px solid #444;
+            background: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 50;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .window-header {
+            background: #0078d7;
+            color: white;
+            cursor: move;
+            user-select: none;
+        }
+
+        .window-content {
+            background: white;
+        }
+
+        /* 控制面板样式 */
+        .control-panel-category {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .control-panel-category:hover {
+            background: rgba(0, 120, 215, 0.1);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .tile {
+                min-width: 80px;
+                min-height: 80px;
+            }
+            
+            .tile-large {
+                min-width: 170px;
+                min-height: 170px;
+            }
+            
+            .tile-wide {
+                min-width: 170px;
+                min-height: 80px;
+            }
+        }
+
+        /* 桌面背景 */
+        #desktop {
+            background: #0078d7;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        /* 图标样式 */
+        .desktop-icon {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            user-select: none;
+        }
+
+        .desktop-icon:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-win-dark text-white">
+    <!-- 开始屏幕 -->
+    <div id="start-screen" class="fixed inset-0 z-50 flex flex-col">
+        <!-- 顶部用户信息栏 -->
+        <div class="flex justify-between items-center p-4 bg-black bg-opacity-20">
+            <div class="text-xl font-semibold">开始</div>
+            <div class="flex items-center space-x-2">
+                <span class="hidden md:inline-block">用户名</span>
+                <div class="w-8 h-8 rounded-full bg-white text-win-blue flex items-center justify-center">
+                    <i class="fa fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 磁贴区域 -->
+        <div class="flex-1 overflow-x-auto overflow-y-hidden p-4">
+            <div class="flex space-x-8 min-w-max">
+                <!-- 第一组磁贴 -->
+                <div class="flex flex-col space-y-4">
+                    <!-- 邮件磁贴 -->
+                    <div class="tile bg-win-blue w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="mail">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/0cf3668366e84464abc1a247ff57cd8b~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=Cvo9z1GMAew52u08BbscMY2XB9E%3D" 
+                             alt="邮件" class="w-16 h-16 object-contain">
+                    </div>
+                    
+                    <!-- 日历磁贴 -->
+                    <div class="tile bg-win-orange w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="calendar">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/fcf6c1c590f143979d008562285ba4cd~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=EPXaJ9LOxdYVM7WxU58GYtjtgi0%3D" 
+                             alt="日历" class="w-16 h-16 object-contain">
+                    </div>
+                    
+                    <!-- 照片磁贴 -->
+                    <div class="tile bg-win-green w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="photos">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/eaf15af818e2493992717c2b84dc265f~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744215&x-signature=lAKUgBjq1iPkoifaa2CkCoywPrA%3D" 
+                             alt="照片" class="w-16 h-16 object-contain">
+                    </div>
+                </div>
+
+                <!-- 第二组磁贴 -->
+                <div class="flex flex-col space-y-4">
+                    <!-- 音乐磁贴 -->
+                    <div class="tile bg-win-purple w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="music">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/632ba2e6c2634f7ca718f00834b6335e~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744215&x-signature=h25xAxio68jwwmJ%2BYPAtrarvErQ%3D" 
+                             alt="音乐" class="w-16 h-16 object-contain">
+                    </div>
+                    
+                    <!-- 设置磁贴 -->
+                    <div class="tile bg-win-gray w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="settings">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/313bd1e89bfa467a9fdec85b327c79d8~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=gbbaYhfIOK%2F589wSOJC%2F9TwmvNM%3D" 
+                             alt="设置" class="w-16 h-16 object-contain">
+                    </div>
+                    
+                    <!-- 应用商店磁贴 -->
+                    <div class="tile bg-win-teal w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="store">
+                        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/13d1ac1e57da40009c998357bdf0a087~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=OifnZDiFb7hWgPWj6MUHh3FEyMQ%3D" 
+                             alt="应用商店" class="w-16 h-16 object-contain">
+                    </div>
+                </div>
+
+                <!-- 第三组磁贴 -->
+                <div class="flex flex-col space-y-4">
+                    <!-- 天气磁贴（宽） -->
+                    <div class="tile tile-wide bg-blue-500 w-44 h-20 md:w-52 md:h-24 rounded-sm flex items-center justify-center shadow-tile live-tile" data-app="weather">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold">24°</div>
+                            <div class="text-sm">晴天</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 新闻磁贴（宽） -->
+                    <div class="tile tile-wide bg-win-pink w-44 h-20 md:w-52 md:h-24 rounded-sm flex items-center justify-center shadow-tile live-tile" data-app="news">
+                        <div class="text-center">
+                            <div class="text-sm font-bold">今日头条</div>
+                            <div class="text-xs">最新新闻动态</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 游戏磁贴（大） -->
+                    <div class="tile tile-large bg-win-green w-44 h-44 md:w-52 md:h-52 rounded-sm flex items-center justify-center shadow-tile" data-app="games">
+                        <div class="text-center">
+                            <i class="fa fa-gamepad text-4xl md:text-5xl"></i>
+                            <div class="mt-2 text-sm md:text-base">游戏</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第四组磁贴 -->
+                <div class="flex flex-col space-y-4">
+                    <!-- IE浏览器磁贴 -->
+                    <div class="tile bg-blue-600 w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="ie">
+                        <i class="fa fa-globe text-3xl md:text-4xl"></i>
+                    </div>
+                    
+                    <!-- 地图磁贴 -->
+                    <div class="tile bg-green-600 w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="maps">
+                        <i class="fa fa-map-marker text-3xl md:text-4xl"></i>
+                    </div>
+                    
+                    <!-- 视频磁贴 -->
+                    <div class="tile bg-red-600 w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="video">
+                        <i class="fa fa-video-camera text-3xl md:text-4xl"></i>
+                    </div>
+                    
+                    <!-- OneNote磁贴 -->
+                    <div class="tile bg-yellow-500 w-20 h-20 md:w-24 md:h-24 rounded-sm flex items-center justify-center shadow-tile" data-app="onenote">
+                        <i class="fa fa-sticky-note text-3xl md:text-4xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 桌面 -->
+    <div id="desktop" class="fixed inset-0 z-0 hidden">
+        <!-- 桌面图标 -->
+        <div class="p-4">
+            <div class="desktop-icon w-20 mb-8" data-app="computer">
+                <div class="w-12 h-12 mx-auto bg-blue-500 rounded flex items-center justify-center">
+                    <i class="fa fa-desktop text-2xl"></i>
+                </div>
+                <div class="text-center text-sm mt-1 truncate">这台电脑</div>
+            </div>
+            
+            <div class="desktop-icon w-20 mb-8" data-app="documents">
+                <div class="w-12 h-12 mx-auto bg-yellow-500 rounded flex items-center justify-center">
+                    <i class="fa fa-folder text-2xl"></i>
+                </div>
+                <div class="text-center text-sm mt-1 truncate">文档</div>
+            </div>
+            
+            <div class="desktop-icon w-20 mb-8" data-app="pictures">
+                <div class="w-12 h-12 mx-auto bg-green-500 rounded flex items-center justify-center">
+                    <i class="fa fa-picture-o text-2xl"></i>
+                </div>
+                <div class="text-center text-sm mt-1 truncate">图片</div>
+            </div>
+            
+            <div class="desktop-icon w-20" data-app="recycle-bin">
+                <div class="w-12 h-12 mx-auto bg-gray-500 rounded flex items-center justify-center">
+                    <i class="fa fa-trash text-2xl"></i>
+                </div>
+                <div class="text-center text-sm mt-1 truncate">回收站</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务栏 -->
+    <div id="taskbar" class="fixed bottom-0 left-0 right-0 h-12 md:h-14 flex items-center justify-between px-4 z-40 taskbar-shadow">
+        <!-- 左侧开始按钮 -->
+        <div id="start-button" class="w-10 h-10 flex items-center justify-center rounded mr-2" onclick="toggleStartScreen()">
+            <i class="fa fa-windows text-white text-xl"></i>
+        </div>
+        
+        <!-- 中间任务按钮 -->
+        <div class="flex-1 flex items-center space-x-1 overflow-x-auto">
+            <div class="task-button w-10 h-10 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10" data-app="desktop">
+                <i class="fa fa-desktop text-white"></i>
+            </div>
+            <div class="task-button w-10 h-10 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10" data-app="ie">
+                <i class="fa fa-globe text-white"></i>
+            </div>
+            <div class="task-button w-10 h-10 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10" data-app="mail">
+                <i class="fa fa-envelope text-white"></i>
+            </div>
+        </div>
+        
+        <!-- 右侧系统托盘 -->
+        <div class="flex items-center space-x-2">
+            <div class="tray-icon w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10" onclick="toggleCharmsBar()">
+                <i class="fa fa-cog text-white"></i>
+            </div>
+            <div class="tray-icon w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10">
+                <i class="fa fa-volume-up text-white"></i>
+            </div>
+            <div class="tray-icon w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-10">
+                <i class="fa fa-wifi text-white"></i>
+            </div>
+            <div class="tray-icon w-8 h-8 flex items-center justify-center rounded">
+                <span class="text-white text-sm" id="current-time">12:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charms 边栏 -->
+    <div id="charms-bar" class="fixed top-0 right-0 bottom-0 w-64 bg-black bg-opacity-80 z-50 charms-shadow flex flex-col">
+        <div class="flex-1 flex flex-col items-center justify-center space-y-8 p-4">
+            <div class="charm-item w-16 h-16 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-2" data-charm="search">
+                <i class="fa fa-search text-white text-2xl"></i>
+                <span class="text-white text-xs mt-1">搜索</span>
+            </div>
+            <div class="charm-item w-16 h-16 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-2" data-charm="share">
+                <i class="fa fa-share-alt text-white text-2xl"></i>
+                <span class="text-white text-xs mt-1">共享</span>
+            </div>
+            <div class="charm-item w-16 h-16 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-2" data-charm="start">
+                <i class="fa fa-home text-white text-2xl"></i>
+                <span class="text-white text-xs mt-1">开始</span>
+            </div>
+            <div class="charm-item w-16 h-16 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-2" data-charm="devices">
+                <i class="fa fa-plug text-white text-2xl"></i>
+                <span class="text-white text-xs mt-1">设备</span>
+            </div>
+            <div class="charm-item w-16 h-16 flex flex-col items-center justify-center cursor-pointer hover:bg-white hover:bg-opacity-10 rounded-full p-2" data-charm="settings">
+                <i class="fa fa-cog text-white text-2xl"></i>
+                <span class="text-white text-xs mt-1">设置</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 应用窗口 -->
+    <!-- 设置窗口 -->
+    <div id="settings-window" class="window w-11/12 max-w-4xl h-3/4 hidden">
+        <div class="window-header p-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/313bd1e89bfa467a9fdec85b327c79d8~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=gbbaYhfIOK%2F589wSOJC%2F9TwmvNM%3D" 
+                     alt="设置" class="w-6 h-6 mr-2">
+                <span>控制面板</span>
+            </div>
+            <div class="flex space-x-2">
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-20" onclick="minimizeWindow('settings-window')">
+                    <i class="fa fa-minus"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-20" onclick="closeWindow('settings-window')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="window-content p-6 overflow-y-auto h-[calc(100%-50px)]">
+            <div class="mb-6">
+                <h1 class="text-2xl font-semibold text-gray-800 mb-4">控制面板</h1>
+                <div class="flex mb-4">
+                    <div class="relative flex-1">
+                        <input type="text" placeholder="搜索设置..." class="w-full p-2 pl-10 border border-gray-300 rounded">
+                        <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 系统和安全 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-shield text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">系统和安全</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">系统信息、设备管理器、Windows更新、防火墙</p>
+                </div>
+                
+                <!-- 用户账户和家庭安全 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-user text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">用户账户</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">用户账户、凭据管理器、家长控制</p>
+                </div>
+                
+                <!-- 网络和Internet -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-wifi text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">网络和Internet</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">网络和共享中心、家庭组、Internet选项</p>
+                </div>
+                
+                <!-- 外观和个性化 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-paint-brush text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">外观和个性化</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">个性化、主题、桌面图标、任务栏和导航</p>
+                </div>
+                
+                <!-- 硬件和声音 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-volume-up text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">硬件和声音</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">设备和打印机、声音、电源选项</p>
+                </div>
+                
+                <!-- 程序 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-list text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">程序</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">卸载程序、打开或关闭Windows功能</p>
+                </div>
+                
+                <!-- 时钟、语言和区域 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-clock-o text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">时钟、语言和区域</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">日期和时间、区域和语言、语音识别</p>
+                </div>
+                
+                <!-- Ease of Access -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-universal-access text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">轻松使用</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">轻松使用设置中心、讲述人、放大镜</p>
+                </div>
+                
+                <!-- Windows更新 -->
+                <div class="control-panel-category bg-white p-4 rounded-lg shadow cursor-pointer">
+                    <div class="flex items-center mb-2">
+                        <div class="w-10 h-10 bg-blue-400 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-refresh text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-800">Windows更新</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">检查更新、查看更新历史记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 邮件应用窗口 -->
+    <div id="mail-window" class="window w-11/12 max-w-5xl h-3/4 hidden">
+        <div class="window-header p-3 flex justify-between items-center bg-win-blue">
+            <div class="flex items-center">
+                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/0cf3668366e84464abc1a247ff57cd8b~tplv-a9rns2rl98-image.image?rcl=2025121921493867049608C1829C2FAE8B&rk3s=8e244e95&rrcfp=f06b921b&x-expires=1768744216&x-signature=Cvo9z1GMAew52u08BbscMY2XB9E%3D" 
+                     alt="邮件" class="w-6 h-6 mr-2">
+                <span>邮件</span>
+            </div>
+            <div class="flex space-x-2">
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-20" onclick="minimizeWindow('mail-window')">
+                    <i class="fa fa-minus"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-white hover:bg-opacity-20" onclick="closeWindow('mail-window')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="window-content flex h-[calc(100%-50px)]">
+            <!-- 左侧文件夹 -->
+            <div class="w-48 bg-gray-100 border-r border-gray-300">
+                <div class="p-3 border-b border-gray-300">
+                    <h3 class="font-medium text-gray-800">文件夹</h3>
+                </div>
+                <ul>
+                    <li class="p-3 hover:bg-gray-200 cursor-pointer flex items-center justify-between">
+                        <span>收件箱</span>
+                        <span class="bg-win-blue text-white text-xs px-2 py-1 rounded-full">5</span>
+                    </li>
+                    <li class="p-3 hover:bg-gray-200 cursor-pointer">已发送</li>
+                    <li class="p-3 hover:bg-gray-200 cursor-pointer">草稿</li>
+                    <li class="p-3 hover:bg-gray-200 cursor-pointer">已删除</li>
+                    <li class="p-3 hover:bg-gray-200 cursor-pointer">垃圾邮件</li>
+                </ul>
+            </div>
+            
+            <!-- 中间邮件列表 -->
+            <div class="w-1/3 border-r border-gray-300">
+                <div class="p-3 border-b border-gray-300 flex justify-between items-center">
+                    <h3 class="font-medium text-gray-800">收件箱</h3>
+                    <div class="flex space-x-2">
+                        <button class="text-gray-600 hover:text-gray-900">
+                            <i class="fa fa-refresh"></i>
+                        </button>
+                        <button class="text-gray-600 hover:text-gray-900">
+                            <i class="fa fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto h-[calc(100%-50px)]">
+                    <!-- 邮件项 -->
+                    <div class="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer bg-blue-50">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-medium text-gray-900">系统通知</span>
+                            <span class="text-xs text-gray-500">10:30</span>
+                        </div>
+                        <div class="font-medium text-gray-800 mb-1">Windows 8 更新可用</div>
+                        <div class="text-sm text-gray-600 truncate">您的系统有新的更新可用，请及时安装以获得最佳体验。</div>
+                    </div>
+                    
+                    <div class="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-medium text-gray-900">用户</span>
+                            <span class="text-xs text-gray-500">昨天</span>
+                        </div>
+                        <div class="font-medium text-gray-800 mb-1">会议安排</div>
+                        <div class="text-sm text-gray-600 truncate">明天下午3点的会议已安排，请准时参加。</div>
+                    </div>
+                    
+                    <div class="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-medium text-gray-900">应用商店</span>
+                            <span class="text-xs text-gray-500">昨天</span>
+                        </div>
+                        <div class="font-medium text-gray-800 mb-1">新应用推荐</div>
+                        <div class="text-sm text-gray-600 truncate">根据您的使用习惯，我们为您推荐了几款热门应用。</div>
+                    </div>
+                    
+                    <div class="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-medium text-gray-900">微软</span>
+                            <span class="text-xs text-gray-500">周一</span>
+                        </div>
+                        <div class="font-medium text-gray-800 mb-1">Windows 8 小贴士</div>
+                        <div class="text-sm text-gray-600 truncate">了解如何充分利用Windows 8的新功能，提升您的工作效率。</div>
+                    </div>
+                    
+                    <div class="p-3 border-b border-gray-200 hover:bg-gray-100 cursor-pointer">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-medium text-gray-900">安全中心</span>
+                            <span class="text-xs text-gray-500">上周</span>
+                        </div>
+                        <div class="font-medium text-gray-800 mb-1">安全警报</div>
+                        <div class="text-sm text-gray-600 truncate">您的账户近期有异常登录尝试，请及时检查并更新密码。</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧邮件内容 -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">Windows 8 更新可用</h2>
+                    <div class="flex items-center text-sm text-gray-600 mb-4">
+                        <span class="mr-4"><i class="fa fa-user mr-1"></i> 系统通知</span>
+                        <span class="mr-4"><i class="fa fa-clock-o mr-1"></i> 今天 10:30</span>
+                        <span><i class="fa fa-tag mr-1"></i> 系统</span>
+                    </div>
+                    <div class="border-t border-b border-gray-200 py-4 mb-4">
+                        <div class="text-gray-800">
+                            <p class="mb-4">尊敬的用户：</p>
+                            <p class="mb-4">您的Windows 8系统有新的更新可用。此次更新包含安全补丁、性能改进和新功能。</p>
+                            <p class="mb-4">更新内容：</p>
+                            <ul class="list-disc pl-6 mb-4">
+                                <li>修复了多个安全漏洞</li>
+                                <li>改进了系统性能和稳定性</li>
+                                <li>优化了电池使用时间</li>
+                                <li>新增了一些功能和改进</li>
+                            </ul>
+                            <p class="mb-4">建议您尽快安装此更新以获得最佳体验。</p>
+                            <p>此致，<br>Windows更新团队</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button class="bg-win-blue text-white px-4 py-2 rounded hover:bg-blue-700">
+                            <i class="fa fa-reply mr-1"></i> 回复
+                        </button>
+                        <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
+                            <i class="fa fa-forward mr-1"></i> 转发
+                        </button>
+                        <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
+                            <i class="fa fa-trash mr-1"></i> 删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IE浏览器窗口 -->
+    <div id="ie-window" class="window w-11/12 max-w-6xl h-3/4 hidden">
+        <div class="window-header p-3 flex justify-between items-center bg-white">
+            <div class="flex items-center">
+                <div class="w-6 h-6 bg-blue-600 rounded flex items-center justify-center mr-2">
+                    <i class="fa fa-globe text-white text-xs"></i>
+                </div>
+                <span class="text-gray-800">Internet Explorer</span>
+            </div>
+            <div class="flex space-x-2">
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-200" onclick="minimizeWindow('ie-window')">
+                    <i class="fa fa-minus text-gray-800"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-200" onclick="closeWindow('ie-window')">
+                    <i class="fa fa-times text-gray-800"></i>
+                </button>
+            </div>
+        </div>
+        <div class="window-content flex flex-col h-[calc(100%-50px)] bg-white">
+            <!-- 地址栏 -->
+            <div class="p-3 border-b border-gray-300 flex items-center bg-gray-100">
+                <div class="flex space-x-2 mr-4">
+                    <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-300">
+                        <i class="fa fa-arrow-left text-gray-800"></i>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-300">
+                        <i class="fa fa-arrow-right text-gray-800"></i>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-300">
+                        <i class="fa fa-refresh text-gray-800"></i>
+                    </button>
+                </div>
+                <div class="flex-1 relative">
+                    <input type="text" value="https://www.microsoft.com/zh-cn/windows/windows-8" class="w-full p-2 pl-10 border border-gray-300 rounded bg-white">
+                    <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <button class="ml-4 px-4 py-2 bg-win-blue text-white rounded hover:bg-blue-700">
+                    转到
+                </button>
+            </div>
+            
+            <!-- 网页内容 -->
+            <div class="flex-1 overflow-auto p-6">
+                <div class="max-w-4xl mx-auto">
+                    <div class="text-center mb-8">
+                        <img src="https://p3-doubao-search-sign.byteimg.com/labis/6cc82bc564a3966c85cb64a85bf071eb~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781704192&x-signature=mJ6jyMv6E%2Fut4Jq8XqGB4Gyu%2FUE%3D" 
+                             alt="Windows 8" class="w-64 h-auto mx-auto mb-4">
+                        <h1 class="text-3xl font-bold text-gray-800">Windows 8</h1>
+                        <p class="text-gray-600">专为您的生活方式打造的操作系统</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">全新开始屏幕</h2>
+                            <p class="text-gray-600 mb-4">Windows 8引入了全新的开始屏幕，使用动态磁贴展示应用和信息，让您的桌面更加个性化和高效。</p>
+                            <img src="https://p3-doubao-search-sign.byteimg.com/labis/9378ab4c772fada73eecdd73beebbbc1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781704192&x-signature=O7LyZA5uSe%2FgD79woBZE1MMLLsI%3D" 
+                                 alt="开始屏幕" class="w-full h-auto rounded mb-4">
+                        </div>
+                        
+                        <div class="bg-gray-100 p-6 rounded-lg">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">触控友好</h2>
+                            <p class="text-gray-600 mb-4">Windows 8专为触控设备优化，同时兼顾鼠标和键盘操作，为您带来流畅自然的交互体验。</p>
+                            <img src="https://p3-doubao-search-sign.byteimg.com/labis/6e5e8785cf27fbd171565226698e21f6~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781704192&x-signature=ubiyzTg2foIr4nI5Xcx6lM3MKdI%3D" 
+                                 alt="触控界面" class="w-full h-auto rounded mb-4">
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 p-6 rounded-lg mb-8">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">主要特性</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-win-blue rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fa fa-tachometer text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-800 mb-1">快速启动</h3>
+                                    <p class="text-sm text-gray-600">Windows 8启动速度比以往更快，让您的设备随时待命。</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-win-green rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fa fa-shield text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-800 mb-1">增强安全</h3>
+                                    <p class="text-sm text-gray-600">内置Windows Defender和SmartScreen，保护您的设备和数据安全。</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-win-purple rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fa fa-cloud text-white"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-800 mb-1">云同步</h3>
+                                    <p class="text-sm text-gray-600">与SkyDrive深度集成，轻松同步您的文件和设置。</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-10 h-10 bg-win-orange rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                                    <i class="fa fa-mobile text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-medium text-gray-800 mb-1">多设备支持</h3>
+                                    <p class="text-sm text-gray-600">从平板电脑到台式机，Windows 8适应各种设备。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button class="px-8 py-3 bg-win-blue text-white rounded-lg hover:bg-blue-700 text-lg font-medium">
+                            了解更多
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 更新当前时间
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+        }
+        
+        // 初始化时间并每分钟更新
+        updateTime();
+        setInterval(updateTime, 60000);
+        
+        // 切换开始屏幕
+        function toggleStartScreen() {
+            const startScreen = document.getElementById('start-screen');
+            const desktop = document.getElementById('desktop');
+            
+            if (startScreen.classList.contains('hidden')) {
+                // 显示开始屏幕
+                startScreen.classList.remove('hidden');
+                desktop.classList.add('hidden');
+                
+                // 添加动画效果
+                gsap.fromTo(startScreen, 
+                    { y: -50, opacity: 0 }, 
+                    { y: 0, opacity: 1, duration: 0.3, ease: "power2.out" }
+                );
+            } else {
+                // 隐藏开始屏幕，显示桌面
+                startScreen.classList.add('hidden');
+                desktop.classList.remove('hidden');
+                
+                // 添加动画效果
+                gsap.fromTo(desktop, 
+                    { opacity: 0 }, 
+                    { opacity: 1, duration: 0.3, ease: "power2.out" }
+                );
+            }
+        }
+        
+        // 切换Charms边栏
+        function toggleCharmsBar() {
+            const charmsBar = document.getElementById('charms-bar');
+            charmsBar.classList.toggle('active');
+        }
+        
+        // 关闭Charms边栏
+        function closeCharmsBar() {
+            const charmsBar = document.getElementById('charms-bar');
+            charmsBar.classList.remove('active');
+        }
+        
+        // 打开应用窗口
+        function openApp(appName) {
+            // 隐藏开始屏幕，显示桌面
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('desktop').classList.remove('hidden');
+            
+            // 关闭Charms边栏
+            closeCharmsBar();
+            
+            // 打开对应的应用窗口
+            const windowId = `${appName}-window`;
+            const windowElement = document.getElementById(windowId);
+            
+            if (windowElement) {
+                windowElement.classList.remove('hidden');
+                
+                // 添加动画效果
+                gsap.fromTo(windowElement, 
+                    { scale: 0.9, opacity: 0 }, 
+                    { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" }
+                );
+            }
+        }
+        
+        // 关闭窗口
+        function closeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                // 添加关闭动画
+                gsap.to(windowElement, {
+                    scale: 0.9,
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.in",
+                    onComplete: function() {
+                        windowElement.classList.add('hidden');
+                    }
+                });
+            }
+        }
+        
+        // 最小化窗口
+        function minimizeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                // 添加最小化动画
+                gsap.to(windowElement, {
+                    y: window.innerHeight,
+                    opacity: 0,
+                    duration: 0.3,
+                    ease: "power2.in",
+                    onComplete: function() {
+                        windowElement.classList.add('hidden');
+                        // 重置位置
+                        gsap.set(windowElement, { y: '50%' });
+                    }
+                });
+            }
+        }
+        
+        // 使窗口可拖动
+        function makeWindowDraggable(windowId) {
+            const windowElement = document.getElementById(windowId);
+            const header = windowElement.querySelector('.window-header');
+            
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            header.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                offsetX = e.clientX - windowElement.getBoundingClientRect().left;
+                offsetY = e.clientY - windowElement.getBoundingClientRect().top;
+                
+                // 防止文本选择
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                
+                // 限制窗口不超出屏幕
+                const maxX = window.innerWidth - windowElement.offsetWidth;
+                const maxY = window.innerHeight - windowElement.offsetHeight;
+                
+                const boundedX = Math.max(0, Math.min(x, maxX));
+                const boundedY = Math.max(0, Math.min(y, maxY));
+                
+                windowElement.style.left = `${boundedX}px`;
+                windowElement.style.top = `${boundedY}px`;
+                windowElement.style.transform = 'none';
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        }
+        
+        // 初始化所有窗口的拖动功能
+        document.addEventListener('DOMContentLoaded', function() {
+            makeWindowDraggable('settings-window');
+            makeWindowDraggable('mail-window');
+            makeWindowDraggable('ie-window');
+        });
+        
+        // 为磁贴添加点击事件
+        document.querySelectorAll('.tile').forEach(tile => {
+            tile.addEventListener('click', function() {
+                const appName = this.getAttribute('data-app');
+                openApp(appName);
+            });
+        });
+        
+        // 为任务栏按钮添加点击事件
+        document.querySelectorAll('.task-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const appName = this.getAttribute('data-app');
+                
+                if (appName === 'desktop') {
+                    // 显示桌面
+                    document.getElementById('start-screen').classList.add('hidden');
+                    document.getElementById('desktop').classList.remove('hidden');
+                    closeCharmsBar();
+                } else {
+                    openApp(appName);
+                }
+            });
+        });
+        
+        // 为桌面图标添加点击事件
+        document.querySelectorAll('.desktop-icon').forEach(icon => {
+            icon.addEventListener('click', function() {
+                const appName = this.getAttribute('data-app');
+                
+                if (appName === 'computer') {
+                    // 模拟打开我的电脑
+                    alert('我的电脑已打开');
+                } else if (appName === 'recycle-bin') {
+                    // 模拟打开回收站
+                    alert('回收站已打开');
+                } else {
+                    // 其他图标
+                    alert(`${appName}已打开`);
+                }
+            });
+        });
+        
+        // 为Charms项添加点击事件
+        document.querySelectorAll('.charm-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const charm = this.getAttribute('data-charm');
+                
+                if (charm === 'start') {
+                    toggleStartScreen();
+                } else if (charm === 'settings') {
+                    openApp('settings');
+                } else {
+                    // 其他Charms项
+                    alert(`${charm}功能已激活`);
+                }
+                
+                // 点击后关闭Charms栏
+                setTimeout(closeCharmsBar, 300);
+            });
+        });
+        
+        // 点击桌面空白处关闭Charms栏
+        document.getElementById('desktop').addEventListener('click', closeCharmsBar);
+        
+        // 为动态磁贴添加随机更新效果
+        function animateLiveTiles() {
+            document.querySelectorAll('.live-tile').forEach(tile => {
+                // 随机延迟，使动画不同步
+                const delay = Math.random() * 2;
+                
+                gsap.to(tile, {
+                    scale: 1.05,
+                    duration: 0.5,
+                    delay: delay,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "power2.inOut"
+                });
+            });
+        }
+        
+        // 启动动态磁贴动画
+        animateLiveTiles();
+        
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            // Windows键或Ctrl+Esc打开/关闭开始屏幕
+            if (e.key === 'Meta' || (e.ctrlKey && e.key === 'Escape')) {
+                e.preventDefault();
+                toggleStartScreen();
+            }
+            
+            // Windows键+C打开/关闭Charms栏
+            if (e.key === 'c' && e.metaKey) {
+                e.preventDefault();
+                toggleCharmsBar();
+            }
+            
+            // Alt+F4关闭当前窗口
+            if (e.key === 'F4' && e.altKey) {
+                e.preventDefault();
+                const activeWindow = document.querySelector('.window:not(.hidden)');
+                if (activeWindow) {
+                    closeWindow(activeWindow.id);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

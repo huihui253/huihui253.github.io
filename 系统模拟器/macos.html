@@ -1,0 +1,2460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Web</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0071e3',
+                        secondary: '#1d1d1f',
+                        accent: '#ff9500',
+                        'macos-gray': '#86868b',
+                        'macos-light-gray': '#f5f5f7',
+                        'macos-dark-gray': '#2c2c2e',
+                        'macos-window-bg': 'rgba(255, 255, 255, 0.9)',
+                        'macos-window-border': 'rgba(0, 0, 0, 0.1)',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'macos': '0 8px 30px rgba(0, 0, 0, 0.12)',
+                        'macos-hover': '0 8px 30px rgba(0, 0, 0, 0.18)',
+                    },
+                    borderRadius: {
+                        'macos': '10px',
+                        'macos-sm': '6px',
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 3s infinite',
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-in-out',
+                        'slide-down': 'slideDown 0.3s ease-in-out',
+                        'scale-in': 'scaleIn 0.2s ease-in-out',
+                        'scale-out': 'scaleOut 0.2s ease-in-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideDown: {
+                            '0%': { transform: 'translateY(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        scaleOut: {
+                            '0%': { transform: 'scale(1)', opacity: '1' },
+                            '100%': { transform: 'scale(0.95)', opacity: '0' },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .macos-window {
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+            .macos-scrollbar::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            .macos-scrollbar::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.05);
+                border-radius: 4px;
+            }
+            .macos-scrollbar::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 4px;
+            }
+            .macos-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: rgba(0, 0, 0, 0.3);
+            }
+            .dock-icon {
+                transition: all 0.2s ease-in-out;
+            }
+            .dock-icon:hover {
+                transform: scale(1.2);
+                z-index: 10;
+            }
+            .dock-icon.active {
+                opacity: 1;
+            }
+            .dock-icon:not(.active) {
+                opacity: 0.7;
+            }
+            .menu-item {
+                transition: background-color 0.15s ease-in-out;
+            }
+            .menu-item:hover {
+                background-color: rgba(0, 0, 0, 0.08);
+            }
+            .menu-item:active {
+                background-color: rgba(0, 0, 0, 0.12);
+            }
+            .window-control {
+                transition: background-color 0.15s ease-in-out;
+            }
+            .desktop-icon {
+                transition: all 0.2s ease-in-out;
+            }
+            .desktop-icon:hover {
+                transform: scale(1.1);
+            }
+            .desktop-icon:active {
+                transform: scale(0.95);
+            }
+            .context-menu {
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+            }
+        }
+    </style>
+    
+    <style>
+        body {
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        .menu-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 22px;
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .menu-left, .menu-center, .menu-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-left {
+            flex: 1;
+        }
+        
+        .menu-center {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .menu-right {
+            flex: 1;
+            justify-content: flex-end;
+        }
+        
+        .menu-item {
+            padding: 0 8px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .submenu {
+            position: absolute;
+            top: 22px;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 4px 0;
+            min-width: 180px;
+            z-index: 1001;
+            display: none;
+        }
+        
+        .menu-item:hover .submenu {
+            display: block;
+        }
+        
+        .submenu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .submenu-item:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+        }
+        
+        .submenu-item:active {
+            background-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        .divider {
+            height: 1px;
+            background-color: rgba(0, 0, 0, 0.1);
+            margin: 4px 0;
+        }
+        
+        .dock {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 56px;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+        
+        .dock-icon {
+            width: 40px;
+            height: 40px;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .dock-icon img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+        
+        .dock-separator {
+            width: 1px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.2);
+            margin: 0 4px;
+        }
+        
+        .desktop-icons {
+            position: fixed;
+            top: 22px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 22px - 66px);
+            z-index: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 24px;
+        }
+        
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+            cursor: pointer;
+        }
+        
+        .desktop-icon img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+        
+        .desktop-icon span {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        
+        .window {
+            position: fixed;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .window-header {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: move;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        
+        .window-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-right: 12px;
+        }
+        
+        .window-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .window-control.close {
+            background-color: #ff5f57;
+        }
+        
+        .window-control.minimize {
+            background-color: #ffbd2e;
+        }
+        
+        .window-control.maximize {
+            background-color: #28ca42;
+        }
+        
+        .window-title {
+            flex: 1;
+            font-size: 12px;
+            color: #000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .window-title img {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+        
+        .window-content {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+            background-color: #fff;
+        }
+        
+        .window-resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            z-index: 101;
+        }
+        
+        .window-resize-handle.top-left {
+            top: 0;
+            left: 0;
+            cursor: nwse-resize;
+        }
+        
+        .window-resize-handle.top-right {
+            top: 0;
+            right: 0;
+            cursor: nesw-resize;
+        }
+        
+        .window-resize-handle.bottom-left {
+            bottom: 0;
+            left: 0;
+            cursor: nesw-resize;
+        }
+        
+        .window-resize-handle.bottom-right {
+            bottom: 0;
+            right: 0;
+            cursor: nwse-resize;
+        }
+        
+        .context-menu {
+            position: fixed;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 4px 0;
+            min-width: 180px;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .context-menu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .context-menu-item:hover {
+            background-color: rgba(0, 0, 0, 0.08);
+        }
+        
+        .context-menu-item:active {
+            background-color: rgba(0, 0, 0, 0.12);
+        }
+        
+        /* 应用特定样式 */
+        .finder-sidebar {
+            width: 180px;
+            background-color: #f5f5f7;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 8px 0;
+        }
+        
+        .finder-sidebar-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .finder-sidebar-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .finder-sidebar-item.active {
+            background-color: rgba(0, 113, 227, 0.1);
+            color: #0071e3;
+        }
+        
+        .finder-content {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .finder-toolbar {
+            height: 44px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+        
+        .finder-toolbar-button {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .finder-toolbar-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .finder-toolbar-button:active {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .finder-files {
+            flex: 1;
+            padding: 16px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            overflow: auto;
+        }
+        
+        .finder-file {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .finder-file img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+        
+        .finder-file span {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #000;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        
+        .safari-toolbar {
+            height: 44px;
+            background-color: #f5f5f7;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+        }
+        
+        .safari-address-bar {
+            flex: 1;
+            height: 32px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .safari-address-bar input {
+            flex: 1;
+            border: none;
+            background-color: transparent;
+            outline: none;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .safari-content {
+            flex: 1;
+            overflow: auto;
+        }
+        
+        .safari-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .textedit-content {
+            flex: 1;
+            padding: 16px;
+            overflow: auto;
+        }
+        
+        .textedit-content textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+        }
+        
+        .calculator-content {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .calculator-display {
+            height: 60px;
+            background-color: #f5f5f7;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 16px;
+            font-size: 24px;
+            font-weight: 300;
+            color: #000;
+        }
+        
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .calculator-button {
+            height: 48px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+        
+        .calculator-button.number {
+            background-color: #f5f5f7;
+            color: #000;
+        }
+        
+        .calculator-button.operator {
+            background-color: #ff9500;
+            color: #fff;
+        }
+        
+        .calculator-button.function {
+            background-color: #d1d1d6;
+            color: #000;
+        }
+        
+        .calculator-button:hover {
+            filter: brightness(0.9);
+        }
+        
+        .calculator-button:active {
+            transform: scale(0.95);
+        }
+        
+        .system-preferences-content {
+            flex: 1;
+            display: flex;
+        }
+        
+        .system-preferences-sidebar {
+            width: 180px;
+            background-color: #f5f5f7;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 16px 0;
+            overflow: auto;
+        }
+        
+        .system-preferences-sidebar-item {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+        
+        .system-preferences-sidebar-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .system-preferences-sidebar-item.active {
+            background-color: rgba(0, 113, 227, 0.1);
+        }
+        
+        .system-preferences-sidebar-item img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .system-preferences-sidebar-item span {
+            font-size: 14px;
+            color: #000;
+        }
+        
+        .system-preferences-panel {
+            flex: 1;
+            padding: 24px;
+            overflow: auto;
+        }
+        
+        .system-preferences-panel h2 {
+            font-size: 24px;
+            font-weight: 500;
+            color: #000;
+            margin-bottom: 24px;
+        }
+        
+        .system-preferences-group {
+            margin-bottom: 24px;
+        }
+        
+        .system-preferences-group h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #000;
+            margin-bottom: 12px;
+        }
+        
+        .system-preferences-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .system-preferences-row:last-child {
+            border-bottom: none;
+        }
+        
+        .system-preferences-label {
+            font-size: 14px;
+            color: #000;
+        }
+        
+        .system-preferences-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .slider {
+            width: 200px;
+            height: 4px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .slider-track {
+            height: 4px;
+            background-color: #0071e3;
+            border-radius: 2px;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        .slider-thumb {
+            width: 16px;
+            height: 16px;
+            background-color: #0071e3;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+        
+        .toggle {
+            width: 48px;
+            height: 24px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .toggle.active {
+            background-color: #0071e3;
+        }
+        
+        .toggle-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toggle.active .toggle-thumb {
+            left: 26px;
+        }
+        
+        .wallpaper-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+        
+        .wallpaper-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .wallpaper-preview:hover img {
+            transform: scale(1.05);
+        }
+        
+        .wallpaper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .wallpaper-item {
+            aspect-ratio: 16/9;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .wallpaper-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .wallpaper-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .wallpaper-item.active {
+            border: 2px solid #0071e3;
+        }
+        
+        /* 启动台样式 */
+        .launchpad {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .launchpad-content {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            max-height: 800px;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 24px;
+            overflow: auto;
+        }
+        
+        .launchpad-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .launchpad-app:hover {
+            transform: scale(1.1);
+        }
+        
+        .launchpad-app img {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+        }
+        
+        .launchpad-app span {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-black font-sans">
+    <!-- 桌面背景 -->
+    <div class="desktop" id="desktop" style="background-image: url('https://p11-doubao-search-sign.byteimg.com/labis/646953d6760187a539337f781b3dca6c~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647409&x-signature=r7hf0gWAyVRud%2B%2Fc9n1VF%2BfLEOs%3D')"></div>
+    
+    <!-- 菜单栏 -->
+    <div class="menu-bar" id="menu-bar">
+        <div class="menu-left">
+            <div class="menu-item">
+                <span>苹果</span>
+                <div class="submenu">
+                    <div class="submenu-item">关于本机</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">系统偏好设置...</div>
+                    <div class="submenu-item">App Store...</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">睡眠</div>
+                    <div class="submenu-item">重新启动...</div>
+                    <div class="submenu-item">关机...</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">退出登录</div>
+                </div>
+            </div>
+            <div class="menu-item" id="file-menu">
+                <span>文件</span>
+                <div class="submenu">
+                    <div class="submenu-item">新建 Finder 窗口</div>
+                    <div class="submenu-item">新建文件夹</div>
+                    <div class="submenu-item">新建文稿</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">打开</div>
+                    <div class="submenu-item">打开方式</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">保存</div>
+                    <div class="submenu-item">另存为...</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">关闭</div>
+                    <div class="submenu-item">退出</div>
+                </div>
+            </div>
+            <div class="menu-item" id="edit-menu">
+                <span>编辑</span>
+                <div class="submenu">
+                    <div class="submenu-item">撤销</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">剪切</div>
+                    <div class="submenu-item">拷贝</div>
+                    <div class="submenu-item">粘贴</div>
+                    <div class="submenu-item">删除</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">全选</div>
+                </div>
+            </div>
+            <div class="menu-item" id="view-menu">
+                <span>显示</span>
+                <div class="submenu">
+                    <div class="submenu-item">显示工具栏</div>
+                    <div class="submenu-item">显示侧边栏</div>
+                    <div class="submenu-item">显示状态栏</div>
+                    <div class="divider"></div>
+                    <div class="submenu-item">图标</div>
+                    <div class="submenu-item">列表</div>
+                    <div class="submenu-item">分栏</div>
+                    <div class="submenu-item">画廊</div>
+                </div>
+            </div>
+        </div>
+        <div class="menu-center">
+            <div class="menu-item" id="app-name">Finder</div>
+        </div>
+        <div class="menu-right">
+            <div class="menu-item">
+                <i class="fa fa-search" aria-hidden="true"></i>
+            </div>
+            <div class="menu-item">
+                <i class="fa fa-volume-up" aria-hidden="true"></i>
+            </div>
+            <div class="menu-item" id="time-display">12:00</div>
+        </div>
+    </div>
+    
+    <!-- 桌面图标 -->
+    <div class="desktop-icons" id="desktop-icons">
+        <div class="desktop-icon" data-app="finder">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-tjoges91tu/b062bc83c682e5a1ade210fb242fa87e~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=bt6J42BJ3ut9PcQ56awy14NvUbU%3D" alt="访达">
+            <span>访达</span>
+        </div>
+        <div class="desktop-icon" data-app="launchpad">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/c74b3ed374604abeb6bdb9cf93a46c0b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=8ta5xKYrlsTxwquOGEMU%2Fzz%2FFnQ%3D" alt="启动台">
+            <span>启动台</span>
+        </div>
+        <div class="desktop-icon" data-app="safari">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/99597268deab589fa0a1d525a19cbf40~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=qHZPEE8%2BAr9PaFxZP4mk6MuMft0%3D" alt="Safari">
+            <span>Safari</span>
+        </div>
+        <div class="desktop-icon" data-app="textedit">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/5bbd6d5706514d96394014f6ce141e37~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=XNm%2BG51wPz3tdTEVF%2BIdVIuArUQ%3D" alt="记事本">
+            <span>记事本</span>
+        </div>
+        <div class="desktop-icon" data-app="calculator">
+            <img src="https://p26-doubao-search-sign.byteimg.com/labis/1d0b7f64d17c5ced430d818ec7b9d6c3~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=73R3WwJRm7JtDdjsd9c42%2FY33sQ%3D" alt="计算器">
+            <span>计算器</span>
+        </div>
+        <div class="desktop-icon" data-app="trash">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1014442293030551603~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=F4J5dSCKItRdkfmuJqhbULI9IsA%3D" alt="回收站">
+            <span>回收站</span>
+        </div>
+        <div class="desktop-icon" data-app="system-preferences">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/477839eae448687ce7f05afb817e6355~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=nBJ2%2FGW3ohF%2BBfC1CYzQTzO8FKQ%3D" alt="系统偏好设置">
+            <span>系统偏好设置</span>
+        </div>
+    </div>
+    
+    <!-- Dock栏 -->
+    <div class="dock" id="dock">
+        <div class="dock-icon active" data-app="finder">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-tjoges91tu/b062bc83c682e5a1ade210fb242fa87e~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=bt6J42BJ3ut9PcQ56awy14NvUbU%3D" alt="访达">
+        </div>
+        <div class="dock-icon" data-app="launchpad">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/c74b3ed374604abeb6bdb9cf93a46c0b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=8ta5xKYrlsTxwquOGEMU%2Fzz%2FFnQ%3D" alt="启动台">
+        </div>
+        <div class="dock-icon" data-app="safari">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/99597268deab589fa0a1d525a19cbf40~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=qHZPEE8%2BAr9PaFxZP4mk6MuMft0%3D" alt="Safari">
+        </div>
+        <div class="dock-icon" data-app="textedit">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/5bbd6d5706514d96394014f6ce141e37~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=XNm%2BG51wPz3tdTEVF%2BIdVIuArUQ%3D" alt="记事本">
+        </div>
+        <div class="dock-icon" data-app="calculator">
+            <img src="https://p26-doubao-search-sign.byteimg.com/labis/1d0b7f64d17c5ced430d818ec7b9d6c3~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=73R3WwJRm7JtDdjsd9c42%2FY33sQ%3D" alt="计算器">
+        </div>
+        <div class="dock-separator"></div>
+        <div class="dock-icon" data-app="trash">
+            <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1014442293030551603~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=F4J5dSCKItRdkfmuJqhbULI9IsA%3D" alt="回收站">
+        </div>
+        <div class="dock-icon" data-app="system-preferences">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/477839eae448687ce7f05afb817e6355~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=nBJ2%2FGW3ohF%2BBfC1CYzQTzO8FKQ%3D" alt="系统偏好设置">
+        </div>
+    </div>
+    
+    <!-- 右键菜单 -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item">新建文件夹</div>
+        <div class="context-menu-item">新建文稿</div>
+        <div class="divider"></div>
+        <div class="context-menu-item">查看显示选项</div>
+        <div class="divider"></div>
+        <div class="context-menu-item">更改桌面背景...</div>
+    </div>
+    
+    <!-- 启动台 -->
+    <div class="launchpad" id="launchpad">
+        <div class="launchpad-content">
+            <div class="launchpad-app" data-app="finder">
+                <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-tjoges91tu/b062bc83c682e5a1ade210fb242fa87e~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=bt6J42BJ3ut9PcQ56awy14NvUbU%3D" alt="访达">
+                <span>访达</span>
+            </div>
+            <div class="launchpad-app" data-app="launchpad">
+                <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/c74b3ed374604abeb6bdb9cf93a46c0b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=8ta5xKYrlsTxwquOGEMU%2Fzz%2FFnQ%3D" alt="启动台">
+                <span>启动台</span>
+            </div>
+            <div class="launchpad-app" data-app="safari">
+                <img src="https://p3-doubao-search-sign.byteimg.com/labis/99597268deab589fa0a1d525a19cbf40~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=qHZPEE8%2BAr9PaFxZP4mk6MuMft0%3D" alt="Safari">
+                <span>Safari</span>
+            </div>
+            <div class="launchpad-app" data-app="textedit">
+                <img src="https://p3-doubao-search-sign.byteimg.com/labis/5bbd6d5706514d96394014f6ce141e37~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=XNm%2BG51wPz3tdTEVF%2BIdVIuArUQ%3D" alt="记事本">
+                <span>记事本</span>
+            </div>
+            <div class="launchpad-app" data-app="calculator">
+                <img src="https://p26-doubao-search-sign.byteimg.com/labis/1d0b7f64d17c5ced430d818ec7b9d6c3~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=73R3WwJRm7JtDdjsd9c42%2FY33sQ%3D" alt="计算器">
+                <span>计算器</span>
+            </div>
+            <div class="launchpad-app" data-app="trash">
+                <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1014442293030551603~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=F4J5dSCKItRdkfmuJqhbULI9IsA%3D" alt="回收站">
+                <span>回收站</span>
+            </div>
+            <div class="launchpad-app" data-app="system-preferences">
+                <img src="https://p3-doubao-search-sign.byteimg.com/labis/477839eae448687ce7f05afb817e6355~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=nBJ2%2FGW3ohF%2BBfC1CYzQTzO8FKQ%3D" alt="系统偏好设置">
+                <span>系统偏好设置</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let windows = [];
+        let activeWindow = null;
+        let nextWindowId = 1;
+        let nextZIndex = 100;
+        
+        // 壁纸列表
+        const wallpapers = [
+            'https://p11-doubao-search-sign.byteimg.com/labis/646953d6760187a539337f781b3dca6c~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647409&x-signature=r7hf0gWAyVRud%2B%2Fc9n1VF%2BfLEOs%3D',
+            'https://p26-doubao-search-sign.byteimg.com/labis/8bd2c424a0b156fdb8c8c301193d649d~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647409&x-signature=%2FS30AJn2NjuRSOA91mfdNiklCQ4%3D',
+            'https://p11-doubao-search-sign.byteimg.com/labis/d39eeca88a0674d2a946f61597efb775~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647409&x-signature=aBoRllB57%2BdgilHqJr7oSJIUUCk%3D',
+            'https://p26-doubao-search-sign.byteimg.com/labis/e656bfca9a3019107dc2020d67bdfea9~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647409&x-signature=NWPBHDykslz8Ew8NvEND5W%2Fi42U%3D'
+        ];
+        
+        // 模拟文件系统
+        const fileSystem = {
+            desktop: {
+                name: '桌面',
+                type: 'folder',
+                children: [
+                    { name: '文档1.txt', type: 'file', content: '这是一个文本文件。' },
+                    { name: '图片1.jpg', type: 'file' },
+                    { name: '文件夹1', type: 'folder', children: [] }
+                ]
+            },
+            documents: {
+                name: '文稿',
+                type: 'folder',
+                children: [
+                    { name: '报告.docx', type: 'file' },
+                    { name: '演示文稿.pptx', type: 'file' }
+                ]
+            },
+            downloads: {
+                name: '下载',
+                type: 'folder',
+                children: [
+                    { name: '安装包.dmg', type: 'file' },
+                    { name: '压缩文件.zip', type: 'file' }
+                ]
+            },
+            applications: {
+                name: '应用程序',
+                type: 'folder',
+                children: [
+                    { name: '访达.app', type: 'app' },
+                    { name: 'Safari.app', type: 'app' },
+                    { name: '记事本.app', type: 'app' },
+                    { name: '计算器.app', type: 'app' }
+                ]
+            }
+        };
+        
+        // 当前路径
+        let currentPath = ['desktop'];
+        
+        // 获取当前目录内容
+        function getCurrentDirectory() {
+            let directory = fileSystem;
+            for (const part of currentPath) {
+                if (directory[part] && directory[part].type === 'folder') {
+                    directory = directory[part];
+                } else {
+                    return null;
+                }
+            }
+            return directory;
+        }
+        
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('time-display').textContent = `${hours}:${minutes}`;
+        }
+        
+        // 创建窗口
+        function createWindow(app, x, y, width, height) {
+            const windowId = nextWindowId++;
+            const zIndex = nextZIndex++;
+            
+            // 创建窗口元素
+            const windowElement = document.createElement('div');
+            windowElement.className = 'window animate-scale-in';
+            windowElement.id = `window-${windowId}`;
+            windowElement.style.left = `${x}px`;
+            windowElement.style.top = `${y}px`;
+            windowElement.style.width = `${width}px`;
+            windowElement.style.height = `${height}px`;
+            windowElement.style.zIndex = zIndex;
+            
+            // 设置窗口内容
+            let windowTitle = '';
+            let windowIcon = '';
+            let windowContent = '';
+            
+            switch (app) {
+                case 'finder':
+                    windowTitle = '访达';
+                    windowIcon = 'https://p26-doubao-search-sign.byteimg.com/tos-cn-i-tjoges91tu/b062bc83c682e5a1ade210fb242fa87e~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=bt6J42BJ3ut9PcQ56awy14NvUbU%3D';
+                    windowContent = `
+                        <div class="flex h-full">
+                            <div class="finder-sidebar">
+                                <div class="finder-sidebar-item active" data-path="desktop">
+                                    <i class="fa fa-home" aria-hidden="true"></i>
+                                    <span>桌面</span>
+                                </div>
+                                <div class="finder-sidebar-item" data-path="documents">
+                                    <i class="fa fa-file-text-o" aria-hidden="true"></i>
+                                    <span>文稿</span>
+                                </div>
+                                <div class="finder-sidebar-item" data-path="downloads">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                    <span>下载</span>
+                                </div>
+                                <div class="finder-sidebar-item" data-path="applications">
+                                    <i class="fa fa-cubes" aria-hidden="true"></i>
+                                    <span>应用程序</span>
+                                </div>
+                            </div>
+                            <div class="finder-content">
+                                <div class="finder-toolbar">
+                                    <div class="finder-toolbar-button">
+                                        <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="finder-toolbar-button">
+                                        <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="finder-toolbar-button">
+                                        <i class="fa fa-arrow-up" aria-hidden="true"></i>
+                                    </div>
+                                    <div class="finder-toolbar-button">
+                                        <i class="fa fa-search" aria-hidden="true"></i>
+                                        <span>搜索</span>
+                                    </div>
+                                </div>
+                                <div class="finder-files" id="finder-files">
+                                    ${renderFiles(getCurrentDirectory().children)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'safari':
+                    windowTitle = 'Safari';
+                    windowIcon = 'https://p3-doubao-search-sign.byteimg.com/labis/99597268deab589fa0a1d525a19cbf40~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=qHZPEE8%2BAr9PaFxZP4mk6MuMft0%3D';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="safari-toolbar">
+                                <div class="safari-address-bar">
+                                    <i class="fa fa-search" aria-hidden="true"></i>
+                                    <input type="text" placeholder="搜索或输入网址" id="safari-address">
+                                    <i class="fa fa-refresh" aria-hidden="true"></i>
+                                    <i class="fa fa-home" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                            <div class="safari-content">
+                                <iframe src="https://www.baidu.com" id="safari-frame"></iframe>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'textedit':
+                    windowTitle = '记事本';
+                    windowIcon = 'https://p3-doubao-search-sign.byteimg.com/labis/5bbd6d5706514d96394014f6ce141e37~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=XNm%2BG51wPz3tdTEVF%2BIdVIuArUQ%3D';
+                    windowContent = `
+                        <div class="textedit-content">
+                            <textarea placeholder="在此输入文本..." id="textedit-content"></textarea>
+                        </div>
+                    `;
+                    break;
+                case 'calculator':
+                    windowTitle = '计算器';
+                    windowIcon = 'https://p26-doubao-search-sign.byteimg.com/labis/1d0b7f64d17c5ced430d818ec7b9d6c3~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=73R3WwJRm7JtDdjsd9c42%2FY33sQ%3D';
+                    windowContent = `
+                        <div class="calculator-content">
+                            <div class="calculator-display" id="calculator-display">0</div>
+                            <div class="calculator-buttons">
+                                <div class="calculator-button function" data-action="clear">C</div>
+                                <div class="calculator-button function" data-action="sign">±</div>
+                                <div class="calculator-button function" data-action="percent">%</div>
+                                <div class="calculator-button operator" data-action="divide">÷</div>
+                                <div class="calculator-button number" data-number="7">7</div>
+                                <div class="calculator-button number" data-number="8">8</div>
+                                <div class="calculator-button number" data-number="9">9</div>
+                                <div class="calculator-button operator" data-action="multiply">×</div>
+                                <div class="calculator-button number" data-number="4">4</div>
+                                <div class="calculator-button number" data-number="5">5</div>
+                                <div class="calculator-button number" data-number="6">6</div>
+                                <div class="calculator-button operator" data-action="subtract">−</div>
+                                <div class="calculator-button number" data-number="1">1</div>
+                                <div class="calculator-button number" data-number="2">2</div>
+                                <div class="calculator-button number" data-number="3">3</div>
+                                <div class="calculator-button operator" data-action="add">+</div>
+                                <div class="calculator-button number" data-number="0" style="grid-column: span 2;">0</div>
+                                <div class="calculator-button number" data-number=".">.</div>
+                                <div class="calculator-button operator" data-action="equals">=</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'trash':
+                    windowTitle = '回收站';
+                    windowIcon = 'https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1014442293030551603~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=F4J5dSCKItRdkfmuJqhbULI9IsA%3D';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="finder-toolbar">
+                                <div class="finder-toolbar-button">
+                                    <i class="fa fa-trash" aria-hidden="true"></i>
+                                    <span>清空回收站</span>
+                                </div>
+                            </div>
+                            <div class="finder-files" style="justify-content: center; align-items: center; color: #86868b;">
+                                <div style="text-align: center;">
+                                    <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1014442293030551603~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=F4J5dSCKItRdkfmuJqhbULI9IsA%3D" alt="回收站" style="width: 64px; height: 64px; opacity: 0.5;">
+                                    <p style="margin-top: 16px;">回收站是空的</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'system-preferences':
+                    windowTitle = '系统偏好设置';
+                    windowIcon = 'https://p3-doubao-search-sign.byteimg.com/labis/477839eae448687ce7f05afb817e6355~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1783647422&x-signature=nBJ2%2FGW3ohF%2BBfC1CYzQTzO8FKQ%3D';
+                    windowContent = `
+                        <div class="system-preferences-content">
+                            <div class="system-preferences-sidebar">
+                                <div class="system-preferences-sidebar-item active" data-panel="general">
+                                    <i class="fa fa-sliders" aria-hidden="true"></i>
+                                    <span>通用</span>
+                                </div>
+                                <div class="system-preferences-sidebar-item" data-panel="desktop">
+                                    <i class="fa fa-desktop" aria-hidden="true"></i>
+                                    <span>桌面与屏幕保护程序</span>
+                                </div>
+                                <div class="system-preferences-sidebar-item" data-panel="displays">
+                                    <i class="fa fa-television" aria-hidden="true"></i>
+                                    <span>显示器</span>
+                                </div>
+                                <div class="system-preferences-sidebar-item" data-panel="sound">
+                                    <i class="fa fa-volume-up" aria-hidden="true"></i>
+                                    <span>声音</span>
+                                </div>
+                                <div class="system-preferences-sidebar-item" data-panel="keyboard">
+                                    <i class="fa fa-keyboard-o" aria-hidden="true"></i>
+                                    <span>键盘</span>
+                                </div>
+                                <div class="system-preferences-sidebar-item" data-panel="mouse">
+                                    <i class="fa fa-mouse-pointer" aria-hidden="true"></i>
+                                    <span>鼠标</span>
+                                </div>
+                            </div>
+                            <div class="system-preferences-panel" id="system-preferences-panel">
+                                <div id="panel-general">
+                                    <h2>通用</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>外观</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">外观</div>
+                                            <div class="system-preferences-control">
+                                                <select class="bg-white border border-gray-300 rounded px-3 py-1 text-sm">
+                                                    <option>浅色</option>
+                                                    <option>深色</option>
+                                                    <option>自动</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="system-preferences-group">
+                                        <h3>通用</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">允许Handoff在这台Mac和您的iCloud设备之间继续工作</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle active">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">在菜单栏中显示电池状态</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle active">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="panel-desktop" style="display: none;">
+                                    <h2>桌面与屏幕保护程序</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>桌面</h3>
+                                        <div class="wallpaper-grid">
+                                            ${wallpapers.map((wallpaper, index) => `
+                                                <div class="wallpaper-item ${index === 0 ? 'active' : ''}" data-wallpaper="${wallpaper}">
+                                                    <img src="${wallpaper}" alt="壁纸">
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="panel-displays" style="display: none;">
+                                    <h2>显示器</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>显示</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">亮度</div>
+                                            <div class="system-preferences-control">
+                                                <div class="slider">
+                                                    <div class="slider-track" style="width: 70%;"></div>
+                                                    <div class="slider-thumb" style="left: 70%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">自动调节亮度</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle active">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="panel-sound" style="display: none;">
+                                    <h2>声音</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>声音效果</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">音量</div>
+                                            <div class="system-preferences-control">
+                                                <div class="slider">
+                                                    <div class="slider-track" style="width: 50%;"></div>
+                                                    <div class="slider-thumb" style="left: 50%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">播放用户界面声音效果</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle active">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">启动时播放声音</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="panel-keyboard" style="display: none;">
+                                    <h2>键盘</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>键盘</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">按键重复</div>
+                                            <div class="system-preferences-control">
+                                                <div class="slider">
+                                                    <div class="slider-track" style="width: 60%;"></div>
+                                                    <div class="slider-thumb" style="left: 60%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">重复前延迟</div>
+                                            <div class="system-preferences-control">
+                                                <div class="slider">
+                                                    <div class="slider-track" style="width: 40%;"></div>
+                                                    <div class="slider-thumb" style="left: 40%;"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="panel-mouse" style="display: none;">
+                                    <h2>鼠标</h2>
+                                    <div class="system-preferences-group">
+                                        <h3>点按</h3>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label"> secondary click</div>
+                                            <div class="system-preferences-control">
+                                                <select class="bg-white border border-gray-300 rounded px-3 py-1 text-sm">
+                                                    <option>点按右侧</option>
+                                                    <option>点按左侧</option>
+                                                    <option>关闭</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="system-preferences-row">
+                                            <div class="system-preferences-label">滚动方向：自然</div>
+                                            <div class="system-preferences-control">
+                                                <div class="toggle active">
+                                                    <div class="toggle-thumb"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            // 设置窗口HTML
+            windowElement.innerHTML = `
+                <div class="window-header" data-window-id="${windowId}">
+                    <div class="window-controls">
+                        <div class="window-control close" data-window-id="${windowId}"></div>
+                        <div class="window-control minimize" data-window-id="${windowId}"></div>
+                        <div class="window-control maximize" data-window-id="${windowId}"></div>
+                    </div>
+                    <div class="window-title">
+                        <img src="${windowIcon}" alt="${windowTitle}">
+                        <span>${windowTitle}</span>
+                    </div>
+                </div>
+                <div class="window-content">
+                    ${windowContent}
+                </div>
+                <div class="window-resize-handle top-left" data-window-id="${windowId}"></div>
+                <div class="window-resize-handle top-right" data-window-id="${windowId}"></div>
+                <div class="window-resize-handle bottom-left" data-window-id="${windowId}"></div>
+                <div class="window-resize-handle bottom-right" data-window-id="${windowId}"></div>
+            `;
+            
+            // 添加到DOM
+            document.body.appendChild(windowElement);
+            
+            // 添加到窗口列表
+            windows.push({
+                id: windowId,
+                element: windowElement,
+                app: app,
+                isMinimized: false,
+                isMaximized: false,
+                originalWidth: width,
+                originalHeight: height,
+                originalX: x,
+                originalY: y
+            });
+            
+            // 设置为活动窗口
+            setActiveWindow(windowId);
+            
+            // 添加事件监听器
+            addWindowEventListeners(windowId);
+            
+            // 初始化应用特定功能
+            initAppSpecificFeatures(app, windowId);
+            
+            return windowId;
+        }
+        
+        // 添加窗口事件监听器
+        function addWindowEventListeners(windowId) {
+            const windowElement = document.getElementById(`window-${windowId}`);
+            const windowHeader = windowElement.querySelector('.window-header');
+            const closeButton = windowElement.querySelector('.window-control.close');
+            const minimizeButton = windowElement.querySelector('.window-control.minimize');
+            const maximizeButton = windowElement.querySelector('.window-control.maximize');
+            const resizeHandles = windowElement.querySelectorAll('.window-resize-handle');
+            
+            // 窗口拖拽
+            let isDragging = false;
+            let dragStartX, dragStartY, windowStartX, windowStartY;
+            
+            windowHeader.addEventListener('mousedown', (e) => {
+                // 如果点击的是控制按钮，不启动拖拽
+                if (e.target.closest('.window-controls')) {
+                    return;
+                }
+                
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                windowStartX = parseInt(windowElement.style.left);
+                windowStartY = parseInt(windowElement.style.top);
+                
+                // 设置为活动窗口
+                setActiveWindow(windowId);
+                
+                // 添加移动事件监听器
+                document.addEventListener('mousemove', handleWindowDrag);
+                document.addEventListener('mouseup', stopWindowDrag);
+                
+                // 阻止默认行为和冒泡
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            function handleWindowDrag(e) {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - dragStartX;
+                const deltaY = e.clientY - dragStartY;
+                
+                windowElement.style.left = `${windowStartX + deltaX}px`;
+                windowElement.style.top = `${windowStartY + deltaY}px`;
+            }
+            
+            function stopWindowDrag() {
+                isDragging = false;
+                document.removeEventListener('mousemove', handleWindowDrag);
+                document.removeEventListener('mouseup', stopWindowDrag);
+            }
+            
+            // 关闭按钮
+            closeButton.addEventListener('click', () => {
+                closeWindow(windowId);
+            });
+            
+            // 最小化按钮
+            minimizeButton.addEventListener('click', () => {
+                minimizeWindow(windowId);
+            });
+            
+            // 最大化按钮
+            maximizeButton.addEventListener('click', () => {
+                maximizeWindow(windowId);
+            });
+            
+            // 窗口缩放
+            let isResizing = false;
+            let resizeStartX, resizeStartY, windowStartWidth, windowStartHeight;
+            let resizeDirection = '';
+            
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
+                    windowStartWidth = parseInt(windowElement.style.width);
+                    windowStartHeight = parseInt(windowElement.style.height);
+                    resizeDirection = handle.classList[1];
+                    
+                    // 设置为活动窗口
+                    setActiveWindow(windowId);
+                    
+                    // 添加调整大小事件监听器
+                    document.addEventListener('mousemove', handleWindowResize);
+                    document.addEventListener('mouseup', stopWindowResize);
+                    
+                    // 阻止默认行为和冒泡
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+            
+            function handleWindowResize(e) {
+                if (!isResizing) return;
+                
+                const deltaX = e.clientX - resizeStartX;
+                const deltaY = e.clientY - resizeStartY;
+                
+                let newWidth = windowStartWidth;
+                let newHeight = windowStartHeight;
+                let newX = parseInt(windowElement.style.left);
+                let newY = parseInt(windowElement.style.top);
+                
+                switch (resizeDirection) {
+                    case 'top-left':
+                        newWidth = Math.max(200, windowStartWidth - deltaX);
+                        newHeight = Math.max(100, windowStartHeight - deltaY);
+                        newX = parseInt(windowElement.style.left) + (windowStartWidth - newWidth);
+                        newY = parseInt(windowElement.style.top) + (windowStartHeight - newHeight);
+                        break;
+                    case 'top-right':
+                        newWidth = Math.max(200, windowStartWidth + deltaX);
+                        newHeight = Math.max(100, windowStartHeight - deltaY);
+                        newY = parseInt(windowElement.style.top) + (windowStartHeight - newHeight);
+                        break;
+                    case 'bottom-left':
+                        newWidth = Math.max(200, windowStartWidth - deltaX);
+                        newHeight = Math.max(100, windowStartHeight + deltaY);
+                        newX = parseInt(windowElement.style.left) + (windowStartWidth - newWidth);
+                        break;
+                    case 'bottom-right':
+                        newWidth = Math.max(200, windowStartWidth + deltaX);
+                        newHeight = Math.max(100, windowStartHeight + deltaY);
+                        break;
+                }
+                
+                windowElement.style.width = `${newWidth}px`;
+                windowElement.style.height = `${newHeight}px`;
+                windowElement.style.left = `${newX}px`;
+                windowElement.style.top = `${newY}px`;
+            }
+            
+            function stopWindowResize() {
+                isResizing = false;
+                document.removeEventListener('mousemove', handleWindowResize);
+                document.removeEventListener('mouseup', stopWindowResize);
+            }
+            
+            // 点击窗口内容时设置为活动窗口
+            windowElement.querySelector('.window-content').addEventListener('click', () => {
+                setActiveWindow(windowId);
+            });
+        }
+        
+        // 设置活动窗口
+        function setActiveWindow(windowId) {
+            // 找到窗口
+            const windowIndex = windows.findIndex(w => w.id === windowId);
+            if (windowIndex === -1) return;
+            
+            const windowElement = windows[windowIndex].element;
+            
+            // 更新z-index
+            nextZIndex++;
+            windowElement.style.zIndex = nextZIndex;
+            
+            // 更新活动窗口
+            activeWindow = windowId;
+            
+            // 更新菜单栏应用名称
+            document.getElementById('app-name').textContent = windows[windowIndex].app === 'finder' ? '访达' : 
+                                                             windows[windowIndex].app === 'safari' ? 'Safari' : 
+                                                             windows[windowIndex].app === 'textedit' ? '记事本' : 
+                                                             windows[windowIndex].app === 'calculator' ? '计算器' : 
+                                                             windows[windowIndex].app === 'trash' ? '回收站' : 
+                                                             windows[windowIndex].app === 'system-preferences' ? '系统偏好设置' : '';
+            
+            // 更新Dock图标状态
+            updateDockIcons();
+        }
+        
+        // 关闭窗口
+        function closeWindow(windowId) {
+            // 找到窗口
+            const windowIndex = windows.findIndex(w => w.id === windowId);
+            if (windowIndex === -1) return;
+            
+            const windowElement = windows[windowIndex].element;
+            
+            // 添加关闭动画
+            windowElement.classList.remove('animate-scale-in');
+            windowElement.classList.add('animate-scale-out');
+            
+            // 移除窗口
+            setTimeout(() => {
+                document.body.removeChild(windowElement);
+                windows.splice(windowIndex, 1);
+                
+                // 更新活动窗口
+                if (activeWindow === windowId) {
+                    activeWindow = windows.length > 0 ? windows[windows.length - 1].id : null;
+                    if (activeWindow) {
+                        setActiveWindow(activeWindow);
+                    } else {
+                        document.getElementById('app-name').textContent = '';
+                    }
+                }
+                
+                // 更新Dock图标状态
+                updateDockIcons();
+            }, 200);
+        }
+        
+        // 最小化窗口
+        function minimizeWindow(windowId) {
+            // 找到窗口
+            const windowIndex = windows.findIndex(w => w.id === windowId);
+            if (windowIndex === -1) return;
+            
+            const window = windows[windowIndex];
+            const windowElement = window.element;
+            
+            // 添加最小化动画
+            windowElement.style.transform = 'translateY(100vh)';
+            windowElement.style.opacity = '0';
+            
+            // 更新窗口状态
+            window.isMinimized = true;
+            
+            // 隐藏窗口
+            setTimeout(() => {
+                windowElement.style.display = 'none';
+                
+                // 更新活动窗口
+                if (activeWindow === windowId) {
+                    activeWindow = windows.length > 0 ? windows.find(w => !w.isMinimized)?.id : null;
+                    if (activeWindow) {
+                        setActiveWindow(activeWindow);
+                    } else {
+                        document.getElementById('app-name').textContent = '';
+                    }
+                }
+                
+                // 更新Dock图标状态
+                updateDockIcons();
+            }, 300);
+        }
+        
+        // 最大化窗口
+        function maximizeWindow(windowId) {
+            // 找到窗口
+            const windowIndex = windows.findIndex(w => w.id === windowId);
+            if (windowIndex === -1) return;
+            
+            const window = windows[windowIndex];
+            const windowElement = window.element;
+            
+            if (window.isMaximized) {
+                // 还原窗口
+                windowElement.style.width = `${window.originalWidth}px`;
+                windowElement.style.height = `${window.originalHeight}px`;
+                windowElement.style.left = `${window.originalX}px`;
+                windowElement.style.top = `${window.originalY}px`;
+                window.isMaximized = false;
+            } else {
+                // 保存原始尺寸和位置
+                window.originalWidth = parseInt(windowElement.style.width);
+                window.originalHeight = parseInt(windowElement.style.height);
+                window.originalX = parseInt(windowElement.style.left);
+                window.originalY = parseInt(windowElement.style.top);
+                
+                // 最大化窗口
+                windowElement.style.width = `${window.innerWidth - 20}px`;
+                windowElement.style.height = `${window.innerHeight - 70}px`;
+                windowElement.style.left = '10px';
+                windowElement.style.top = '32px';
+                window.isMaximized = true;
+            }
+        }
+        
+        // 还原最小化窗口
+        function restoreWindow(windowId) {
+            // 找到窗口
+            const windowIndex = windows.findIndex(w => w.id === windowId);
+            if (windowIndex === -1) return;
+            
+            const window = windows[windowIndex];
+            const windowElement = window.element;
+            
+            // 显示窗口
+            windowElement.style.display = 'flex';
+            windowElement.style.transform = 'translateY(0)';
+            windowElement.style.opacity = '1';
+            
+            // 更新窗口状态
+            window.isMinimized = false;
+            
+            // 设置为活动窗口
+            setActiveWindow(windowId);
+        }
+        
+        // 更新Dock图标状态
+        function updateDockIcons() {
+            const dockIcons = document.querySelectorAll('.dock-icon');
+            
+            dockIcons.forEach(icon => {
+                const app = icon.dataset.app;
+                const isRunning = windows.some(w => w.app === app && !w.isMinimized);
+                
+                if (isRunning) {
+                    icon.classList.add('active');
+                } else {
+                    icon.classList.remove('active');
+                }
+            });
+        }
+        
+        // 渲染文件列表
+        function renderFiles(files) {
+            return files.map(file => {
+                let icon = '';
+                
+                if (file.type === 'folder') {
+                    icon = '<i class="fa fa-folder" aria-hidden="true" style="font-size: 48px; color: #0071e3;"></i>';
+                } else if (file.type === 'file') {
+                    if (file.name.endsWith('.txt')) {
+                        icon = '<i class="fa fa-file-text-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.jpg') || file.name.endsWith('.png') || file.name.endsWith('.gif')) {
+                        icon = '<i class="fa fa-file-image-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+                        icon = '<i class="fa fa-file-word-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')) {
+                        icon = '<i class="fa fa-file-excel-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.ppt') || file.name.endsWith('.pptx')) {
+                        icon = '<i class="fa fa-file-powerpoint-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.pdf')) {
+                        icon = '<i class="fa fa-file-pdf-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else if (file.name.endsWith('.zip') || file.name.endsWith('.rar') || file.name.endsWith('.7z')) {
+                        icon = '<i class="fa fa-file-archive-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    } else {
+                        icon = '<i class="fa fa-file-o" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                    }
+                } else if (file.type === 'app') {
+                    icon = '<i class="fa fa-cube" aria-hidden="true" style="font-size: 48px; color: #86868b;"></i>';
+                }
+                
+                return `
+                    <div class="finder-file" data-file-name="${file.name}" data-file-type="${file.type}">
+                        ${icon}
+                        <span>${file.name}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 初始化应用特定功能
+        function initAppSpecificFeatures(app, windowId) {
+            const windowElement = document.getElementById(`window-${windowId}`);
+            
+            switch (app) {
+                case 'finder':
+                    // 侧边栏点击事件
+                    const sidebarItems = windowElement.querySelectorAll('.finder-sidebar-item');
+                    sidebarItems.forEach(item => {
+                        item.addEventListener('click', () => {
+                            // 移除所有活动状态
+                            sidebarItems.forEach(i => i.classList.remove('active'));
+                            
+                            // 添加活动状态
+                            item.classList.add('active');
+                            
+                            // 更新当前路径
+                            const path = item.dataset.path;
+                            currentPath = [path];
+                            
+                            // 更新文件列表
+                            const directory = fileSystem[path];
+                            if (directory && directory.type === 'folder') {
+                                const filesContainer = windowElement.querySelector('#finder-files');
+                                filesContainer.innerHTML = renderFiles(directory.children);
+                            }
+                        });
+                    });
+                    
+                    // 文件点击事件
+                    const filesContainer = windowElement.querySelector('#finder-files');
+                    filesContainer.addEventListener('click', (e) => {
+                        const fileElement = e.target.closest('.finder-file');
+                        if (!fileElement) return;
+                        
+                        const fileName = fileElement.dataset.fileName;
+                        const fileType = fileElement.dataset.fileType;
+                        
+                        // 处理文件点击
+                        if (fileType === 'folder') {
+                            // 打开文件夹
+                            const directory = getCurrentDirectory();
+                            if (directory) {
+                                const folder = directory.children.find(f => f.name === fileName && f.type === 'folder');
+                                if (folder) {
+                                    currentPath.push(fileName);
+                                    
+                                    // 更新文件列表
+                                    filesContainer.innerHTML = renderFiles(folder.children);
+                                    
+                                    // 更新侧边栏
+                                    sidebarItems.forEach(i => i.classList.remove('active'));
+                                }
+                            }
+                        } else if (fileType === 'file') {
+                            // 打开文件
+                            if (fileName.endsWith('.txt')) {
+                                // 打开记事本
+                                const textContent = fileSystem[currentPath[0]].children.find(f => f.name === fileName)?.content || '';
+                                const texteditWindowId = createWindow('textedit', 100, 100, 600, 400);
+                                const texteditWindow = document.getElementById(`window-${texteditWindowId}`);
+                                const textarea = texteditWindow.querySelector('#textedit-content');
+                                textarea.value = textContent;
+                            }
+                        }
+                    });
+                    break;
+                    
+                case 'safari':
+                    // 地址栏事件
+                    const addressBar = windowElement.querySelector('#safari-address');
+                    const frame = windowElement.querySelector('#safari-frame');
+                    
+                    addressBar.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            let url = addressBar.value.trim();
+                            
+                            // 如果不是完整URL，添加前缀
+                            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                                // 检查是否是搜索查询
+                                if (url.includes(' ')) {
+                                    url = `https://www.baidu.com/s?wd=${encodeURIComponent(url)}`;
+                                } else {
+                                    url = `https://${url}`;
+                                }
+                            }
+                            
+                            // 加载URL
+                            frame.src = url;
+                        }
+                    });
+                    break;
+                    
+                case 'calculator':
+                    // 计算器功能
+                    const display = windowElement.querySelector('#calculator-display');
+                    let currentValue = '0';
+                    let previousValue = '';
+                    let operator = '';
+                    let resetOnNextInput = false;
+                    
+                    const buttons = windowElement.querySelectorAll('.calculator-button');
+                    buttons.forEach(button => {
+                        button.addEventListener('click', () => {
+                            if (button.classList.contains('number')) {
+                                const number = button.dataset.number;
+                                
+                                if (resetOnNextInput) {
+                                    currentValue = number;
+                                    resetOnNextInput = false;
+                                } else {
+                                    currentValue = currentValue === '0' ? number : currentValue + number;
+                                }
+                                
+                                display.textContent = currentValue;
+                            } else if (button.classList.contains('operator')) {
+                                const action = button.dataset.action;
+                                
+                                if (action === 'equals') {
+                                    if (operator && previousValue !== '') {
+                                        const result = calculate(previousValue, currentValue, operator);
+                                        display.textContent = result;
+                                        currentValue = result;
+                                        operator = '';
+                                        previousValue = '';
+                                        resetOnNextInput = true;
+                                    }
+                                } else {
+                                    operator = action;
+                                    previousValue = currentValue;
+                                    resetOnNextInput = true;
+                                }
+                            } else if (button.classList.contains('function')) {
+                                const action = button.dataset.action;
+                                
+                                if (action === 'clear') {
+                                    currentValue = '0';
+                                    previousValue = '';
+                                    operator = '';
+                                    resetOnNextInput = false;
+                                    display.textContent = currentValue;
+                                } else if (action === 'sign') {
+                                    currentValue = currentValue.startsWith('-') ? currentValue.substring(1) : '-' + currentValue;
+                                    display.textContent = currentValue;
+                                } else if (action === 'percent') {
+                                    currentValue = (parseFloat(currentValue) / 100).toString();
+                                    display.textContent = currentValue;
+                                    resetOnNextInput = true;
+                                }
+                            }
+                        });
+                    });
+                    
+                    function calculate(a, b, op) {
+                        a = parseFloat(a);
+                        b = parseFloat(b);
+                        
+                        switch (op) {
+                            case 'add':
+                                return (a + b).toString();
+                            case 'subtract':
+                                return (a - b).toString();
+                            case 'multiply':
+                                return (a * b).toString();
+                            case 'divide':
+                                return (a / b).toString();
+                            default:
+                                return b;
+                        }
+                    }
+                    break;
+                    
+                case 'system-preferences':
+                    // 侧边栏切换面板
+                    const sidebarItemsPref = windowElement.querySelectorAll('.system-preferences-sidebar-item');
+                    const panels = windowElement.querySelectorAll('[id^="panel-"]');
+                    
+                    sidebarItemsPref.forEach(item => {
+                        item.addEventListener('click', () => {
+                            const panelId = item.dataset.panel;
+                            
+                            // 更新侧边栏活动状态
+                            sidebarItemsPref.forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
+                            
+                            // 显示对应面板
+                            panels.forEach(panel => {
+                                panel.style.display = panel.id === `panel-${panelId}` ? 'block' : 'none';
+                            });
+                        });
+                    });
+                    
+                    // 壁纸选择
+                    const wallpaperItems = windowElement.querySelectorAll('.wallpaper-item');
+                    wallpaperItems.forEach(item => {
+                        item.addEventListener('click', () => {
+                            const wallpaper = item.dataset.wallpaper;
+                            
+                            // 更新活动状态
+                            wallpaperItems.forEach(i => i.classList.remove('active'));
+                            item.classList.add('active');
+                            
+                            // 更新桌面背景
+                            document.getElementById('desktop').style.backgroundImage = `url('${wallpaper}')`;
+                        });
+                    });
+                    
+                    // 滑块功能
+                    const sliders = windowElement.querySelectorAll('.slider');
+                    sliders.forEach(slider => {
+                        const track = slider.querySelector('.slider-track');
+                        const thumb = slider.querySelector('.slider-thumb');
+                        
+                        slider.addEventListener('mousedown', (e) => {
+                            updateSlider(e);
+                            
+                            document.addEventListener('mousemove', updateSlider);
+                            document.addEventListener('mouseup', () => {
+                                document.removeEventListener('mousemove', updateSlider);
+                            });
+                            
+                            function updateSlider(e) {
+                                const rect = slider.getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                const percent = Math.max(0, Math.min(100, (x / rect.width) * 100));
+                                
+                                track.style.width = `${percent}%`;
+                                thumb.style.left = `${percent}%`;
+                            }
+                        });
+                    });
+                    
+                    // 开关功能
+                    const toggles = windowElement.querySelectorAll('.toggle');
+                    toggles.forEach(toggle => {
+                        toggle.addEventListener('click', () => {
+                            toggle.classList.toggle('active');
+                        });
+                    });
+                    break;
+            }
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 更新时间
+            updateTime();
+            setInterval(updateTime, 60000);
+            
+            // 桌面图标点击事件
+            const desktopIcons = document.querySelectorAll('.desktop-icon');
+            desktopIcons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const app = icon.dataset.app;
+                    
+                    if (app === 'launchpad') {
+                        // 显示启动台
+                        document.getElementById('launchpad').style.display = 'flex';
+                    } else {
+                        // 检查是否已有该应用的窗口
+                        const existingWindow = windows.find(w => w.app === app && !w.isMinimized);
+                        
+                        if (existingWindow) {
+                            // 设置为活动窗口
+                            setActiveWindow(existingWindow.id);
+                        } else {
+                            // 检查是否有最小化的窗口
+                            const minimizedWindow = windows.find(w => w.app === app && w.isMinimized);
+                            
+                            if (minimizedWindow) {
+                                // 还原最小化窗口
+                                restoreWindow(minimizedWindow.id);
+                            } else {
+                                // 创建新窗口
+                                createWindow(app, 100, 100, 800, 600);
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Dock图标点击事件
+            const dockIcons = document.querySelectorAll('.dock-icon');
+            dockIcons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const app = icon.dataset.app;
+                    
+                    if (app === 'launchpad') {
+                        // 显示启动台
+                        document.getElementById('launchpad').style.display = 'flex';
+                    } else {
+                        // 检查是否已有该应用的窗口
+                        const existingWindow = windows.find(w => w.app === app && !w.isMinimized);
+                        
+                        if (existingWindow) {
+                            // 设置为活动窗口
+                            setActiveWindow(existingWindow.id);
+                        } else {
+                            // 检查是否有最小化的窗口
+                            const minimizedWindow = windows.find(w => w.app === app && w.isMinimized);
+                            
+                            if (minimizedWindow) {
+                                // 还原最小化窗口
+                                restoreWindow(minimizedWindow.id);
+                            } else {
+                                // 创建新窗口
+                                createWindow(app, 100, 100, 800, 600);
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // 启动台应用点击事件
+            const launchpadApps = document.querySelectorAll('.launchpad-app');
+            launchpadApps.forEach(app => {
+                app.addEventListener('click', () => {
+                    const appName = app.dataset.app;
+                    
+                    // 隐藏启动台
+                    document.getElementById('launchpad').style.display = 'none';
+                    
+                    // 检查是否已有该应用的窗口
+                    const existingWindow = windows.find(w => w.app === appName && !w.isMinimized);
+                    
+                    if (existingWindow) {
+                        // 设置为活动窗口
+                        setActiveWindow(existingWindow.id);
+                    } else {
+                        // 检查是否有最小化的窗口
+                        const minimizedWindow = windows.find(w => w.app === appName && w.isMinimized);
+                        
+                        if (minimizedWindow) {
+                            // 还原最小化窗口
+                            restoreWindow(minimizedWindow.id);
+                        } else {
+                            // 创建新窗口
+                            createWindow(appName, 100, 100, 800, 600);
+                        }
+                    }
+                });
+            });
+            
+            // 点击启动台背景关闭启动台
+            const launchpad = document.getElementById('launchpad');
+            launchpad.addEventListener('click', (e) => {
+                if (e.target === launchpad) {
+                    launchpad.style.display = 'none';
+                }
+            });
+            
+            // 桌面右键菜单
+            const desktop = document.getElementById('desktop');
+            const contextMenu = document.getElementById('context-menu');
+            
+            desktop.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                
+                // 显示右键菜单
+                contextMenu.style.display = 'block';
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.style.top = `${e.clientY}px`;
+            });
+            
+            // 点击其他地方关闭右键菜单
+            document.addEventListener('click', () => {
+                contextMenu.style.display = 'none';
+            });
+            
+            // 右键菜单项点击事件
+            const contextMenuItems = document.querySelectorAll('.context-menu-item');
+            contextMenuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const text = item.textContent;
+                    
+                    if (text === '新建文件夹') {
+                        // 创建新文件夹
+                        const directory = getCurrentDirectory();
+                        if (directory) {
+                            const newFolderName = `新建文件夹 ${directory.children.filter(f => f.type === 'folder').length + 1}`;
+                            directory.children.push({
+                                name: newFolderName,
+                                type: 'folder',
+                                children: []
+                            });
+                            
+                            // 更新文件列表
+                            const finderWindow = windows.find(w => w.app === 'finder');
+                            if (finderWindow) {
+                                const filesContainer = finderWindow.element.querySelector('#finder-files');
+                                if (filesContainer) {
+                                    filesContainer.innerHTML = renderFiles(directory.children);
+                                }
+                            }
+                        }
+                    } else if (text === '新建文稿') {
+                        // 创建新文稿
+                        const directory = getCurrentDirectory();
+                        if (directory) {
+                            const newFileName = `新建文稿 ${directory.children.filter(f => f.type === 'file' && f.name.endsWith('.txt')).length + 1}.txt`;
+                            directory.children.push({
+                                name: newFileName,
+                                type: 'file',
+                                content: ''
+                            });
+                            
+                            // 更新文件列表
+                            const finderWindow = windows.find(w => w.app === 'finder');
+                            if (finderWindow) {
+                                const filesContainer = finderWindow.element.querySelector('#finder-files');
+                                if (filesContainer) {
+                                    filesContainer.innerHTML = renderFiles(directory.children);
+                                }
+                            }
+                        }
+                    } else if (text === '更改桌面背景...') {
+                        // 打开系统偏好设置并切换到桌面面板
+                        const existingWindow = windows.find(w => w.app === 'system-preferences' && !w.isMinimized);
+                        
+                        if (existingWindow) {
+                            // 设置为活动窗口
+                            setActiveWindow(existingWindow.id);
+                            
+                            // 切换到桌面面板
+                            const sidebarItems = existingWindow.element.querySelectorAll('.system-preferences-sidebar-item');
+                            const desktopItem = Array.from(sidebarItems).find(i => i.dataset.panel === 'desktop');
+                            if (desktopItem) {
+                                desktopItem.click();
+                            }
+                        } else {
+                            // 检查是否有最小化的窗口
+                            const minimizedWindow = windows.find(w => w.app === 'system-preferences' && w.isMinimized);
+                            
+                            if (minimizedWindow) {
+                                // 还原最小化窗口
+                                restoreWindow(minimizedWindow.id);
+                                
+                                // 切换到桌面面板
+                                const sidebarItems = minimizedWindow.element.querySelectorAll('.system-preferences-sidebar-item');
+                                const desktopItem = Array.from(sidebarItems).find(i => i.dataset.panel === 'desktop');
+                                if (desktopItem) {
+                                    desktopItem.click();
+                                }
+                            } else {
+                                // 创建新窗口
+                                const windowId = createWindow('system-preferences', 100, 100, 800, 600);
+                                
+                                // 切换到桌面面板
+                                setTimeout(() => {
+                                    const sidebarItems = document.getElementById(`window-${windowId}`).querySelectorAll('.system-preferences-sidebar-item');
+                                    const desktopItem = Array.from(sidebarItems).find(i => i.dataset.panel === 'desktop');
+                                    if (desktopItem) {
+                                        desktopItem.click();
+                                    }
+                                }, 100);
+                            }
+                        }
+                    }
+                    
+                    // 关闭右键菜单
+                    contextMenu.style.display = 'none';
+                });
+            });
+            
+            // 键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                // Command + N: 新建窗口
+                if (e.metaKey && e.key === 'n') {
+                    e.preventDefault();
+                    
+                    if (activeWindow) {
+                        const activeWindowObj = windows.find(w => w.id === activeWindow);
+                        if (activeWindowObj) {
+                            createWindow(activeWindowObj.app, 150, 150, 800, 600);
+                        }
+                    } else {
+                        createWindow('finder', 100, 100, 800, 600);
+                    }
+                }
+                
+                // Command + W: 关闭窗口
+                if (e.metaKey && e.key === 'w') {
+                    e.preventDefault();
+                    
+                    if (activeWindow) {
+                        closeWindow(activeWindow);
+                    }
+                }
+                
+                // Command + M: 最小化窗口
+                if (e.metaKey && e.key === 'm') {
+                    e.preventDefault();
+                    
+                    if (activeWindow) {
+                        minimizeWindow(activeWindow);
+                    }
+                }
+                
+                // Command + H: 隐藏应用
+                if (e.metaKey && e.key === 'h') {
+                    e.preventDefault();
+                    
+                    if (activeWindow) {
+                        const activeWindowObj = windows.find(w => w.id === activeWindow);
+                        if (activeWindowObj) {
+                            // 最小化所有该应用的窗口
+                            windows.forEach(w => {
+                                if (w.app === activeWindowObj.app && !w.isMinimized) {
+                                    minimizeWindow(w.id);
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                // Command + Space: 显示启动台
+                if (e.metaKey && e.key === ' ') {
+                    e.preventDefault();
+                    
+                    const launchpad = document.getElementById('launchpad');
+                    launchpad.style.display = launchpad.style.display === 'flex' ? 'none' : 'flex';
+                }
+                
+                // Escape: 关闭启动台或右键菜单
+                if (e.key === 'Escape') {
+                    document.getElementById('launchpad').style.display = 'none';
+                    document.getElementById('context-menu').style.display = 'none';
+                }
+            });
+            
+            // 创建默认窗口
+            createWindow('finder', 100, 100, 800, 600);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 12</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'windows-blue': '#0078d4',
+                        'windows-light-blue': '#50e6ff',
+                        'windows-dark-blue': '#005a9e',
+                        'windows-bg': '#f0f8ff',
+                        'taskbar-bg': 'rgba(255, 255, 255, 0.8)',
+                        'window-bg': 'rgba(255, 255, 255, 0.7)',
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                        'window': '0 10px 25px rgba(0, 0, 0, 0.1)',
+                        'taskbar': '0 -2px 10px rgba(0, 0, 0, 0.1)',
+                    },
+                    backdropBlur: {
+                        'glass': '8px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-effect {
+                @apply bg-white/70 backdrop-blur-glass border border-white/20 shadow-glass;
+            }
+            .window-effect {
+                @apply bg-window-bg backdrop-blur-glass border border-white/30 shadow-window;
+            }
+            .taskbar-effect {
+                @apply bg-taskbar-bg backdrop-blur-glass border-t border-white/30 shadow-taskbar;
+            }
+            .rounded-windows {
+                @apply rounded-2xl;
+            }
+            .window-button {
+                @apply w-8 h-8 flex items-center justify-center rounded-full text-gray-700 hover:bg-gray-200 transition-all duration-200 transform hover:scale-110;
+            }
+            .desktop-icon {
+                @apply flex flex-col items-center cursor-pointer select-none transition-all duration-300 hover:scale-110;
+            }
+            .desktop-icon img {
+                @apply w-16 h-16;
+            }
+            .desktop-icon span {
+                @apply mt-2 text-sm text-white drop-shadow-md;
+            }
+            .taskbar-icon {
+                @apply p-2 rounded-lg hover:bg-white/30 cursor-pointer transition-all duration-200 transform hover:scale-110;
+            }
+            .taskbar-icon.active {
+                @apply bg-white/30;
+            }
+            .start-menu-item {
+                @apply flex items-center p-3 rounded-lg hover:bg-white/30 cursor-pointer transition-all duration-200 transform hover:translate-x-2;
+            }
+            .start-menu-item img {
+                @apply w-8 h-8 mr-3;
+            }
+            .context-menu-item {
+                @apply px-4 py-2 hover:bg-gray-200 cursor-pointer transition-all duration-200;
+            }
+            .draggable {
+                cursor: move;
+            }
+            .calculator-button {
+                @apply hover:bg-gray-200 transition-all duration-200 transform hover:scale-105;
+            }
+            .system-tray-icon {
+                @apply hover:bg-white/20 rounded-full p-1 transition-all duration-200;
+            }
+
+
+        }
+    </style>
+</head>
+<body class="overflow-hidden h-screen w-screen bg-windows-bg">
+    <!-- Windows 12 Boot Screen -->
+    <div id="boot-screen" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center">
+        <div class="mb-8">
+            <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/81cea06b78b4428f9663867a66fe1029.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=20260208180555D65D2F4E2C14CF1DB070&rrcfp=8a172a1a&x-expires=1771149955&x-signature=4KncvVRZVHLtPJTFHRqVheaW36Y%3D" 
+                 alt="Windows 12 Logo" 
+                 class="w-32 h-32 object-contain">
+        </div>
+
+        <div class="w-64 h-1 bg-gray-300 rounded-full overflow-hidden">
+            <div id="boot-progress" class="h-full bg-windows-blue transition-all duration-300 ease-out" style="width: 0%"></div>
+        </div>
+        <div id="boot-status" class="text-gray-400 text-sm mt-4">正在启动...</div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="boot-sound" preload="auto">
+        <source src="https://www.soundjay.com/windows/sounds/windows-11-startup-2022.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Desktop Background -->
+    <div class="fixed inset-0 z-0">
+        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e8b0ad9a988348b88ee781e3384e453b~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260208170218653787ABA45A53159D24&rrcfp=f06b921b&x-expires=1773133367&x-signature=Ez6CpSoqPDi7yeJD7LxZcZ7bkwQ%3D" 
+             alt="Windows 12 Background" 
+             class="w-full h-full object-cover">
+    </div>
+
+    <!-- Desktop Icons -->
+    <div class="fixed inset-0 z-10 p-8">
+        <div class="flex flex-col space-y-8 max-w-xs">
+            <div class="desktop-icon" id="this-pc-icon">
+                <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/7916ee7918274788b3c1f8637c9762c0~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026020817211220CA5299049FB71B7235&rrcfp=f06b921b&x-expires=1773134492&x-signature=mVheKF4Y9sGOIu%2B1%2B%2FG5ql6KhAk%3D" 
+                     alt="此电脑" 
+                     class="w-16 h-16 object-contain">
+                <span>此电脑</span>
+            </div>
+            <div class="desktop-icon" id="settings-icon">
+                <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/9962aa9025564366876ea38826e70f3a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260208175538B66D43947EDB92162DF8&rrcfp=f06b921b&x-expires=1773136549&x-signature=8g1oErUQ7N5ThMD69OtqTsnau8k%3D" 
+                     alt="设置" 
+                     class="w-16 h-16 object-contain">
+                <span>设置</span>
+            </div>
+            <div class="desktop-icon" id="calculator-icon">
+                <img src="https://p11-doubao-search-sign.byteimg.com/labis/52e9554f81a8a57af94146f99ea804db~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786096418&x-signature=7U5DsW1dtg9NBmt8UKVAK7WsGYI%3D" 
+                     alt="计算器" 
+                     class="w-16 h-16 object-contain">
+                <span>计算器</span>
+            </div>
+            <div class="desktop-icon" id="paint-icon">
+                <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/d37498a209b34194b660084c028a13e4.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=202602091008179FDB3177E8C93920C354&rrcfp=8a172a1a&x-expires=1771207698&x-signature=n2yLu%2F8C8%2BgT4nI36J79TeBtWcI%3D" 
+                     alt="画图" 
+                     class="w-16 h-16 object-contain">
+                <span>画图</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] h-16 rounded-windows taskbar-effect flex items-center justify-between px-4">
+        <!-- Left side (Start button and pinned apps) -->
+        <div class="flex items-center space-x-2">
+            <div class="taskbar-icon" id="start-button">
+                <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/81cea06b78b4428f9663867a66fe1029.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=20260208180555D65D2F4E2C14CF1DB070&rrcfp=8a172a1a&x-expires=1771149955&x-signature=4KncvVRZVHLtPJTFHRqVheaW36Y%3D" 
+                     alt="开始菜单" 
+                     class="w-8 h-8">
+            </div>
+            <div class="h-8 border-r border-gray-300/50 mx-2"></div>
+            <div class="taskbar-icon" id="this-pc-taskbar">
+                <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/7916ee7918274788b3c1f8637c9762c0~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026020817211220CA5299049FB71B7235&rrcfp=f06b921b&x-expires=1773134492&x-signature=mVheKF4Y9sGOIu%2B1%2B%2FG5ql6KhAk%3D" 
+                     alt="此电脑" 
+                     class="w-8 h-8">
+            </div>
+            <div class="taskbar-icon" id="settings-taskbar">
+                <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/9962aa9025564366876ea38826e70f3a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260208175538B66D43947EDB92162DF8&rrcfp=f06b921b&x-expires=1773136549&x-signature=8g1oErUQ7N5ThMD69OtqTsnau8k%3D" 
+                     alt="设置" 
+                     class="w-8 h-8">
+            </div>
+            <div class="taskbar-icon" id="calculator-taskbar">
+                <img src="https://p11-doubao-search-sign.byteimg.com/labis/52e9554f81a8a57af94146f99ea804db~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786096418&x-signature=7U5DsW1dtg9NBmt8UKVAK7WsGYI%3D" 
+                     alt="计算器" 
+                     class="w-8 h-8">
+            </div>
+            <div class="taskbar-icon" id="paint-taskbar">
+                <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/d37498a209b34194b660084c028a13e4.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=202602091008179FDB3177E8C93920C354&rrcfp=8a172a1a&x-expires=1771207698&x-signature=n2yLu%2F8C8%2BgT4nI36J79TeBtWcI%3D" 
+                     alt="画图" 
+                     class="w-8 h-8">
+            </div>
+        </div>
+
+        <!-- Right side (System tray) -->
+        <div class="flex items-center space-x-2">
+            <div class="taskbar-icon">
+                <i class="fa fa-wifi text-gray-700"></i>
+            </div>
+            <div class="taskbar-icon">
+                <i class="fa fa-volume-up text-gray-700"></i>
+            </div>
+            <div class="taskbar-icon">
+                <i class="fa fa-battery-three-quarters text-gray-700"></i>
+            </div>
+            <div class="taskbar-icon">
+                <span class="text-sm font-medium text-gray-700" id="current-time">12:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Menu (Hidden by default) -->
+    <div id="start-menu" class="fixed bottom-24 left-4 z-[100] w-[40vh] h-[30vh] rounded-windows window-effect hidden">
+        <div class="p-4 h-full flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800"></h2>
+                <button class="window-button" id="close-start-menu">
+                    <span>✕</span>
+                </button>
+            </div>
+            <div class="flex-1 flex items-center justify-center">
+                <div class="flex space-x-6 p-4">
+                    <div class="start-menu-item flex flex-col items-center" data-app="this-pc-window">
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/7916ee7918274788b3c1f8637c9762c0~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026020817211220CA5299049FB71B7235&rrcfp=f06b921b&x-expires=1773134492&x-signature=mVheKF4Y9sGOIu%2B1%2B%2FG5ql6KhAk%3D" alt="此电脑" class="w-12 h-12">
+                        <span class="mt-2"></span>
+                    </div>
+                    <div class="start-menu-item flex flex-col items-center" data-app="settings-window">
+                        <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/9962aa9025564366876ea38826e70f3a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260208175538B66D43947EDB92162DF8&rrcfp=f06b921b&x-expires=1773136549&x-signature=8g1oErUQ7N5ThMD69OtqTsnau8k%3D" alt="设置" class="w-12 h-12">
+                        <span class="mt-2"></span>
+                    </div>
+                    <div class="start-menu-item flex flex-col items-center" data-app="calculator-window">
+                        <img src="https://p11-doubao-search-sign.byteimg.com/labis/52e9554f81a8a57af94146f99ea804db~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786096418&x-signature=7U5DsW1dtg9NBmt8UKVAK7WsGYI%3D" alt="计算器" class="w-12 h-12">
+                        <span class="mt-2"></span>
+                    </div>
+                    <div class="start-menu-item flex flex-col items-center" data-app="paint-window">
+                        <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/d37498a209b34194b660084c028a13e4.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=202602091008179FDB3177E8C93920C354&rrcfp=8a172a1a&x-expires=1771207698&x-signature=n2yLu%2F8C8%2BgT4nI36J79TeBtWcI%3D" alt="画图" class="w-12 h-12">
+                        <span class="mt-2"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-300/50">
+                <div class="relative">
+                    <div class="start-menu-item" id="power-button">
+                        <i class="fa fa-power-off text-2xl mr-3 text-gray-700"></i>
+                        <span></span>
+                    </div>
+                    <!-- Power Options Menu -->
+                    <div id="power-options" class="absolute bottom-full left-0 mb-2 w-12 rounded-windows window-effect hidden">
+                        <div class="context-menu-item" id="shutdown-option">
+                            <i class="fa fa-power-off mr-2"></i>
+                            <span></span>
+                        </div>
+                        <div class="context-menu-item" id="restart-option">
+                            <i class="fa fa-refresh mr-2"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- This PC Window (Hidden by default) -->
+    <div id="this-pc-window" class="fixed z-30 w-3/4 h-3/4 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-windows window-effect hidden">
+        <div class="w-full h-full flex flex-col">
+            <!-- Window Header -->
+            <div class="p-4 flex items-center justify-between border-b border-gray-300/50 draggable" id="this-pc-header">
+                <div class="flex items-center">
+                    <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/7916ee7918274788b3c1f8637c9762c0~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026020817211220CA5299049FB71B7235&rrcfp=f06b921b&x-expires=1773134492&x-signature=mVheKF4Y9sGOIu%2B1%2B%2FG5ql6KhAk%3D" 
+                         alt="此电脑" 
+                         class="w-6 h-6 mr-2">
+                    <h2 class="text-lg font-medium text-gray-800">此电脑</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="window-button minimize-button">
+                        <span>—</span>
+                    </button>
+                    <button class="window-button maximize-button">
+                        <span>▲</span>
+                    </button>
+                    <button class="window-button close-button">
+                        <span>✕</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Window Content -->
+            <div class="flex-1 p-6 overflow-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-4 rounded-lg bg-white/50 hover:bg-white/70 transition-all duration-200 cursor-pointer">
+                        <div class="flex items-center">
+                            <i class="fa fa-hard-drive text-3xl mr-4 text-windows-blue"></i>
+                            <div>
+                                <h3 class="font-medium">本地磁盘 (C:)</h3>
+                                <p class="text-sm text-gray-600">256 GB SSD</p>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-windows-blue h-2 rounded-full" style="width: 65%"></div>
+                                </div>
+                                <p class="text-xs text-right mt-1">256 GB 中的 165 GB 可用</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Window (Hidden by default) -->
+    <div id="settings-window" class="fixed z-30 w-3/4 h-3/4 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-windows window-effect hidden">
+        <div class="w-full h-full flex flex-col">
+            <!-- Window Header -->
+            <div class="p-4 flex items-center justify-between border-b border-gray-300/50 draggable" id="settings-header">
+                <div class="flex items-center">
+                    <img src="https://p9-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/9962aa9025564366876ea38826e70f3a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260208175538B66D43947EDB92162DF8&rrcfp=f06b921b&x-expires=1773136549&x-signature=8g1oErUQ7N5ThMD69OtqTsnau8k%3D" 
+                         alt="设置" 
+                         class="w-6 h-6 mr-2">
+                    <h2 class="text-lg font-medium text-gray-800">设置</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="window-button minimize-button">
+                        <span>—</span>
+                    </button>
+                    <button class="window-button maximize-button">
+                        <span>▲</span>
+                    </button>
+                    <button class="window-button close-button">
+                        <span>✕</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Window Content -->
+            <div class="flex-1 flex">
+                <!-- Sidebar -->
+                <div class="w-64 border-r border-gray-300/50 p-4">
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-lg bg-windows-blue/10 text-windows-blue font-medium cursor-pointer">
+                            <i class="fa fa-home mr-3"></i>
+                            <span>系统</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content -->
+                <div class="flex-1 p-6 overflow-auto">
+                    <h1 class="text-2xl font-semibold mb-6">系统</h1>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="p-4 rounded-lg bg-white/50">
+                            <h2 class="text-lg font-medium mb-3">关于</h2>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">设备名称</span>
+                                    <span>Windows12-PC</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">处理器</span>
+                                    <span>Intel Core i7-12700K</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">已安装内存</span>
+                                    <span>16 GB DDR5</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">系统类型</span>
+                                    <span>64-bit operating system</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Windows 版本</span>
+                                    <span>Windows 12 专业版</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paint Window (Hidden by default) -->
+    <div id="paint-window" class="fixed z-30 w-[85vw] h-[85vh] top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-windows window-effect hidden">
+        <div class="w-full h-full flex flex-col">
+            <!-- Window Header -->
+            <div class="p-4 flex items-center justify-between border-b border-gray-300/50 draggable" id="paint-header">
+                <div class="flex items-center">
+                    <img src="https://p26-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/d37498a209b34194b660084c028a13e4.png~tplv-a9rns2rl98-24:720:720.png?lk3s=8e244e95&rcl=202602091008179FDB3177E8C93920C354&rrcfp=8a172a1a&x-expires=1771207698&x-signature=n2yLu%2F8C8%2BgT4nI36J79TeBtWcI%3D" 
+                         alt="画图" 
+                         class="w-6 h-6 mr-2">
+                    <h2 class="text-lg font-medium text-gray-800">画图</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="window-button minimize-button">
+                        <span>—</span>
+                    </button>
+                    <button class="window-button maximize-button">
+                        <span>▲</span>
+                    </button>
+                    <button class="window-button close-button">
+                        <span>✕</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Paint Toolbar -->
+            <div class="p-2 border-b border-gray-300/50 flex items-center space-x-2 bg-white/50">
+                <button class="paint-tool p-2 hover:bg-gray-200 rounded" data-tool="brush">
+                    <i class="fa fa-paint-brush"></i>
+                </button>
+                <button class="paint-tool p-2 hover:bg-gray-200 rounded" data-tool="eraser">
+                    <i class="fa fa-eraser"></i>
+                </button>
+
+                <div class="h-6 border-r border-gray-300/50 mx-2"></div>
+                <span class="text-sm">颜色:</span>
+                <input type="color" id="paint-color" value="#000000" class="w-6 h-6 cursor-pointer">
+                <div class="h-6 border-r border-gray-300/50 mx-2"></div>
+                <span class="text-sm">粗细:</span>
+                <input type="range" id="paint-size" min="1" max="20" value="2" class="w-20">
+                <button class="paint-tool p-2 hover:bg-gray-200 rounded" data-tool="clear">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </div>
+            
+            <!-- Paint Canvas -->
+            <div class="flex-1 p-8 bg-white/80 flex items-center justify-center">
+                <div class="w-[90%] h-[90%]">
+                    <canvas id="paint-canvas" class="w-full h-full border border-gray-300/50 cursor-crosshair"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculator Window (Hidden by default) -->
+    <div id="calculator-window" class="fixed z-30 w-80 h-96 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-windows window-effect hidden">
+        <div class="w-full h-full flex flex-col">
+            <!-- Window Header -->
+            <div class="p-4 flex items-center justify-between border-b border-gray-300/50 draggable" id="calculator-header">
+                <div class="flex items-center">
+                    <img src="https://p11-doubao-search-sign.byteimg.com/labis/52e9554f81a8a57af94146f99ea804db~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786096418&x-signature=7U5DsW1dtg9NBmt8UKVAK7WsGYI%3D" 
+                         alt="计算器" 
+                         class="w-6 h-6 mr-2">
+                    <h2 class="text-lg font-medium text-gray-800">计算器</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button class="window-button minimize-button">
+                        <span>—</span>
+                    </button>
+                    <button class="window-button maximize-button">
+                        <span>▲</span>
+                    </button>
+                    <button class="window-button close-button">
+                        <span>✕</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Calculator Display -->
+            <div class="p-4">
+                <div class="w-full h-16 bg-white/80 rounded-lg flex items-center justify-end p-4 text-right">
+                    <span id="calculator-display" class="text-2xl font-medium">0</span>
+                </div>
+            </div>
+            
+            <!-- Calculator Buttons -->
+            <div class="flex-1 p-4 grid grid-cols-4 gap-3">
+                <button class="calculator-button bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-lg font-medium">C</button>
+                <button class="calculator-button bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-lg font-medium">±</button>
+                <button class="calculator-button bg-gray-200 hover:bg-gray-300 rounded-lg flex items-center justify-center text-lg font-medium">%</button>
+                <button class="calculator-button bg-windows-blue hover:bg-windows-dark-blue text-white rounded-lg flex items-center justify-center text-lg font-medium">÷</button>
+                
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">7</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">8</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">9</button>
+                <button class="calculator-button bg-windows-blue hover:bg-windows-dark-blue text-white rounded-lg flex items-center justify-center text-lg font-medium">×</button>
+                
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">4</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">5</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">6</button>
+                <button class="calculator-button bg-windows-blue hover:bg-windows-dark-blue text-white rounded-lg flex items-center justify-center text-lg font-medium">−</button>
+                
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">1</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">2</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">3</button>
+                <button class="calculator-button bg-windows-blue hover:bg-windows-dark-blue text-white rounded-lg flex items-center justify-center text-lg font-medium">+</button>
+                
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium col-span-2">0</button>
+                <button class="calculator-button bg-white/80 hover:bg-white rounded-lg flex items-center justify-center text-lg font-medium">.</button>
+                <button class="calculator-button bg-windows-blue hover:bg-windows-dark-blue text-white rounded-lg flex items-center justify-center text-lg font-medium">=</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // Boot screen functionality
+        function startBootProcess() {
+            const bootScreen = document.getElementById('boot-screen');
+            const bootProgress = document.getElementById('boot-progress');
+            const bootStatus = document.getElementById('boot-status');
+            const bootSound = document.getElementById('boot-sound');
+            const statusMessages = [
+                '正在启动 Windows...',
+                '正在加载系统文件...',
+                '正在初始化设备...',
+                '正在准备桌面...',
+                '欢迎使用 Windows 12'
+            ];
+            
+            // Play boot sound when boot process starts
+            try {
+                bootSound.play().catch(error => {
+                    console.log('无法自动播放开机音效:', error);
+                });
+            } catch (error) {
+                console.log('播放开机音效时出错:', error);
+            }
+            
+            let progress = 0;
+            let statusIndex = 0;
+            
+            const bootInterval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(bootInterval);
+                    
+                    // Show final status and then hide boot screen
+                    bootStatus.textContent = statusMessages[statusMessages.length - 1];
+                    setTimeout(() => {
+                        bootScreen.style.animation = 'fadeOut 1s ease-in forwards';
+                        setTimeout(() => {
+                            bootScreen.classList.add('hidden');
+                        }, 1000);
+                    }, 1000);
+                }
+                
+                // Update progress bar
+                bootProgress.style.width = `${progress}%`;
+                
+                // Update status message
+                const newStatusIndex = Math.floor((progress / 100) * statusMessages.length);
+                if (newStatusIndex !== statusIndex) {
+                    statusIndex = newStatusIndex;
+                    bootStatus.textContent = statusMessages[statusIndex];
+                }
+            }, 200);
+        }
+
+        // Start boot process when page loads
+        window.addEventListener('load', startBootProcess);
+
+        // W+I+N keyboard shortcut to open Start Menu
+        let pressedKeys = new Set();
+        const requiredKeys = new Set(['KeyW', 'KeyI', 'KeyN']);
+
+        document.addEventListener('keydown', (e) => {
+            pressedKeys.add(e.code);
+            
+            // Check if all required keys are pressed
+            const hasAllRequiredKeys = [...requiredKeys].every(key => pressedKeys.has(key));
+            
+            if (hasAllRequiredKeys) {
+                e.preventDefault();
+                const bootScreen = document.getElementById('boot-screen');
+                // Only allow start menu when boot is complete
+                if (bootScreen.classList.contains('hidden')) {
+                    // Ensure start menu is visible and on top
+                    startMenu.classList.remove('hidden');
+                    startMenu.style.zIndex = '1000'; // Set to highest z-index
+                    startMenu.style.animation = 'slideUp 0.3s ease-out forwards';
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            pressedKeys.delete(e.code);
+        });
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+        }
+        
+        updateTime();
+        setInterval(updateTime, 60000);
+        
+        // Start Menu Toggle
+        const startButton = document.getElementById('start-button');
+        const startMenu = document.getElementById('start-menu');
+        const closeStartMenu = document.getElementById('close-start-menu');
+        
+        startButton.addEventListener('click', () => {
+            const bootScreen = document.getElementById('boot-screen');
+            // Only allow start menu when boot is complete
+            if (!bootScreen.classList.contains('hidden')) {
+                return;
+            }
+            
+            if (startMenu.classList.contains('hidden')) {
+                startMenu.classList.remove('hidden');
+            } else {
+                startMenu.classList.add('hidden');
+            }
+        });
+        
+        closeStartMenu.addEventListener('click', () => {
+            startMenu.classList.add('hidden');
+        });
+        
+        // Power options functionality
+        const powerButton = document.getElementById('power-button');
+        const powerOptions = document.getElementById('power-options');
+        const shutdownOption = document.getElementById('shutdown-option');
+        const restartOption = document.getElementById('restart-option');
+
+        // Show power options on hover
+        powerButton.addEventListener('mouseenter', (e) => {
+            e.stopPropagation();
+            powerOptions.classList.remove('hidden');
+        });
+
+        // Hide power options when mouse leaves
+        powerButton.addEventListener('mouseleave', (e) => {
+            // Only hide if mouse is not over power options
+            setTimeout(() => {
+                if (!powerOptions.matches(':hover')) {
+                    powerOptions.classList.add('hidden');
+                }
+            }, 100);
+        });
+
+        // Keep power options visible when hovering over them
+        powerOptions.addEventListener('mouseenter', () => {
+            powerOptions.classList.remove('hidden');
+        });
+
+        // Hide power options when leaving them
+        powerOptions.addEventListener('mouseleave', () => {
+            powerOptions.classList.add('hidden');
+        });
+
+        shutdownOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            alert('正在关机...');
+            powerOptions.classList.add('hidden');
+            startMenu.classList.add('hidden');
+        });
+
+        restartOption.addEventListener('click', (e) => {
+            e.stopPropagation();
+            alert('正在重启...');
+            powerOptions.classList.add('hidden');
+            startMenu.classList.add('hidden');
+        });
+
+        // Close power options when clicking outside
+        document.addEventListener('click', () => {
+            if (!powerOptions.classList.contains('hidden')) {
+                powerOptions.classList.add('hidden');
+            }
+        });
+
+        powerOptions.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        document.addEventListener('click', (e) => {
+            if (!startMenu.contains(e.target) && !startButton.contains(e.target) && !startMenu.classList.contains('hidden')) {
+                startMenu.classList.add('hidden');
+            }
+        });
+
+        // Window animation functions
+        function showWindow(windowElement) {
+            if (windowElement.classList.contains('hidden')) {
+                windowElement.classList.remove('hidden');
+                windowElement.style.animation = 'fadeInScale 0.3s ease-out forwards';
+            }
+        }
+
+        function hideWindow(windowElement) {
+            windowElement.style.animation = 'fadeInScale 0.3s ease-in reverse forwards';
+            setTimeout(() => {
+                windowElement.classList.add('hidden');
+            }, 300);
+        }
+        
+        // Window Management
+        function setupWindow(windowId, headerId) {
+            const windowElement = document.getElementById(windowId);
+            const headerElement = document.getElementById(headerId);
+            
+            // Make window draggable
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            headerElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                offsetX = e.clientX - windowElement.getBoundingClientRect().left;
+                offsetY = e.clientY - windowElement.getBoundingClientRect().top;
+                windowElement.style.zIndex = '100'; // Bring window to front
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                
+                const x = e.clientX - offsetX;
+                const y = e.clientY - offsetY;
+                
+                // Keep window within viewport
+                const maxX = window.innerWidth - windowElement.offsetWidth;
+                const maxY = window.innerHeight - windowElement.offsetHeight;
+                
+                windowElement.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+                windowElement.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+                windowElement.style.transform = 'none'; // Remove center transform when dragging
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            // Close button
+            const closeButton = windowElement.querySelector('.close-button');
+            closeButton.addEventListener('click', () => {
+                windowElement.classList.add('hidden');
+            });
+            
+            // Minimize button
+            const minimizeButton = windowElement.querySelector('.minimize-button');
+            minimizeButton.addEventListener('click', () => {
+                windowElement.classList.add('hidden');
+            });
+            
+            // Maximize button
+            const maximizeButton = windowElement.querySelector('.maximize-button');
+            let isMaximized = false;
+            let originalSize = { width: '', height: '', left: '', top: '' };
+            
+            maximizeButton.addEventListener('click', () => {
+                if (!isMaximized) {
+                    // Store original size and position
+                    originalSize = {
+                        width: windowElement.style.width,
+                        height: windowElement.style.height,
+                        left: windowElement.style.left,
+                        top: windowElement.style.top
+                    };
+                    
+                    // Maximize
+                    windowElement.style.width = '100vw';
+                    windowElement.style.height = '100vh';
+                    windowElement.style.left = '0';
+                    windowElement.style.top = '0';
+                    windowElement.style.transform = 'none';
+                    maximizeButton.innerHTML = '<span>▼</span>'; // Change to restore icon
+                } else {
+                    // Restore
+                    windowElement.style.width = originalSize.width;
+                    windowElement.style.height = originalSize.height;
+                    windowElement.style.left = originalSize.left;
+                    windowElement.style.top = originalSize.top;
+                    windowElement.style.transform = originalSize.left ? 'none' : 'translate(-50%, -50%)';
+                    maximizeButton.innerHTML = '<span>▲</span>'; // Change back to maximize icon
+                }
+                isMaximized = !isMaximized;
+            });
+        }
+        
+        // Setup windows
+        setupWindow('this-pc-window', 'this-pc-header');
+        setupWindow('settings-window', 'settings-header');
+        setupWindow('calculator-window', 'calculator-header');
+        setupWindow('paint-window', 'paint-header');
+        
+        // Open windows
+        function openWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            windowElement.classList.remove('hidden');
+            windowElement.style.zIndex = '100'; // Bring window to front
+            
+            // Reset other windows z-index
+            document.querySelectorAll('[id$="-window"]').forEach(win => {
+                if (win.id !== windowId) {
+                    win.style.zIndex = '30';
+                }
+            });
+            
+            // Special handling for paint window
+            if (windowId === 'paint-window') {
+                // Trigger resize to restore content
+                setTimeout(() => {
+                    resizeCanvas();
+                }, 100);
+            }
+        }
+        
+        // Desktop icons double-click handlers
+        document.getElementById('this-pc-icon').addEventListener('dblclick', () => openWindow('this-pc-window'));
+        document.getElementById('settings-icon').addEventListener('dblclick', () => openWindow('settings-window'));
+        document.getElementById('calculator-icon').addEventListener('dblclick', () => openWindow('calculator-window'));
+        document.getElementById('paint-icon').addEventListener('dblclick', () => openWindow('paint-window'));
+        
+        // Taskbar icons click handlers
+        document.getElementById('this-pc-taskbar').addEventListener('click', () => openWindow('this-pc-window'));
+        document.getElementById('settings-taskbar').addEventListener('click', () => openWindow('settings-window'));
+        document.getElementById('calculator-taskbar').addEventListener('click', () => openWindow('calculator-window'));
+        document.getElementById('paint-taskbar').addEventListener('click', () => openWindow('paint-window'));
+        
+        // Start menu items click handlers
+        document.querySelectorAll('.start-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Skip power button
+                if (item.id === 'power-button') return;
+                
+                // Get app window ID from data attribute
+                const appWindowId = item.getAttribute('data-app');
+                if (appWindowId) {
+                    openWindow(appWindowId);
+                }
+                
+                startMenu.classList.add('hidden'); // Close start menu after clicking
+                // Restore taskbar z-index when start menu is closed
+                taskbar.style.zIndex = '50';
+            });
+        });
+        
+
+        // Local Disk (C:) click handler - simple alert message
+        document.querySelector('#this-pc-window .p-4.rounded-lg').addEventListener('click', () => {
+            alert('正在打开本地磁盘 (C:)...\n\n这是一个模拟界面，实际文件系统访问需要真实的后端支持。');
+        });
+        
+        // Paint functionality
+        const paintCanvas = document.getElementById('paint-canvas');
+        const paintCtx = paintCanvas.getContext('2d');
+        let isDrawing = false;
+        let currentTool = 'brush';
+        let currentColor = '#000000';
+        let currentSize = 2;
+        let lastX = 0;
+        let lastY = 0;
+        let drawingPoints = [];
+        let animationFrameId = null;
+        let canvasContent = null; // Store canvas content when window is closed
+
+        // Set canvas size with high DPI support
+        function resizeCanvas() {
+            const container = paintCanvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Save current content if exists
+            let tempImage = null;
+            if (canvasContent) {
+                tempImage = new Image();
+                tempImage.src = canvasContent;
+            }
+            
+            // Set CSS size
+            paintCanvas.style.width = rect.width + 'px';
+            paintCanvas.style.height = rect.height + 'px';
+            
+            // Set actual canvas size with device pixel ratio
+            paintCanvas.width = rect.width * dpr;
+            paintCanvas.height = rect.height * dpr;
+            
+            // Scale context for high DPI
+            paintCtx.scale(dpr, dpr);
+            
+            // Set white background
+            paintCtx.fillStyle = 'white';
+            paintCtx.fillRect(0, 0, rect.width, rect.height);
+            
+            // Restore content if available
+            if (tempImage) {
+                tempImage.onload = function() {
+                    paintCtx.drawImage(tempImage, 0, 0, rect.width, rect.height);
+                };
+            }
+            
+            // Set rendering quality
+            paintCtx.imageSmoothingEnabled = true;
+            paintCtx.imageSmoothingQuality = 'high';
+        }
+
+        // Initialize canvas
+        function initializePaintCanvas() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        }
+        
+        // Save canvas content when paint window is closed
+        // Override the close button functionality for paint window
+        const paintCloseBtn = document.querySelector('#paint-header .window-close');
+        if (paintCloseBtn) {
+            paintCloseBtn.addEventListener('click', function(e) {
+                // Save canvas content before closing
+                canvasContent = paintCanvas.toDataURL();
+                // Continue with normal close behavior
+                const paintWindow = document.getElementById('paint-window');
+                paintWindow.classList.add('hidden');
+                e.stopPropagation();
+            });
+        }
+        
+        // Initialize paint tools
+        document.querySelectorAll('.paint-tool').forEach(tool => {
+            tool.addEventListener('click', () => {
+                currentTool = tool.dataset.tool;
+                // Highlight active tool
+                document.querySelectorAll('.paint-tool').forEach(t => t.classList.remove('bg-gray-200'));
+                tool.classList.add('bg-gray-200');
+            });
+        });
+        
+        // Initialize canvas
+        initializePaintCanvas();
+
+        // Color picker
+        document.getElementById('paint-color').addEventListener('change', (e) => {
+            currentColor = e.target.value;
+        });
+
+        // Brush size
+        document.getElementById('paint-size').addEventListener('input', (e) => {
+            currentSize = e.target.value;
+        });
+
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = paintCanvas.getBoundingClientRect();
+            const scaleX = paintCanvas.width / rect.width;
+            const scaleY = paintCanvas.height / rect.height;
+            
+            lastX = (e.clientX - rect.left) * scaleX;
+            lastY = (e.clientY - rect.top) * scaleY;
+            drawingPoints = [{x: lastX, y: lastY}];
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = paintCanvas.getBoundingClientRect();
+            const scaleX = paintCanvas.width / rect.width;
+            const scaleY = paintCanvas.height / rect.height;
+            
+            const currentX = (e.clientX - rect.left) * scaleX;
+            const currentY = (e.clientY - rect.top) * scaleY;
+            
+            drawingPoints.push({x: currentX, y: currentY});
+            
+            // Use requestAnimationFrame for smoother rendering
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(() => {
+                    renderDrawing();
+                    animationFrameId = null;
+                });
+            }
+            
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        function renderDrawing() {
+            if (drawingPoints.length < 2) return;
+            
+            paintCtx.lineJoin = 'round';
+            paintCtx.lineCap = 'round';
+            paintCtx.lineWidth = currentSize;
+            
+            if (currentTool === 'brush') {
+                paintCtx.strokeStyle = currentColor;
+            } else if (currentTool === 'eraser') {
+                paintCtx.strokeStyle = 'white';
+            }
+            
+            // Use quadratic curve for smoother lines
+            paintCtx.beginPath();
+            paintCtx.moveTo(drawingPoints[0].x, drawingPoints[0].y);
+            
+            for (let i = 1; i < drawingPoints.length - 1; i++) {
+                const xc = (drawingPoints[i].x + drawingPoints[i + 1].x) / 2;
+                const yc = (drawingPoints[i].y + drawingPoints[i + 1].y) / 2;
+                paintCtx.quadraticCurveTo(drawingPoints[i].x, drawingPoints[i].y, xc, yc);
+            }
+            
+            // Draw the last segment
+            if (drawingPoints.length > 1) {
+                paintCtx.lineTo(drawingPoints[drawingPoints.length - 1].x, drawingPoints[drawingPoints.length - 1].y);
+            }
+            
+            paintCtx.stroke();
+            
+            // Keep only the last few points for performance
+            if (drawingPoints.length > 50) {
+                drawingPoints = drawingPoints.slice(-20);
+            }
+        }
+
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                // Final render to ensure all points are drawn
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                    animationFrameId = null;
+                }
+                renderDrawing();
+                drawingPoints = [];
+            }
+        }
+
+        // Canvas event listeners
+        paintCanvas.addEventListener('mousedown', startDrawing);
+        paintCanvas.addEventListener('mousemove', draw);
+        paintCanvas.addEventListener('mouseup', stopDrawing);
+        paintCanvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch event support for better precision
+        paintCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            paintCanvas.dispatchEvent(mouseEvent);
+        });
+        
+        paintCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            paintCanvas.dispatchEvent(mouseEvent);
+        });
+        
+        paintCanvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            paintCanvas.dispatchEvent(mouseEvent);
+        });
+
+        // Clear canvas
+        document.querySelector('[data-tool="clear"]').addEventListener('click', () => {
+            const rect = paintCanvas.getBoundingClientRect();
+            paintCtx.fillStyle = 'white';
+            paintCtx.fillRect(0, 0, rect.width, rect.height);
+            drawingPoints = [];
+        });
+
+        // Initialize canvas when paint window is opened
+        const paintWindow = document.getElementById('paint-window');
+        let paintWindowOpened = false;
+
+        function checkPaintWindow() {
+            if (!paintWindow.classList.contains('hidden') && !paintWindowOpened) {
+                resizeCanvas();
+                paintWindowOpened = true;
+                // Set default tool
+                document.querySelector('[data-tool="brush"]').classList.add('bg-gray-200');
+            } else if (paintWindow.classList.contains('hidden')) {
+                paintWindowOpened = false;
+            }
+        }
+
+        // Check paint window status periodically
+        setInterval(checkPaintWindow, 500);
+
+        // Calculator functionality
+        const calculatorDisplay = document.getElementById('calculator-display');
+        let currentInput = '0';
+        let previousInput = '';
+        let operator = null;
+        let resetDisplay = false;
+        
+        document.querySelectorAll('.calculator-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const value = button.textContent;
+                
+                // Number buttons
+                if (/[0-9]/.test(value)) {
+                    if (currentInput === '0' || resetDisplay) {
+                        currentInput = value;
+                        resetDisplay = false;
+                    } else {
+                        currentInput += value;
+                    }
+                    calculatorDisplay.textContent = currentInput;
+                }
+                
+                // Decimal point
+                else if (value === '.') {
+                    if (resetDisplay) {
+                        currentInput = '0.';
+                        resetDisplay = false;
+                    } else if (!currentInput.includes('.')) {
+                        currentInput += '.';
+                    }
+                    calculatorDisplay.textContent = currentInput;
+                }
+                
+                // Clear button
+                else if (value === 'C') {
+                    currentInput = '0';
+                    previousInput = '';
+                    operator = null;
+                    calculatorDisplay.textContent = currentInput;
+                }
+                
+                // Operator buttons
+                else if (['+', '−', '×', '÷'].includes(value)) {
+                    if (operator && !resetDisplay) {
+                        // Calculate result if operator already exists
+                        calculate();
+                    }
+                    previousInput = currentInput;
+                    operator = value;
+                    resetDisplay = true;
+                }
+                
+                // Equals button
+                else if (value === '=') {
+                    if (operator) {
+                        calculate();
+                        operator = null;
+                    }
+                }
+                
+                // Percentage button
+                else if (value === '%') {
+                    currentInput = (parseFloat(currentInput) / 100).toString();
+                    calculatorDisplay.textContent = currentInput;
+                }
+                
+                // Plus/Minus button
+                else if (value === '±') {
+                    currentInput = (parseFloat(currentInput) * -1).toString();
+                    calculatorDisplay.textContent = currentInput;
+                }
+            });
+        });
+        
+        function calculate() {
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+            let result;
+            
+            switch (operator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '−':
+                    result = prev - current;
+                    break;
+                case '×':
+                    result = prev * current;
+                    break;
+                case '÷':
+                    result = prev / current;
+                    break;
+                default:
+                    return;
+            }
+            
+            currentInput = result.toString();
+            calculatorDisplay.textContent = currentInput;
+            previousInput = '';
+            resetDisplay = true;
+        }
+        
+        // Bring window to front when clicking on it
+        document.querySelectorAll('[id$="-window"]').forEach(window => {
+            window.addEventListener('click', () => {
+                window.style.zIndex = '100';
+                document.querySelectorAll('[id$="-window"]').forEach(win => {
+                    if (win !== window) {
+                        win.style.zIndex = '30';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,345 @@
+/* 自定义动画 */
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 5px currentColor; }
+    50% { box-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes scale-in {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1); }
+}
+
+@keyframes glow-pulse {
+    0%, 100% { 
+        box-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700;
+    }
+    50% { 
+        box-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700, 0 0 40px #ffd700;
+    }
+}
+
+@keyframes rarity-glow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+}
+
+/* 动画类 */
+.animate-shimmer {
+    animation: shimmer 1.5s infinite;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animate-scale-in {
+    animation: scale-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+}
+
+.animate-glow-pulse {
+    animation: glow-pulse 2s infinite;
+}
+
+.animate-rarity-glow {
+    animation: rarity-glow 2s infinite;
+}
+
+/* 稀有度样式 */
+.rarity-Common {
+    border-color: #808080;
+    box-shadow: 0 0 10px rgba(128, 128, 128, 0.3);
+}
+
+.rarity-Rare {
+    border-color: #0000ff;
+    box-shadow: 0 0 10px rgba(0, 0, 255, 0.4);
+}
+
+.rarity-Epic {
+    border-color: #800080;
+    box-shadow: 0 0 10px rgba(128, 0, 128, 0.4);
+}
+
+.rarity-Legendary {
+    border-color: #ffa500;
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.5);
+}
+
+.rarity-Ultra {
+    border-color: #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6), inset 0 0 10px rgba(139, 0, 0, 0.3);
+    background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(139, 0, 0, 0.2));
+}
+
+/* 稀有度徽章 */
+.badge-Common {
+    background: linear-gradient(135deg, #808080, #606060);
+}
+
+.badge-Rare {
+    background: linear-gradient(135deg, #0000ff, #0000aa);
+}
+
+.badge-Epic {
+    background: linear-gradient(135deg, #800080, #500050);
+}
+
+.badge-Legendary {
+    background: linear-gradient(135deg, #ffa500, #cc8400);
+}
+
+.badge-Ultra {
+    background: linear-gradient(135deg, #ff0000, #8b0000);
+}
+
+/* 属性条颜色 */
+.attr-speed { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.attr-acceleration { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.attr-handling { background: linear-gradient(90deg, #a855f7, #c084fc); }
+.attr-durability { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+/* 车辆卡片悬停效果 */
+.car-card {
+    transition: all 0.3s ease;
+}
+
+.car-card:hover {
+    transform: translateY(-5px);
+}
+
+.car-card.rarity-Common:hover {
+    box-shadow: 0 10px 30px rgba(128, 128, 128, 0.4);
+}
+
+.car-card.rarity-Rare:hover {
+    box-shadow: 0 10px 30px rgba(0, 0, 255, 0.4);
+}
+
+.car-card.rarity-Epic:hover {
+    box-shadow: 0 10px 30px rgba(128, 0, 128, 0.5);
+}
+
+.car-card.rarity-Legendary:hover {
+    box-shadow: 0 10px 30px rgba(255, 165, 0, 0.6);
+}
+
+.car-card.rarity-Ultra:hover {
+    box-shadow: 0 10px 40px rgba(255, 0, 0, 0.7), 0 0 60px rgba(255, 0, 0, 0.3);
+}
+
+/* 按钮样式 */
+.nav-btn {
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    transform: scale(1.05);
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+/* 弹窗样式 */
+.modal {
+    backdrop-filter: blur(5px);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 选中状态 */
+.selected-car {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* 抽卡结果卡片 */
+.gacha-result-card {
+    animation: scale-in 0.3s ease-out;
+}
+
+/* 战斗日志样式 */
+.battle-log-entry {
+    animation: fadeIn 0.3s ease-out;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.battle-log-entry:last-child {
+    border-bottom: none;
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+    .car-card {
+        font-size: 0.875rem;
+    }
+    
+    .nav-btn span:last-child {
+        font-size: 0.625rem;
+    }
+}
+
+/* 禁用状态 */
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 输入框样式 */
+select, input {
+    outline: none;
+}
+
+select:focus, input:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
+/* Toast 动画 */
+#toast {
+    animation: slide-up 0.3s ease-out;
+}
+
+/* 属性条容器 */
+.attr-bar-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.attr-bar-fill {
+    transition: width 0.5s ease-out;
+}
+
+/* 卡池选择按钮 */
+.gacha-pool-btn {
+    transition: all 0.2s ease;
+}
+
+.gacha-pool-btn.active {
+    transform: scale(1.02);
+}
+
+/* 商店商品卡片 */
+.shop-item {
+    transition: all 0.2s ease;
+}
+
+.shop-item:hover {
+    transform: translateY(-2px);
+}
+
+/* 出售列表项 */
+.sell-car-item {
+    transition: all 0.2s ease;
+}
+
+.sell-car-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sell-car-item.selected {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: #ffd700;
+}
+
+/* 评分星级 */
+.rating-stars {
+    color: #ffd700;
+}
+
+/* 总评分显示 */
+.total-score {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* 价格标签 */
+.price-tag {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    color: #1a1a1a;
+    font-weight: bold;
+}
+
+/* 胜利/失败样式 */
+.battle-win {
+    color: #22c55e;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.battle-lose {
+    color: #ef4444;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.battle-draw {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* 加载动画 */
+.loading-spinner {
+    border: 3px solid rgba(255, 215, 0, 0.3);
+    border-top-color: #ffd700;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

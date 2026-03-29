@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows XP 模拟器</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 桌面 -->
+    <div id="desktop" class="desktop">
+        <!-- 桌面图标 -->
+        <div class="desktop-icon" data-type="my-documents" draggable="true">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/9520e59841677e31920b930edc891ff4~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778570607&x-signature=cY8PZFxIu7q2HLmKaOs54ZXvRgo%3D" alt="我的文档">
+            <span>我的文档</span>
+        </div>
+        
+        <div class="desktop-icon" data-type="my-computer" draggable="true">
+            <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778570608&x-signature=Xb%2FazdmXrX6t7sGJfs1JkYSQ9o8%3D" alt="我的电脑">
+            <span>我的电脑</span>
+        </div>
+        
+        <div class="desktop-icon" data-type="recycle-bin" draggable="true">
+            <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1000820185792774288~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778570608&x-signature=F8xGfuNEtxzKjbXW%2FDwC4yZ0vMs%3D" alt="回收站">
+            <span>回收站</span>
+        </div>
+        
+        <div class="desktop-icon" data-type="network-neighborhood" draggable="true">
+            <img src="https://p3-doubao-search-sign.byteimg.com/labis/f48071fee73dea097e7cdf1ef2716583~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778570608&x-signature=XJEDdNuDrbCVqI8SCRFVt81fKew%3D" alt="网上邻居">
+            <span>网上邻居</span>
+        </div>
+        
+        <div class="desktop-icon" data-type="text-document" draggable="true">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/f3e5bd87d9575e10f278dbf80272e5bc~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778570607&x-signature=UK3AV0oDb80N1H0k3sYgHKP3HOA%3D" alt="文档">
+            <span>文档.txt</span>
+        </div>
+    </div>
+
+    <!-- 任务栏 -->
+    <div id="taskbar" class="taskbar">
+        <!-- 开始按钮 -->
+        <div id="start-button" class="start-button">
+            <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778565982&x-signature=aKEkI%2BtCLZSpbZrkJRmyhiCTaiY%3D" alt="开始">
+            <span>开始</span>
+        </div>
+        
+        <!-- 任务栏项目区域 -->
+        <div id="taskbar-items" class="taskbar-items">
+            <!-- 任务栏项目将通过JavaScript动态添加 -->
+        </div>
+        
+        <!-- 系统托盘 -->
+        <div id="system-tray" class="system-tray">
+            <div id="clock" class="clock">00:00</div>
+        </div>
+    </div>
+
+    <!-- 开始菜单 -->
+    <div id="start-menu" class="start-menu hidden">
+        <div class="start-menu-header">
+            <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778565982&x-signature=aKEkI%2BtCLZSpbZrkJRmyhiCTaiY%3D" alt="Windows">
+        </div>
+        <div class="start-menu-items">
+            <div class="start-menu-item" data-action="programs">
+                <span>程序</span>
+            </div>
+            <div class="start-menu-item" data-action="documents">
+                <span>文档</span>
+            </div>
+            <div class="start-menu-item" data-action="settings">
+                <span>设置</span>
+            </div>
+            <div class="start-menu-item" data-action="search">
+                <span>搜索</span>
+            </div>
+            <div class="start-menu-item" data-action="help">
+                <span>帮助和支持</span>
+            </div>
+            <div class="start-menu-item" data-action="run">
+                <span>运行...</span>
+            </div>
+            <div class="start-menu-separator"></div>
+            <div class="start-menu-item" data-action="shutdown">
+                <span>关闭计算机...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 窗口容器 -->
+    <div id="windows-container" class="windows-container">
+        <!-- 窗口将通过JavaScript动态添加 -->
+    </div>
+
+    <!-- 右键菜单 -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="context-menu-item" data-action="open">打开</div>
+        <div class="context-menu-item" data-action="explore">资源管理器</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="cut">剪切</div>
+        <div class="context-menu-item" data-action="copy">复制</div>
+        <div class="context-menu-item" data-action="paste">粘贴</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="delete">删除</div>
+        <div class="context-menu-item" data-action="rename">重命名</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="properties">属性</div>
+    </div>
+
+    <!-- 关闭计算机对话框 -->
+    <div id="shutdown-dialog" class="shutdown-dialog hidden">
+        <div class="shutdown-dialog-content">
+            <div class="shutdown-options">
+                <div class="shutdown-option selected" data-action="shutdown">
+                    <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778565982&x-signature=aKEkI%2BtCLZSpbZrkJRmyhiCTaiY%3D" alt="关闭计算机">
+                    <span>关闭计算机</span>
+                </div>
+                <div class="shutdown-option" data-action="restart">
+                    <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778565982&x-signature=aKEkI%2BtCLZSpbZrkJRmyhiCTaiY%3D" alt="重新启动">
+                    <span>重新启动</span>
+                </div>
+                <div class="shutdown-option" data-action="standby">
+                    <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/04db6b6259843bff47e1547dc8416ab1~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1778565982&x-signature=aKEkI%2BtCLZSpbZrkJRmyhiCTaiY%3D" alt="待机">
+                    <span>待机</span>
+                </div>
+            </div>
+            <div class="shutdown-buttons">
+                <button id="shutdown-ok">确定</button>
+                <button id="shutdown-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

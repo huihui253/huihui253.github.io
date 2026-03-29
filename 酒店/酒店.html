@@ -1,0 +1,3756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>酒店经理人 - 互动经营游戏</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#4F46E5',
+            secondary: '#10B981',
+            accent: '#F59E0B',
+            success: '#22C55E',
+            warning: '#F59E0B',
+            danger: '#EF4444',
+            info: '#3B82F6',
+            background: '#F9FAFB',
+            'primary-light': '#818CF8',
+            'secondary-light': '#34D399',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-slow': 'pulse 3s infinite',
+            'wiggle': 'wiggle 1s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+            'glow': 'glow 2s ease-in-out infinite alternate',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'pop': 'pop 0.3s ease-out',
+          },
+          keyframes: {
+            wiggle: {
+              '0%, 100%': { transform: 'rotate(-3deg)' },
+              '50%': { transform: 'rotate(3deg)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            glow: {
+              '0%': { boxShadow: '0 0 5px rgba(79, 70, 229, 0.5)' },
+              '100%': { boxShadow: '0 0 20px rgba(79, 70, 229, 0.8)' },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(20px)', opacity: '0' },
+              '100%': { transform: 'translateY(0)', opacity: '1' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            pop: {
+              '0%': { transform: 'scale(0.95)' },
+              '50%': { transform: 'scale(1.05)' },
+              '100%': { transform: 'scale(1)' },
+            },
+          },
+          boxShadow: {
+            'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            'button': '0 4px 0 0 rgba(0, 0, 0, 0.2)',
+            'button-pressed': '0 2px 0 0 rgba(0, 0, 0, 0.2)',
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .text-shadow-lg {
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      .button-3d {
+        @apply relative px-6 py-3 rounded-lg font-bold transform transition-all duration-150;
+        box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.2);
+      }
+      .button-3d:active {
+        @apply translate-y-1;
+        box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.2);
+      }
+      .button-3d-primary {
+        @apply button-3d bg-primary text-white;
+        box-shadow: 0 4px 0 0 #3730A3;
+      }
+      .button-3d-primary:active {
+        box-shadow: 0 2px 0 0 #3730A3;
+      }
+      .button-3d-secondary {
+        @apply button-3d bg-secondary text-white;
+        box-shadow: 0 4px 0 0 #047857;
+      }
+      .button-3d-secondary:active {
+        box-shadow: 0 2px 0 0 #047857;
+      }
+      .button-3d-accent {
+        @apply button-3d bg-accent text-white;
+        box-shadow: 0 4px 0 0 #B45309;
+      }
+      .button-3d-accent:active {
+        box-shadow: 0 2px 0 0 #B45309;
+      }
+      .reflection {
+        position: relative;
+        overflow: hidden;
+      }
+      .reflection::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 40%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      .progress-bar {
+        @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+      }
+      .progress-bar-fill {
+        @apply h-full rounded-full transition-all duration-300;
+      }
+    }
+  </style>
+</head>
+<body class="bg-background min-h-screen font-sans">
+  <!-- 紧急关闭按钮 - 始终显示在屏幕右上角 -->
+  <button id="emergency-close-btn" class="fixed top-4 right-4 bg-red-600 text-white w-12 h-12 rounded-full flex items-center justify-center z-50 hover:bg-red-700 transition-colors shadow-lg animate-pulse-slow">
+    <i class="fa fa-times text-xl"></i>
+  </button>
+  <!-- 加载屏幕 -->
+  <div id="loading-screen" class="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+    <div class="text-center">
+      <h1 class="text-4xl font-bold text-primary mb-4 text-shadow-lg">酒店经理人</h1>
+      <p class="text-gray-600 mb-6">互动经营游戏</p>
+      <div class="w-64 mx-auto">
+        <div id="loading-bar" class="progress-bar">
+          <div class="progress-bar-fill bg-primary" style="width: 0%"></div>
+        </div>
+        <p id="loading-text" class="text-sm text-gray-500 mt-2 text-center">加载中...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标题屏幕 -->
+  <div id="title-screen" class="fixed inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center z-40 hidden">
+    <div class="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-card reflection animate-fade-in">
+      <h1 class="text-5xl font-bold text-primary mb-4 text-shadow-lg">酒店经理人</h1>
+      <p class="text-xl text-gray-600 mb-8">打造你梦想中的五星级酒店！</p>
+      <div class="space-y-4">
+        <button id="new-game-btn" class="button-3d-primary w-full text-lg py-4">
+          开始新游戏
+        </button>
+        <button id="load-game-btn" class="button-3d-secondary w-full text-lg py-4">
+          继续游戏
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新游戏屏幕 -->
+  <div id="new-game-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <h2 class="text-3xl font-bold text-primary mb-6 text-center text-shadow">创建你的酒店</h2>
+      
+      <div class="space-y-6">
+        <!-- 酒店名称 -->
+        <div>
+          <label for="hotel-name" class="block text-gray-700 font-bold mb-2">酒店名称</label>
+          <input type="text" id="hotel-name" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="输入你的酒店名称">
+        </div>
+
+        <!-- 初始资金 -->
+        <div>
+          <label for="initial-money" class="block text-gray-700 font-bold mb-2">初始资金: <span id="money-value">$1000000</span></label>
+          <input type="range" id="initial-money" min="100000" max="1000000" step="100000" value="1000000" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>$100,000</span>
+            <span>$1,000,000</span>
+          </div>
+        </div>
+
+        <!-- 酒店风格 -->
+        <div>
+          <label class="block text-gray-700 font-bold mb-2">酒店风格</label>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="hotel-style-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-all text-center">
+              <div class="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2">
+                <i class="fa fa-building text-primary text-2xl"></i>
+              </div>
+              <h3 class="font-bold text-gray-700">现代风格</h3>
+              <p class="text-sm text-gray-500">吸引商务旅客</p>
+            </div>
+            <div class="hotel-style-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-all text-center">
+              <div class="w-16 h-16 mx-auto bg-secondary/10 rounded-full flex items-center justify-center mb-2">
+                <i class="fa fa-pagelines text-secondary text-2xl"></i>
+              </div>
+              <h3 class="font-bold text-gray-700">经典风格</h3>
+              <p class="text-sm text-gray-500">吸引高端客户</p>
+            </div>
+            <div class="hotel-style-option border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-all text-center">
+              <div class="w-16 h-16 mx-auto bg-accent/10 rounded-full flex items-center justify-center mb-2">
+                <i class="fa fa-sun-o text-accent text-2xl"></i>
+              </div>
+              <h3 class="font-bold text-gray-700">度假风格</h3>
+              <p class="text-sm text-gray-500">吸引休闲游客</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-8 flex justify-between">
+        <button id="back-to-title-btn" class="button-3d bg-gray-300 text-gray-700">
+          返回
+        </button>
+        <button id="start-game-btn" class="button-3d-primary">
+          开始游戏
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏主屏幕 -->
+  <div id="game-screen" class="fixed inset-0 bg-gray-100 flex flex-col hidden">
+    <!-- 顶部状态栏 -->
+    <header class="bg-white shadow-md p-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <div>
+          <h1 id="hotel-name-display" class="text-2xl font-bold text-primary text-shadow">我的酒店</h1>
+          <div class="flex items-center space-x-4 text-sm">
+            <span class="text-gray-600"><i class="fa fa-star text-warning"></i> 等级: <span id="hotel-level">1</span></span>
+            <span class="text-gray-600"><i class="fa fa-star text-warning"></i> 星级: <span id="hotel-rating">1⭐</span></span>
+            <span class="text-gray-600"><i class="fa fa-calendar"></i> 第 <span id="day-display">1</span> 天</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-6">
+          <div class="text-right">
+            <div class="text-sm text-gray-600">资金</div>
+            <div id="money-display" class="text-xl font-bold text-success">$1,000,000</div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm text-gray-600">声誉</div>
+            <div class="flex items-center">
+              <div class="progress-bar w-32 mr-2">
+                <div id="reputation-display" class="progress-bar-fill bg-warning" style="width: 50%"></div>
+              </div>
+              <span id="reputation-text" class="font-bold">50%</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm text-gray-600">客人</div>
+            <div id="guest-count" class="text-xl font-bold text-primary">0</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要游戏区域 -->
+    <main class="flex-1 flex overflow-hidden">
+      <!-- 左侧工具栏 -->
+      <aside class="w-64 bg-white shadow-lg p-4 flex flex-col">
+        <h2 class="text-lg font-bold text-gray-700 mb-4">管理工具</h2>
+        <nav class="space-y-2">
+          <button id="facilities-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-building-o w-8 text-primary"></i>
+            <span>设施管理</span>
+          </button>
+          <button id="employees-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-users w-8 text-primary"></i>
+            <span>员工管理</span>
+          </button>
+          <button id="marketing-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-bullhorn w-8 text-primary"></i>
+            <span>营销活动</span>
+          </button>
+          <button id="souvenir-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-shopping-bag w-8 text-primary"></i>
+            <span>纪念品商店</span>
+          </button>
+          <button id="banquet-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-cutlery w-8 text-primary"></i>
+            <span>宴会厅</span>
+          </button>
+          <button id="market-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-shopping-cart w-8 text-primary"></i>
+            <span>进货市场</span>
+          </button>
+          <button id="warehouse-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-archive w-8 text-primary"></i>
+            <span>仓储管理</span>
+          </button>
+          <button id="loan-btn" class="w-full flex items-center p-3 hover:bg-primary hover:bg-opacity-10 rounded-lg transition-all text-left">
+            <i class="fa fa-bank w-8 text-primary"></i>
+            <span>银行贷款</span>
+          </button>
+        </nav>
+
+        <div class="mt-auto space-y-4">
+          <button id="back-to-title-btn" class="w-full flex items-center p-3 bg-red-50 hover:bg-red-100 rounded-lg transition-all text-left text-red-600">
+            <i class="fa fa-home w-8"></i>
+            <span>返回主页</span>
+          </button>
+          <h3 class="text-sm font-bold text-gray-700 mb-2">游戏速度</h3>
+          <div class="flex space-x-2">
+            <button class="game-speed-btn flex-1 py-2 px-3 bg-primary text-white rounded-lg text-sm font-bold" data-speed="1">×1</button>
+            <button class="game-speed-btn flex-1 py-2 px-3 bg-gray-200 text-gray-800 rounded-lg text-sm font-bold" data-speed="2">×2</button>
+            <button class="game-speed-btn flex-1 py-2 px-3 bg-gray-200 text-gray-800 rounded-lg text-sm font-bold" data-speed="3">×3</button>
+          </div>
+          
+          <div class="pt-4 border-t border-gray-200 space-y-2">
+            <button id="save-game-btn" class="w-full button-3d-secondary py-2">
+              <i class="fa fa-save mr-2"></i> 保存游戏
+            </button>
+            <button id="task-btn" class="w-full button-3d-accent py-2">
+              <i class="fa fa-tasks mr-2"></i> 特殊任务
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 中央酒店区域 -->
+      <div class="flex-1 p-6 overflow-y-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- 接待区 -->
+          <div data-area="reception" class="bg-white rounded-xl shadow-card p-6 cursor-pointer hover:shadow-card-hover transition-all reflection">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">接待区</h3>
+                <p class="text-gray-600 mb-4">客人办理入住和退房的地方</p>
+                <div class="flex items-center space-x-4 text-sm">
+                  <span class="text-gray-500"><i class="fa fa-user"></i> 接待员: <span id="receptionist-count">0</span></span>
+                  <span class="text-gray-500"><i class="fa fa-clock-o"></i> 等待: <span id="waiting-guests">0</span></span>
+                </div>
+              </div>
+              <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <i class="fa fa-id-card-o text-primary text-2xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 客房区 -->
+          <div data-area="rooms" class="bg-white rounded-xl shadow-card p-6 cursor-pointer hover:shadow-card-hover transition-all reflection">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">客房区</h3>
+                <p class="text-gray-600 mb-4">为客人提供舒适的住宿环境</p>
+                <div class="flex items-center space-x-4 text-sm">
+                  <span class="text-gray-500"><i class="fa fa-bed"></i> 房间: <span id="room-count">0</span></span>
+                  <span class="text-gray-500"><i class="fa fa-user"></i> 入住: <span id="occupied-rooms">0</span></span>
+                </div>
+              </div>
+              <div class="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
+                <i class="fa fa-bed text-secondary text-2xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 餐厅区 -->
+          <div data-area="restaurant" class="bg-white rounded-xl shadow-card p-6 cursor-pointer hover:shadow-card-hover transition-all reflection">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">自助餐厅</h3>
+                <p class="text-gray-600 mb-4">提供美食和饮品服务</p>
+                <div class="flex items-center space-x-4 text-sm">
+                  <span class="text-gray-500"><i class="fa fa-cutlery"></i> 餐票: <span id="meal-ticket-price">$100</span></span>
+                  <span class="text-gray-500"><i class="fa fa-users"></i> 就餐: <span id="dining-guests">0</span></span>
+                </div>
+              </div>
+              <div class="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center">
+                <i class="fa fa-cutlery text-accent text-2xl"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- 设施状态显示 -->
+          <div class="md:col-span-2 lg:col-span-3 bg-white rounded-xl shadow-card p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">设施状态</h3>
+            <div id="facilities-status" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm text-gray-600 mb-1">接待区</div>
+                <div class="flex items-center justify-center">
+                  <div class="progress-bar w-32 mr-2">
+                    <div class="progress-bar-fill bg-success" style="width: 100%"></div>
+                  </div>
+                  <span class="font-bold">100%</span>
+                </div>
+              </div>
+              <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm text-gray-600 mb-1">客房区</div>
+                <div class="flex items-center justify-center">
+                  <div class="progress-bar w-32 mr-2">
+                    <div class="progress-bar-fill bg-success" style="width: 100%"></div>
+                  </div>
+                  <span class="font-bold">100%</span>
+                </div>
+              </div>
+              <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm text-gray-600 mb-1">餐厅区</div>
+                <div class="flex items-center justify-center">
+                  <div class="progress-bar w-32 mr-2">
+                    <div class="progress-bar-fill bg-success" style="width: 100%"></div>
+                  </div>
+                  <span class="font-bold">100%</span>
+                </div>
+              </div>
+              <div class="text-center p-4 bg-gray-50 rounded-lg">
+                <div class="text-sm text-gray-600 mb-1">维修工</div>
+                <div class="flex items-center justify-center">
+                  <span class="text-gray-500"><i class="fa fa-user"></i> <span id="technician-count">0</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧信息面板 -->
+      <aside class="w-80 bg-white shadow-lg p-4 overflow-y-auto">
+        <h2 class="text-lg font-bold text-gray-700 mb-4">实时信息</h2>
+        
+        <!-- 今日统计 -->
+        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+          <h3 class="font-bold text-gray-700 mb-2">今日统计</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">收入:</span>
+              <span id="daily-income" class="font-bold text-green-600">+$0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">支出:</span>
+              <span id="daily-expenses" class="font-bold text-red-600">-$0</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">利润:</span>
+              <span id="daily-profit" class="font-bold text-primary">+$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 当前客人 -->
+        <div class="mb-4">
+          <h3 class="font-bold text-gray-700 mb-2">当前客人</h3>
+          <div id="guests-container" class="space-y-2">
+            <div class="text-gray-500 text-sm text-center py-4">
+              暂无客人
+            </div>
+          </div>
+        </div>
+
+        <!-- 通知 -->
+        <div>
+          <h3 class="font-bold text-gray-700 mb-2">通知</h3>
+          <div id="notifications" class="space-y-2">
+            <div class="bg-blue-50 border-l-4 border-info p-3 rounded">
+              <p class="text-sm text-gray-700">欢迎来到酒店管理游戏！</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- 设施管理屏幕 -->
+  <div id="facilities-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">设施管理</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 现有设施 -->
+        <div class="lg:col-span-2">
+          <h3 class="text-xl font-bold text-gray-700 mb-4">现有设施</h3>
+          <div id="existing-facilities" class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-gray-500 text-center">你还没有任何设施，请从右侧建造。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 建造设施 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">建造设施</h3>
+          
+          <!-- 设施类型筛选 -->
+          <div class="flex space-x-2 mb-4">
+            <button class="facility-type-btn flex-1 py-2 px-3 bg-primary text-white rounded-lg text-sm font-bold" data-type="all">全部</button>
+            <button class="facility-type-btn flex-1 py-2 px-3 bg-gray-200 text-gray-800 rounded-lg text-sm font-bold" data-type="room">客房</button>
+            <button class="facility-type-btn flex-1 py-2 px-3 bg-gray-200 text-gray-800 rounded-lg text-sm font-bold" data-type="service">服务</button>
+          </div>
+
+          <!-- 设施列表 -->
+          <div id="available-facilities" class="space-y-4">
+            <!-- 标准间 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="room">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">标准间</h4>
+                    <p class="text-sm text-gray-500">基础住宿房间</p>
+                  </div>
+                  <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">客房</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$50,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$200</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$50</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">2位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="standard_room">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 行政套房 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="room">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">行政套房</h4>
+                    <p class="text-sm text-gray-500">高级商务套房</p>
+                  </div>
+                  <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">客房</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$150,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$600</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$150</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">2位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="executive_suite">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 商务套房 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="room">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">商务套房</h4>
+                    <p class="text-sm text-gray-500">商务人士首选</p>
+                  </div>
+                  <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">客房</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$100,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$400</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$100</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">2位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="business_suite">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 豪华套房 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="room">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">豪华套房</h4>
+                    <p class="text-sm text-gray-500">奢华住宿体验</p>
+                  </div>
+                  <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">客房</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$250,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$1000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$250</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">4位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="luxury_suite">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 自助餐厅 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">自助餐厅</h4>
+                    <p class="text-sm text-gray-500">提供餐饮服务</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$200,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$500</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$200</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">50位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="buffet_restaurant">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 健身中心 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">健身中心</h4>
+                    <p class="text-sm text-gray-500">提供健身设施</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$150,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$300</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$150</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">30位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="fitness_center">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 洗衣房 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">洗衣房</h4>
+                    <p class="text-sm text-gray-500">为住客提供免费洗衣服务</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$100,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">$0 (免费服务)</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$100</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">20位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="laundry_room">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 纪念品商店 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">纪念品商店</h4>
+                    <p class="text-sm text-gray-500">售卖酒店特色纪念品</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$120,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$400</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$80</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">15位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="souvenir_shop">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 宴会厅 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">宴会厅</h4>
+                    <p class="text-sm text-gray-500">举办各类宴会和活动</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$300,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$1000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$300</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">100位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="banquet_hall">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 空调系统 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">空调系统</h4>
+                    <p class="text-sm text-gray-500">为酒店提供空调服务</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$80,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">$0 (基础服务)</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$50</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="air_conditioner">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 会议室 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">会议室</h4>
+                    <p class="text-sm text-gray-500">提供会议设施</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$150,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">+$600</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$120</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">容量:</span>
+                    <span class="font-bold text-gray-700">30位客人</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="meeting_room">
+                  建造
+                </button>
+              </div>
+            </div>
+
+            <!-- 音响系统 -->
+            <div class="facility-card bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow" data-type="service">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">音响系统</h4>
+                    <p class="text-sm text-gray-500">提供专业音响设备</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">建造成本:</span>
+                    <span class="font-bold text-red-600">$60,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日收入:</span>
+                    <span class="font-bold text-green-600">$0 (配套服务)</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">每日维护:</span>
+                    <span class="font-bold text-red-600">-$30</span>
+                  </div>
+                </div>
+                
+                <button class="build-facility-btn w-full mt-4 button-3d-primary" data-facility="audio_system">
+                  建造
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 员工管理屏幕 -->
+  <div id="employees-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-6xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">员工管理</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 现有员工 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">现有员工</h3>
+          <div id="existing-employees" class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-gray-500 text-center">你还没有任何员工，请从右侧雇佣。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 雇佣员工 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">雇佣员工</h3>
+          
+          <!-- 员工列表 -->
+          <div class="space-y-4">
+            <!-- 接待员 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">接待员</h4>
+                    <p class="text-sm text-gray-500">负责客人入住和退房</p>
+                  </div>
+                  <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">前台</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">雇佣成本:</span>
+                    <span class="font-bold text-red-600">$30,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">月薪:</span>
+                    <span class="font-bold text-red-600">-$5,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效率:</span>
+                    <span class="font-bold text-gray-700">每小时处理10位客人</span>
+                  </div>
+                </div>
+                
+                <button class="hire-employee-btn w-full mt-4 button-3d-primary" data-employee="receptionist">
+                  雇佣
+                </button>
+              </div>
+            </div>
+
+            <!-- 清洁工 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">清洁工</h4>
+                    <p class="text-sm text-gray-500">负责房间清洁和维护</p>
+                  </div>
+                  <span class="bg-secondary text-white text-xs px-2 py-1 rounded-full">后勤</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">雇佣成本:</span>
+                    <span class="font-bold text-red-600">$20,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">月薪:</span>
+                    <span class="font-bold text-red-600">-$3,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效率:</span>
+                    <span class="font-bold text-gray-700">每小时清洁5间房</span>
+                  </div>
+                </div>
+                
+                <button class="hire-employee-btn w-full mt-4 button-3d-primary" data-employee="cleaner">
+                  雇佣
+                </button>
+              </div>
+            </div>
+
+            <!-- 维修工 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">维修工</h4>
+                    <p class="text-sm text-gray-500">负责设施维修和保养</p>
+                  </div>
+                  <span class="bg-accent text-white text-xs px-2 py-1 rounded-full">技术</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">雇佣成本:</span>
+                    <span class="font-bold text-red-600">$40,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">月薪:</span>
+                    <span class="font-bold text-red-600">-$6,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效率:</span>
+                    <span class="font-bold text-gray-700">每小时维修3个设施</span>
+                  </div>
+                </div>
+                
+                <button class="hire-employee-btn w-full mt-4 button-3d-primary" data-employee="technician">
+                  雇佣
+                </button>
+              </div>
+            </div>
+
+            <!-- 客房服务员 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">客房服务员</h4>
+                    <p class="text-sm text-gray-500">负责将客人所需物品从仓库送至客房</p>
+                  </div>
+                  <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">雇佣成本:</span>
+                    <span class="font-bold text-red-600">$25,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">月薪:</span>
+                    <span class="font-bold text-red-600">-$4,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效率:</span>
+                    <span class="font-bold text-gray-700">每小时处理8个请求</span>
+                  </div>
+                </div>
+                
+                <button class="hire-employee-btn w-full mt-4 button-3d-primary" data-employee="roomService">
+                  雇佣
+                </button>
+              </div>
+            </div>
+
+            <!-- 行李员 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">行李员</h4>
+                    <p class="text-sm text-gray-500">负责将客人大件行李送至客房，可收取小费</p>
+                  </div>
+                  <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">服务</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">雇佣成本:</span>
+                    <span class="font-bold text-red-600">$22,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">月薪:</span>
+                    <span class="font-bold text-red-600">-$3,500</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效率:</span>
+                    <span class="font-bold text-gray-700">每小时处理6个请求</span>
+                  </div>
+                </div>
+                
+                <button class="hire-employee-btn w-full mt-4 button-3d-primary" data-employee="bellboy">
+                  雇佣
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 营销活动屏幕 -->
+  <div id="marketing-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">营销活动</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- 进行中的活动 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">进行中的活动</h3>
+          <div id="active-marketing" class="space-y-4">
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p class="text-gray-500 text-center">暂无进行中的营销活动。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 可用活动 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">可用活动</h3>
+          
+          <div class="space-y-4">
+            <!-- 社交媒体推广 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">社交媒体推广</h4>
+                    <p class="text-sm text-gray-500">在社交媒体上宣传酒店</p>
+                  </div>
+                  <span class="bg-info text-white text-xs px-2 py-1 rounded-full">基础</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">活动成本:</span>
+                    <span class="font-bold text-red-600">$50,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">持续时间:</span>
+                    <span class="font-bold text-gray-700">7天</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效果:</span>
+                    <span class="font-bold text-green-600">客人数量 +20%</span>
+                  </div>
+                </div>
+                
+                <button class="start-marketing-btn w-full mt-4 button-3d-primary" data-marketing="social_media">
+                  开始活动
+                </button>
+              </div>
+            </div>
+
+            <!-- 会员优惠 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">会员优惠</h4>
+                    <p class="text-sm text-gray-500">为会员提供专属折扣</p>
+                  </div>
+                  <span class="bg-success text-white text-xs px-2 py-1 rounded-full">进阶</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">活动成本:</span>
+                    <span class="font-bold text-red-600">$100,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">持续时间:</span>
+                    <span class="font-bold text-gray-700">14天</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效果:</span>
+                    <span class="font-bold text-green-600">客人数量 +30%，声誉 +10%</span>
+                  </div>
+                </div>
+                
+                <button class="start-marketing-btn w-full mt-4 button-3d-primary" data-marketing="membership_discount">
+                  开始活动
+                </button>
+              </div>
+            </div>
+
+            <!-- 节日庆典 -->
+            <div class="bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow">
+              <div class="p-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h4 class="font-bold text-gray-700">节日庆典</h4>
+                    <p class="text-sm text-gray-500">举办盛大的节日庆典活动</p>
+                  </div>
+                  <span class="bg-warning text-white text-xs px-2 py-1 rounded-full">高级</span>
+                </div>
+                
+                <div class="mt-3 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">活动成本:</span>
+                    <span class="font-bold text-red-600">$200,000</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">持续时间:</span>
+                    <span class="font-bold text-gray-700">3天</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-600">效果:</span>
+                    <span class="font-bold text-green-600">客人数量 +50%，声誉 +20%</span>
+                  </div>
+                </div>
+                
+                <button class="start-marketing-btn w-full mt-4 button-3d-primary" data-marketing="holiday_celebration">
+                  开始活动
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 餐票价格设置屏幕 -->
+  <div id="meal-ticket-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-md w-full animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-primary text-shadow">设置餐票价格</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div>
+          <label for="meal-ticket-price-input" class="block text-gray-700 font-bold mb-2">餐票价格: $<span id="meal-ticket-price-display">100</span></label>
+          <input type="range" id="meal-ticket-price-input" min="50" max="500" step="10" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          <div class="flex justify-between text-xs text-gray-500 mt-1">
+            <span>$50</span>
+            <span>$500</span>
+          </div>
+        </div>
+
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-bold text-gray-700 mb-2">价格影响</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">预计销量:</span>
+              <span class="font-bold text-primary">50张/天</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">预计收入:</span>
+              <span class="font-bold text-green-600">$5,000/天</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">客人满意度:</span>
+              <span class="font-bold text-warning">中等</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="confirm-meal-ticket-price" class="button-3d-primary w-full">
+          确认设置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 特殊任务屏幕 -->
+  <div id="task-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">特殊任务</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div id="available-tasks" class="space-y-4">
+          <!-- 任务将通过JavaScript动态生成 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 纪念品商店屏幕 -->
+  <div id="souvenir-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-md w-full animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-primary text-shadow">纪念品商店</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div class="space-y-4">
+          <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-700 mb-2">酒店T恤</h3>
+            <div class="flex justify-between text-sm mb-4">
+              <span class="text-gray-600">成本: $20</span>
+              <span class="text-gray-600">当前价格: $<span id="tshirt-price">50</span></span>
+            </div>
+            <input type="range" id="tshirt-price-input" min="30" max="100" step="5" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          </div>
+          
+          <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-700 mb-2">酒店马克杯</h3>
+            <div class="flex justify-between text-sm mb-4">
+              <span class="text-gray-600">成本: $10</span>
+              <span class="text-gray-600">当前价格: $<span id="mug-price">30</span></span>
+            </div>
+            <input type="range" id="mug-price-input" min="20" max="60" step="5" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          </div>
+        </div>
+
+        <button id="confirm-souvenir-prices" class="button-3d-primary w-full">
+          确认价格设置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 宴会厅预订屏幕 -->
+  <div id="banquet-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-md w-full animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-primary text-shadow">宴会厅预订</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="font-bold text-gray-700 mb-2">当前预订</h3>
+          <div id="banquet-bookings" class="text-sm text-gray-600">
+            暂无预订
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-700 mb-2">标准宴席</h3>
+            <div class="flex justify-between text-sm mb-4">
+              <span class="text-gray-600">成本: $500/桌</span>
+              <span class="text-gray-600">当前价格: $<span id="standard-banquet-price">800</span>/桌</span>
+            </div>
+            <input type="range" id="standard-banquet-input" min="600" max="1200" step="50" value="800" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          </div>
+          
+          <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-700 mb-2">豪华宴席</h3>
+            <div class="flex justify-between text-sm mb-4">
+              <span class="text-gray-600">成本: $1000/桌</span>
+              <span class="text-gray-600">当前价格: $<span id="luxury-banquet-price">1500</span>/桌</span>
+            </div>
+            <input type="range" id="luxury-banquet-input" min="1200" max="2500" step="100" value="1500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          </div>
+          
+          <div class="bg-white border-2 border-gray-200 rounded-lg p-4">
+            <h3 class="font-bold text-gray-700 mb-2">至尊宴席</h3>
+            <div class="flex justify-between text-sm mb-4">
+              <span class="text-gray-600">成本: $2000/桌</span>
+              <span class="text-gray-600">当前价格: $<span id="premium-banquet-price">3000</span>/桌</span>
+            </div>
+            <input type="range" id="premium-banquet-input" min="2500" max="5000" step="200" value="3000" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+          </div>
+        </div>
+
+        <button id="confirm-banquet-prices" class="button-3d-primary w-full">
+          确认价格设置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 每日结算弹窗 -->
+  <div id="daily-report-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">每日结算 - 第 <span id="report-day">1</span> 天</h2>
+        <button id="close-daily-report" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <!-- 收入统计 -->
+        <div class="bg-green-50 p-6 rounded-xl">
+          <h3 class="text-xl font-bold text-green-700 mb-4">今日收入</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">客房收入</div>
+              <div id="report-room-income" class="text-xl font-bold text-green-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">服务收入</div>
+              <div id="report-service-income" class="text-xl font-bold text-green-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">餐饮收入</div>
+              <div id="report-meal-income" class="text-xl font-bold text-green-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">宴会收入</div>
+              <div id="report-banquet-income" class="text-xl font-bold text-green-600">$0</div>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-green-200">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-lg">总收入:</span>
+              <span id="report-total-income" class="text-2xl font-bold text-green-700">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 支出统计 -->
+        <div class="bg-red-50 p-6 rounded-xl">
+          <h3 class="text-xl font-bold text-red-700 mb-4">今日支出</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">设施维护</div>
+              <div id="report-maintenance" class="text-xl font-bold text-red-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">员工工资</div>
+              <div id="report-salary" class="text-xl font-bold text-red-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">进货成本</div>
+              <div id="report-inventory" class="text-xl font-bold text-red-600">$0</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-sm">
+              <div class="text-sm text-gray-600">贷款还款</div>
+              <div id="report-loan" class="text-xl font-bold text-red-600">$0</div>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-red-200">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-lg">总支出:</span>
+              <span id="report-total-expenses" class="text-2xl font-bold text-red-700">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 净利润 -->
+        <div class="bg-blue-50 p-6 rounded-xl">
+          <div class="flex justify-between items-center">
+            <span class="text-xl font-bold">净利润:</span>
+            <span id="report-profit" class="text-3xl font-bold text-blue-700">$0</span>
+          </div>
+        </div>
+
+        <button id="confirm-daily-report" class="button-3d-primary w-full py-3 text-lg">
+          确认并继续
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 进货市场屏幕 -->
+  <div id="market-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">进货市场</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- 商品列表 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">可购买商品</h3>
+          <div class="space-y-4" id="market-items">
+            <!-- 商品将通过JavaScript动态生成 -->
+          </div>
+        </div>
+
+        <!-- 购物车 -->
+        <div>
+          <h3 class="text-xl font-bold text-gray-700 mb-4">购物车</h3>
+          <div class="bg-gray-50 p-4 rounded-lg min-h-[200px]" id="shopping-cart">
+            <div class="text-gray-500 text-center" id="cart-empty">购物车为空</div>
+            <div class="hidden space-y-2" id="cart-items">
+              <!-- 购物车商品将动态生成 -->
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+              <span class="font-bold">总计:</span>
+              <span id="cart-total" class="text-xl font-bold text-primary">$0</span>
+            </div>
+            <button id="confirm-purchase" class="button-3d-primary w-full">
+              确认购买
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 贷款屏幕 -->
+  <div id="loan-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-2xl w-full animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">银行贷款</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <!-- 当前贷款信息 -->
+        <div id="current-loan-info" class="bg-blue-50 p-6 rounded-xl">
+          <h3 class="text-xl font-bold text-blue-700 mb-4">当前贷款</h3>
+          <div id="no-loan-message" class="text-center text-gray-600">
+            您目前没有任何贷款
+          </div>
+          <div id="loan-details" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">贷款金额:</span>
+              <span id="current-loan-amount" class="text-xl font-bold text-primary">$0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">剩余天数:</span>
+              <span id="loan-days-left" class="text-xl font-bold text-orange-600">0天</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-700">日还款额:</span>
+              <span id="daily-payment" class="text-xl font-bold text-red-600">$0</span>
+            </div>
+            <button id="repay-loan-btn" class="w-full button-3d-secondary py-3 text-lg">
+              提前还款
+            </button>
+          </div>
+        </div>
+
+        <!-- 贷款选项 -->
+        <div class="bg-gray-50 p-6 rounded-xl">
+          <h3 class="text-xl font-bold text-gray-700 mb-4">可申请贷款</h3>
+          <div class="space-y-4" id="loan-options">
+            <!-- 贷款选项将通过JavaScript动态生成 -->
+          </div>
+        </div>
+
+        <!-- 贷款说明 -->
+        <div class="bg-yellow-50 p-4 rounded-lg text-sm text-yellow-800">
+          <i class="fa fa-info-circle mr-2"></i>
+          贷款将在每日结算时自动扣除还款额。请确保您有足够的资金还款，否则将影响酒店声誉。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 仓库屏幕 -->
+  <div id="warehouse-screen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 hidden">
+    <div class="bg-white rounded-2xl shadow-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-primary text-shadow">酒店仓库</h2>
+        <button class="close-screen-btn text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times text-2xl"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-50 p-6 rounded-xl">
+          <h3 class="text-lg font-bold text-gray-700 mb-4">客房用品</h3>
+          <div class="space-y-3" id="room-supplies">
+            <!-- 客房用品将动态生成 -->
+          </div>
+        </div>
+        <div class="bg-gray-50 p-6 rounded-xl">
+          <h3 class="text-lg font-bold text-gray-700 mb-4">餐饮原料</h3>
+          <div class="space-y-3" id="food-supplies">
+            <!-- 餐饮原料将动态生成 -->
+          </div>
+        </div>
+        <div class="bg-gray-50 p-6 rounded-xl">
+          <h3 class="text-lg font-bold text-gray-700 mb-4">奢侈品</h3>
+          <div class="space-y-3" id="luxury-items">
+            <!-- 奢侈品将动态生成 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 游戏状态
+    const gameState = {
+      hotelName: '我的酒店',
+      money: 1000000,
+      reputation: 50,
+      day: 1,
+      level: 1,
+      guests: [],
+      facilities: [],
+      employees: [],
+      marketing: [],
+      gameSpeed: 1,
+      isPaused: false,
+      selectedStyle: 'modern',
+      mealTicketPrice: 100,
+      mealTicketsSold: 0,
+      dailyIncome: 0,
+      dailyExpenses: 0,
+      // 新增功能相关状态
+      tasks: [],
+      completedTasks: [],
+      specialGuests: [],
+      souvenirPrices: {
+        tshirt: 50,
+        mug: 30
+      },
+      banquetPrices: {
+        standard: 800,
+        luxury: 1500,
+        premium: 3000
+      },
+      banquetBookings: [],
+      gameTime: 0, // 游戏内时间（秒）
+      lastDayChange: 0, // 上次日期变更的时间戳
+      rating: 1, // 酒店星级
+      lastStarReviewerDay: 0, // 上次明星试睡员来访的天数
+      // 高级功能状态
+      inventory: {
+        'wine_82': 0,
+        'chocolate': 0,
+        'flowers': 0,
+        'towels': 0,
+        'minibar': 0
+      },
+      roomServices: [],
+      guestComplaints: [],
+      tipsIncome: 0,
+      dailyStats: {
+        roomIncome: 0,
+        serviceIncome: 0,
+        souvenirIncome: 0,
+        banquetIncome: 0,
+        mealIncome: 0,
+        tipsIncome: 0,
+        facilityMaintenance: 0,
+        employeeSalary: 0,
+        inventoryCost: 0,
+        loanPayment: 0,
+        otherExpenses: 0
+      }
+    };
+
+    // 设施数据
+    const facilityData = {
+      standard_room: {
+        name: '标准间',
+        description: '基础住宿房间',
+        type: 'room',
+        cost: 50000,
+        income: 200,
+        maintenance: 50,
+        capacity: 2,
+        durability: 100
+      },
+      executive_suite: {
+        name: '行政套房',
+        description: '高级商务套房',
+        type: 'room',
+        cost: 150000,
+        income: 600,
+        maintenance: 150,
+        capacity: 2,
+        durability: 100
+      },
+      business_suite: {
+        name: '商务套房',
+        description: '商务人士首选',
+        type: 'room',
+        cost: 100000,
+        income: 400,
+        maintenance: 100,
+        capacity: 2,
+        durability: 100
+      },
+      luxury_suite: {
+        name: '豪华套房',
+        description: '奢华住宿体验',
+        type: 'room',
+        cost: 250000,
+        income: 1000,
+        maintenance: 250,
+        capacity: 4,
+        durability: 100
+      },
+      buffet_restaurant: {
+        name: '自助餐厅',
+        description: '提供餐饮服务',
+        type: 'service',
+        cost: 200000,
+        income: 500,
+        maintenance: 200,
+        capacity: 50,
+        durability: 100
+      },
+      fitness_center: {
+        name: '健身中心',
+        description: '提供健身设施',
+        type: 'service',
+        cost: 150000,
+        income: 300,
+        maintenance: 150,
+        capacity: 30,
+        durability: 100
+      },
+      laundry_room: {
+        name: '洗衣房',
+        description: '为住客提供免费洗衣服务',
+        type: 'service',
+        cost: 100000,
+        income: 0, // 免费服务
+        maintenance: 100,
+        capacity: 20,
+        durability: 100
+      },
+      souvenir_shop: {
+        name: '纪念品商店',
+        description: '售卖酒店特色纪念品',
+        type: 'service',
+        cost: 120000,
+        income: 400,
+        maintenance: 80,
+        capacity: 15,
+        durability: 100
+      },
+      banquet_hall: {
+        name: '宴会厅',
+        description: '举办各类宴会和活动',
+        type: 'service',
+        cost: 300000,
+        income: 1000,
+        maintenance: 300,
+        capacity: 100,
+        durability: 100
+      },
+      air_conditioner: {
+        name: '空调系统',
+        description: '为酒店提供空调服务',
+        type: 'service',
+        cost: 80000,
+        income: 0,
+        maintenance: 50,
+        durability: 100
+      },
+      meeting_room: {
+        name: '会议室',
+        description: '提供会议设施',
+        type: 'service',
+        cost: 150000,
+        income: 600,
+        maintenance: 120,
+        capacity: 30,
+        durability: 100
+      },
+      audio_system: {
+        name: '音响系统',
+        description: '提供专业音响设备',
+        type: 'service',
+        cost: 60000,
+        income: 0,
+        maintenance: 30,
+        durability: 100
+      }
+    };
+
+    // 员工数据
+    const employeeData = {
+      receptionist: {
+        name: '接待员',
+        description: '负责客人入住和退房',
+        type: 'front',
+        cost: 30000,
+        salary: 5000,
+        efficiency: 10
+      },
+      cleaner: {
+        name: '清洁工',
+        description: '负责房间清洁和维护',
+        type: '后勤',
+        cost: 20000,
+        salary: 3000,
+        efficiency: 5
+      },
+      technician: {
+        name: '维修工',
+        description: '负责设施维修和保养',
+        type: '技术',
+        cost: 40000,
+        salary: 6000,
+        efficiency: 3
+      }
+    };
+
+    // 营销活动数据
+    const marketingData = {
+      social_media: {
+        name: '社交媒体推广',
+        description: '在社交媒体上宣传酒店',
+        type: '基础',
+        cost: 50000,
+        duration: 7,
+        guestIncrease: 0.2,
+        reputationIncrease: 0
+      },
+      membership_discount: {
+        name: '会员优惠',
+        description: '为会员提供专属折扣',
+        type: '进阶',
+        cost: 100000,
+        duration: 14,
+        guestIncrease: 0.3,
+        reputationIncrease: 10
+      },
+      holiday_celebration: {
+        name: '节日庆典',
+        description: '举办盛大的节日庆典活动',
+        type: '高级',
+        cost: 200000,
+        duration: 3,
+        guestIncrease: 0.5,
+        reputationIncrease: 20
+      }
+    };
+
+    // 游戏初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('游戏初始化...');
+      
+      // 检查是否有存档
+      checkForSavedGame();
+      
+      // 模拟加载
+      setTimeout(() => {
+        document.getElementById('loading-screen').classList.add('hidden');
+        document.getElementById('title-screen').classList.remove('hidden');
+      }, 2000);
+
+      // 绑定所有事件监听器
+      bindAllEvents();
+    });
+
+    // 检查是否有存档
+    function checkForSavedGame() {
+      const savedGame = localStorage.getItem('hotelManagerSave');
+      const loadGameBtn = document.getElementById('load-game-btn');
+      
+      if (savedGame) {
+        loadGameBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        loadGameBtn.classList.add('button-3d-secondary');
+        loadGameBtn.disabled = false;
+      } else {
+        loadGameBtn.classList.remove('button-3d-secondary');
+        loadGameBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+        loadGameBtn.disabled = true;
+      }
+    }
+
+    // 绑定所有事件监听器
+    function bindAllEvents() {
+      console.log('绑定事件监听器...');
+      
+      // 标题屏幕按钮
+      document.getElementById('new-game-btn').addEventListener('click', () => {
+        console.log('点击了开始新游戏按钮');
+        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('new-game-screen').classList.remove('hidden');
+      });
+
+      document.getElementById('load-game-btn').addEventListener('click', loadGame);
+
+      // 保存游戏按钮
+      document.getElementById('save-game-btn').addEventListener('click', saveGame);
+      
+      // 特殊任务按钮
+      document.getElementById('task-btn').addEventListener('click', () => {
+        toggleScreen('task-screen');
+        generateTasks();
+      });
+
+      // 游戏内返回主页按钮
+      document.getElementById('back-to-title-btn').addEventListener('click', () => {
+        if (confirm('确定要返回主页吗？未保存的游戏进度将会丢失！')) {
+          console.log('返回主页功能执行');
+          
+          // 停止游戏循环
+          if (window.gameInterval) {
+            clearInterval(window.gameInterval);
+            console.log('游戏循环已停止');
+          }
+          
+          // 重置游戏状态
+          gameState.isPaused = false;
+          
+          // 隐藏游戏屏幕，显示标题屏幕
+          document.getElementById('game-screen').classList.add('hidden');
+          document.getElementById('title-screen').classList.remove('hidden');
+          
+          // 检查存档状态
+          checkForSavedGame();
+          
+          // 显示成功提示
+          setTimeout(() => {
+            showNotification('返回主页', '已成功返回游戏主页！');
+          }, 500);
+        }
+      });
+
+      // 新增功能按钮事件
+      document.getElementById('market-btn').addEventListener('click', () => {
+        toggleScreen('market-screen');
+        updateMarketScreen();
+      });
+
+      document.getElementById('warehouse-btn').addEventListener('click', () => {
+        toggleScreen('warehouse-screen');
+        updateWarehouseScreen();
+      });
+
+      document.getElementById('loan-btn').addEventListener('click', () => {
+        toggleScreen('loan-screen');
+        updateLoanScreen();
+      });
+
+      // 进货市场确认购买
+      document.getElementById('confirm-purchase').addEventListener('click', confirmPurchase);
+
+      // 新游戏屏幕按钮
+      document.getElementById('back-to-title-btn').addEventListener('click', () => {
+        console.log('点击了返回按钮');
+        document.getElementById('new-game-screen').classList.add('hidden');
+        document.getElementById('title-screen').classList.remove('hidden');
+      });
+
+      document.getElementById('start-game-btn').addEventListener('click', startGame);
+
+      // 管理工具按钮
+      document.getElementById('facilities-btn').addEventListener('click', () => {
+        console.log('点击了设施管理按钮');
+        toggleScreen('facilities-screen');
+      });
+
+      document.getElementById('employees-btn').addEventListener('click', () => {
+        console.log('点击了员工管理按钮');
+        toggleScreen('employees-screen');
+      });
+
+      document.getElementById('marketing-btn').addEventListener('click', () => {
+        console.log('点击了营销活动按钮');
+        toggleScreen('marketing-screen');
+      });
+
+      // 纪念品商店按钮
+      document.getElementById('souvenir-btn').addEventListener('click', () => {
+        console.log('点击了纪念品商店按钮');
+        toggleScreen('souvenir-screen');
+        updateSouvenirDisplay();
+      });
+
+      // 宴会厅按钮
+      document.getElementById('banquet-btn').addEventListener('click', () => {
+        console.log('点击了宴会厅按钮');
+        toggleScreen('banquet-screen');
+        updateBanquetDisplay();
+      });
+
+      // 全新的简化弹窗管理系统
+      function setupModalSystem() {
+        // 为所有关闭按钮添加事件监听器
+        document.addEventListener('click', function(event) {
+          // 如果点击的是关闭按钮
+          if (event.target.closest('.close-screen-btn')) {
+            event.stopPropagation();
+            const closeBtn = event.target.closest('.close-screen-btn');
+            const modal = closeBtn.closest('.fixed');
+            if (modal) {
+              console.log('点击关闭按钮关闭弹窗:', modal.id);
+              modal.classList.add('hidden');
+              gameState.isPaused = false;
+            }
+          }
+          
+          // 如果点击的是弹窗遮罩层
+          if (event.target.classList.contains('fixed') && 
+              event.target.classList.contains('inset-0') && 
+              event.target.classList.contains('bg-black')) {
+            event.stopPropagation();
+            console.log('点击遮罩层关闭弹窗:', event.target.id);
+            event.target.classList.add('hidden');
+            gameState.isPaused = false;
+          }
+        });
+        
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape') {
+            event.stopPropagation();
+            const openModals = document.querySelectorAll('[id$="-screen"].fixed:not(.hidden)');
+            openModals.forEach(modal => {
+              console.log('按ESC键关闭弹窗:', modal.id);
+              modal.classList.add('hidden');
+              gameState.isPaused = false;
+            });
+          }
+        });
+        
+        // 紧急关闭按钮功能
+        const emergencyBtn = document.getElementById('emergency-close-btn');
+        if (emergencyBtn) {
+          emergencyBtn.addEventListener('click', function(event) {
+            event.stopPropagation();
+            console.log('紧急关闭按钮被点击 - 关闭所有弹窗');
+            const openModals = document.querySelectorAll('[id$="-screen"].fixed:not(.hidden)');
+            openModals.forEach(modal => {
+              console.log('紧急关闭弹窗:', modal.id);
+              modal.classList.add('hidden');
+            });
+            gameState.isPaused = false;
+            showNotification('提示', '所有弹窗已关闭', 'info');
+          });
+        }
+      }
+      
+      // 立即执行弹窗系统设置
+      setupModalSystem();
+
+      // 贷款系统相关功能
+      const loanOptions = [
+        { id: 'small', amount: 100000, days: 30, interest: 0.1, name: '小额贷款' },
+        { id: 'medium', amount: 300000, days: 50, interest: 0.15, name: '中额贷款' },
+        { id: 'large', amount: 500000, days: 60, interest: 0.2, name: '大额贷款' },
+        { id: 'vip', amount: 1000000, days: 100, interest: 0.25, name: 'VIP贷款' }
+      ];
+
+      function updateLoanScreen() {
+        const noLoanMessage = document.getElementById('no-loan-message');
+        const loanDetails = document.getElementById('loan-details');
+        const loanOptionsContainer = document.getElementById('loan-options');
+        
+        // 更新当前贷款信息
+        if (gameState.currentLoan) {
+          noLoanMessage.classList.add('hidden');
+          loanDetails.classList.remove('hidden');
+          
+          const totalAmount = gameState.currentLoan.amount * (1 + gameState.currentLoan.interest);
+          const dailyPayment = Math.ceil(totalAmount / gameState.currentLoan.days);
+          
+          document.getElementById('current-loan-amount').textContent = `$${totalAmount.toLocaleString()}`;
+          document.getElementById('loan-days-left').textContent = `${gameState.currentLoan.daysLeft}天`;
+          document.getElementById('daily-payment').textContent = `$${dailyPayment.toLocaleString()}`;
+        } else {
+          noLoanMessage.classList.remove('hidden');
+          loanDetails.classList.add('hidden');
+        }
+        
+        // 计算最大可贷款金额（酒店资金的10倍）
+        const maxLoanAmount = gameState.money * 10;
+        const dailyInterestRate = 0.004; // 每日利息率0.4%
+        
+        // 更新贷款选项
+        loanOptionsContainer.innerHTML = '';
+        
+        loanOptions.forEach(option => {
+          const canApply = !gameState.currentLoan && gameState.level >= (option.id === 'vip' ? 5 : 1);
+          const totalAmount = option.amount * (1 + option.interest);
+          const dailyPayment = Math.ceil(totalAmount / option.days);
+          
+          const element = document.createElement('div');
+          element.className = `bg-white border-2 ${canApply ? 'border-gray-200' : 'border-red-300'} rounded-lg p-4 card-shadow`;
+          
+          element.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-gray-700">${option.name}</h4>
+                <p class="text-sm text-gray-600">期限: ${option.days}天</p>
+                <p class="text-sm text-gray-600">利息: ${(option.interest * 100).toFixed(0)}%</p>
+              </div>
+              <div class="text-right">
+                <div class="text-xl font-bold text-primary">$${option.amount.toLocaleString()}</div>
+                <div class="text-sm text-gray-600">总还款: $${totalAmount.toLocaleString()}</div>
+                <div class="text-sm text-gray-600">日还款: $${dailyPayment.toLocaleString()}</div>
+              </div>
+            </div>
+            <div class="mt-4">
+              <button class="apply-loan-btn w-full ${canApply ? 'bg-primary hover:bg-primary/90' : 'bg-red-400 cursor-not-allowed'} text-white py-2 rounded-lg transition-colors" 
+                      data-loan-id="${option.id}" ${!canApply ? 'disabled' : ''}>
+                ${!canApply ? '条件不符' : '申请贷款'}
+              </button>
+            </div>
+          `;
+          
+          loanOptionsContainer.appendChild(element);
+        });
+        
+        // 绑定贷款申请事件
+        document.querySelectorAll('.apply-loan-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            if (!this.disabled) {
+              const loanId = this.dataset.loanId;
+              applyLoan(loanId);
+            }
+          });
+        });
+      }
+
+      function applyLoan(loanId) {
+        const option = loanOptions.find(opt => opt.id === loanId);
+        if (!option) return;
+        
+        if (confirm(`确定要申请${option.name}吗？\n金额: $${option.amount.toLocaleString()}\n期限: ${option.days}天\n利息: ${(option.interest * 100).toFixed(0)}%\n\n总还款: $${(option.amount * (1 + option.interest)).toLocaleString()}`)) {
+          gameState.currentLoan = {
+            id: loanId,
+            amount: option.amount,
+            interest: option.interest,
+            days: option.days,
+            daysLeft: option.days
+          };
+          
+          gameState.money += option.amount;
+          showNotification('贷款成功', `成功申请${option.name}，获得$${option.amount.toLocaleString()}`, 'success');
+          updateLoanScreen();
+          updateDisplay();
+        }
+      }
+
+      function repayLoan() {
+        if (!gameState.currentLoan) return;
+        
+        const totalAmount = gameState.currentLoan.amount * (1 + gameState.currentLoan.interest);
+        const remainingAmount = Math.ceil(totalAmount * (gameState.currentLoan.daysLeft / gameState.currentLoan.days));
+        
+        if (gameState.money >= remainingAmount) {
+          if (confirm(`确定要提前还款吗？\n剩余金额: $${remainingAmount.toLocaleString()}`)) {
+            gameState.money -= remainingAmount;
+            gameState.currentLoan = null;
+            showNotification('还款成功', `成功还清贷款，支付$${remainingAmount.toLocaleString()}`, 'success');
+            updateLoanScreen();
+            updateDisplay();
+          }
+        } else {
+          showNotification('资金不足', `需要$${remainingAmount.toLocaleString()}才能提前还款`, 'error');
+        }
+      }
+
+      function processDailyLoanPayment() {
+        if (!gameState.currentLoan) return;
+        
+        const totalAmount = gameState.currentLoan.amount * (1 + gameState.currentLoan.interest);
+        const dailyPayment = Math.ceil(totalAmount / gameState.currentLoan.days);
+        
+        if (gameState.money >= dailyPayment) {
+          gameState.money -= dailyPayment;
+          gameState.dailyStats.loanPayment = dailyPayment;
+          gameState.currentLoan.daysLeft--;
+          
+          if (gameState.currentLoan.daysLeft <= 0) {
+            gameState.currentLoan = null;
+            showNotification('贷款还清', '恭喜！您已成功还清所有贷款', 'success');
+          }
+        } else {
+          // 贷款违约
+          gameState.reputation = Math.max(0, gameState.reputation - 10);
+          showNotification('贷款违约', '无法按时还款，声誉-10', 'error');
+        }
+      }
+
+      // 绑定还款按钮事件
+      document.getElementById('repay-loan-btn').addEventListener('click', repayLoan);
+
+      // 游戏速度按钮
+      document.querySelectorAll('.game-speed-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('点击了游戏速度按钮:', this.dataset.speed);
+          document.querySelectorAll('.game-speed-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-200', 'text-gray-800');
+          });
+          this.classList.remove('bg-gray-200', 'text-gray-800');
+          this.classList.add('bg-primary', 'text-white');
+          gameState.gameSpeed = parseInt(this.dataset.speed);
+        });
+      });
+
+      // 设施类型按钮
+      document.querySelectorAll('.facility-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('点击了设施类型按钮:', this.dataset.type);
+          document.querySelectorAll('.facility-type-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white');
+            b.classList.add('bg-gray-200', 'text-gray-800');
+          });
+          this.classList.remove('bg-gray-200', 'text-gray-800');
+          this.classList.add('bg-primary', 'text-white');
+          filterFacilities(this.dataset.type);
+        });
+      });
+
+      // 建造设施按钮
+      document.querySelectorAll('.build-facility-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('点击了建造设施按钮:', this.dataset.facility);
+          buildFacility(this.dataset.facility);
+        });
+      });
+
+      // 雇佣员工按钮
+      document.querySelectorAll('.hire-employee-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('点击了雇佣员工按钮:', this.dataset.employee);
+          hireEmployee(this.dataset.employee);
+        });
+      });
+
+      // 开始营销活动按钮
+      document.querySelectorAll('.start-marketing-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          console.log('点击了开始营销活动按钮:', this.dataset.marketing);
+          startMarketing(this.dataset.marketing);
+        });
+      });
+
+      // 酒店风格选择
+      document.querySelectorAll('.hotel-style-option').forEach((option, index) => {
+        option.addEventListener('click', function() {
+          console.log('点击了酒店风格选项:', index);
+          document.querySelectorAll('.hotel-style-option').forEach(o => o.classList.remove('border-primary'));
+          this.classList.add('border-primary');
+          const styles = ['modern', 'classic', 'resort'];
+          gameState.selectedStyle = styles[index];
+        });
+      });
+
+      // 初始资金滑块
+      const initialMoneySlider = document.getElementById('initial-money');
+      const moneyValue = document.getElementById('money-value');
+      initialMoneySlider.addEventListener('input', function() {
+        console.log('初始资金滑块值改变:', this.value);
+        moneyValue.textContent = `$${this.value}`;
+      });
+
+      // 酒店名称输入
+      const hotelNameInput = document.getElementById('hotel-name');
+      hotelNameInput.addEventListener('input', function() {
+        if (this.value.trim()) {
+          console.log('酒店名称改变:', this.value.trim());
+          gameState.hotelName = this.value.trim();
+        }
+      });
+
+      // 区域点击事件
+      document.querySelectorAll('[data-area]').forEach(area => {
+        area.addEventListener('click', function() {
+          const areaType = this.dataset.area;
+          console.log('点击了区域:', areaType);
+          showAreaInfo(areaType);
+        });
+      });
+
+      // 餐票价格设置
+      document.getElementById('confirm-meal-ticket-price').addEventListener('click', function() {
+        const price = parseInt(document.getElementById('meal-ticket-price-input').value);
+        gameState.mealTicketPrice = price;
+        document.getElementById('meal-ticket-price').textContent = `$${price}`;
+        document.getElementById('meal-ticket-screen').classList.add('hidden');
+        showNotification('设置成功', `餐票价格已设置为 $${price}`);
+      });
+
+      const mealTicketPriceInput = document.getElementById('meal-ticket-price-input');
+      const mealTicketPriceDisplay = document.getElementById('meal-ticket-price-display');
+      mealTicketPriceInput.addEventListener('input', function() {
+        mealTicketPriceDisplay.textContent = this.value;
+      });
+
+      // 纪念品价格设置
+      document.getElementById('confirm-souvenir-prices').addEventListener('click', () => {
+        const tshirtPrice = parseInt(document.getElementById('tshirt-price-input').value);
+        const mugPrice = parseInt(document.getElementById('mug-price-input').value);
+        
+        gameState.souvenirPrices.tshirt = tshirtPrice;
+        gameState.souvenirPrices.mug = mugPrice;
+        
+        toggleScreen('souvenir-screen');
+        showNotification('设置成功', '纪念品价格已更新');
+      });
+
+      // 宴会厅价格设置
+      document.getElementById('confirm-banquet-prices').addEventListener('click', () => {
+        const standardPrice = parseInt(document.getElementById('standard-banquet-input').value);
+        const luxuryPrice = parseInt(document.getElementById('luxury-banquet-input').value);
+        const premiumPrice = parseInt(document.getElementById('premium-banquet-input').value);
+        
+        gameState.banquetPrices.standard = standardPrice;
+        gameState.banquetPrices.luxury = luxuryPrice;
+        gameState.banquetPrices.premium = premiumPrice;
+        
+        toggleScreen('banquet-screen');
+        showNotification('设置成功', '宴会厅价格已更新');
+      });
+
+      // 纪念品价格滑块事件
+      document.getElementById('tshirt-price-input').addEventListener('input', (e) => {
+        document.getElementById('tshirt-price').textContent = e.target.value;
+      });
+      
+      document.getElementById('mug-price-input').addEventListener('input', (e) => {
+        document.getElementById('mug-price').textContent = e.target.value;
+      });
+
+      // 宴会厅价格滑块事件
+      document.getElementById('standard-banquet-input').addEventListener('input', (e) => {
+        document.getElementById('standard-banquet-price').textContent = e.target.value;
+      });
+
+      // 进货市场相关功能
+      const marketItems = [
+        // 毛巾套装（不同质量等级）
+        { id: 'towels_basic', name: '基础毛巾套装', category: 'room', quality: 'basic', price: 30, description: '经济实惠的毛巾套装', unit: '套' },
+        { id: 'towels_standard', name: '标准毛巾套装', category: 'room', quality: 'standard', price: 50, description: '质量较好的毛巾套装', unit: '套' },
+        { id: 'towels_premium', name: '高级毛巾套装', category: 'room', quality: 'premium', price: 80, description: '高品质纯棉毛巾套装', unit: '套' },
+        
+        // 一次性洗漱用品（不同质量等级）
+        { id: 'toiletries_basic', name: '基础洗漱套装', category: 'room', quality: 'basic', price: 20, description: '经济实惠的一次性洗漱用品', unit: '套' },
+        { id: 'toiletries_standard', name: '标准洗漱套装', category: 'room', quality: 'standard', price: 40, description: '质量较好的一次性洗漱用品', unit: '套' },
+        { id: 'toiletries_premium', name: '高级洗漱套装', category: 'room', quality: 'premium', price: 70, description: '高端品牌洗漱用品套装', unit: '套' },
+        
+        // 饮料（不同品牌）
+        { id: 'cola_basic', name: '普通可乐', category: 'drink', quality: 'basic', price: 10, description: '普通品牌可乐', unit: '瓶' },
+        { id: 'cola_premium', name: '进口可乐', category: 'drink', quality: 'premium', price: 20, description: '进口品牌可乐', unit: '瓶' },
+        { id: 'mineral_water_basic', name: '普通矿泉水', category: 'drink', quality: 'basic', price: 8, description: '普通矿泉水', unit: '瓶' },
+        { id: 'mineral_water_premium', name: '高端矿泉水', category: 'drink', quality: 'premium', price: 25, description: '进口高端矿泉水', unit: '瓶' },
+        { id: 'beer_basic', name: '普通啤酒', category: 'drink', quality: 'basic', price: 15, description: '国产啤酒', unit: '瓶' },
+        { id: 'beer_premium', name: '进口啤酒', category: 'drink', quality: 'premium', price: 35, description: '进口精酿啤酒', unit: '瓶' },
+        { id: 'wine_basic', name: '普通红酒', category: 'drink', quality: 'basic', price: 80, description: '国产红酒', unit: '瓶' },
+        { id: 'wine_premium', name: '进口红酒', category: 'drink', quality: 'premium', price: 200, description: '进口红酒', unit: '瓶' },
+        { id: 'wine_82', name: '82年拉菲', category: 'luxury', quality: 'luxury', price: 2000, description: '顶级红酒，客人的最爱', unit: '瓶' },
+        
+        // 其他客房用品
+        { id: 'coffee', name: '咖啡豆', category: 'food', quality: 'standard', price: 120, description: '优质咖啡豆', unit: '包' },
+        { id: 'tea', name: '精选茶叶', category: 'food', quality: 'standard', price: 100, description: '各种口味茶叶', unit: '盒' },
+        { id: 'snacks', name: '休闲零食', category: 'food', quality: 'standard', price: 60, description: '客房和餐厅用零食', unit: '包' },
+        { id: 'chocolate', name: '精选巧克力', category: 'luxury', quality: 'premium', price: 150, description: '高品质巧克力礼盒', unit: '盒' },
+        { id: 'flowers', name: '鲜花束', category: 'luxury', quality: 'premium', price: 200, description: '新鲜花束，提升客人满意度', unit: '束' }
+      ];
+
+      // 客房服务请求数据
+      const roomServiceRequests = [
+        { id: 1, item: 'wine_82', quantity: 1, price: 3000, description: '1瓶82年的拉菲酒' },
+        { id: 2, item: 'chocolate', quantity: 1, price: 250, description: '1盒精选巧克力' },
+        { id: 3, item: 'flowers', quantity: 1, price: 350, description: '1束新鲜花束' },
+        { id: 4, item: 'cola_premium', quantity: 2, price: 60, description: '2瓶进口可乐' },
+        { id: 5, item: 'coffee', quantity: 2, price: 50, description: '2杯现磨咖啡' },
+        { id: 6, item: 'mineral_water_premium', quantity: 4, price: 120, description: '4瓶高端矿泉水' },
+        { id: 7, item: 'beer_premium', quantity: 6, price: 240, description: '6瓶进口啤酒' },
+        { id: 8, item: 'wine_premium', quantity: 1, price: 300, description: '1瓶进口红酒' },
+        { id: 9, item: 'towels_premium', quantity: 2, price: 200, description: '2套高级毛巾' },
+        { id: 10, item: 'toiletries_premium', quantity: 1, price: 100, description: '1套高级洗漱用品' }
+      ];
+
+      // 客人投诉数据
+      const guestComplaints = [
+        { id: 1, type: 'price', message: '房间价格太贵了！', impact: -5 },
+        { id: 2, type: 'service', message: '服务态度不够好...', impact: -3 },
+        { id: 3, type: 'facility', message: '设施有点老旧了', impact: -4 },
+        { id: 4, type: 'noise', message: '外面太吵了，影响休息', impact: -3 },
+        { id: 5, type: 'cleanliness', message: '房间不够干净', impact: -6 },
+        { id: 6, type: 'food', message: '食物质量一般', impact: -4 }
+      ];
+
+      function updateMarketScreen() {
+        const marketItemsContainer = document.getElementById('market-items');
+        marketItemsContainer.innerHTML = '';
+        
+        marketItems.forEach(item => {
+          const itemElement = document.createElement('div');
+          itemElement.className = 'bg-white border-2 border-gray-200 rounded-lg p-4 card-shadow';
+          itemElement.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-gray-700">${item.name}</h4>
+                <p class="text-sm text-gray-600">${item.description}</p>
+                <p class="text-sm text-gray-500">${item.unit}</p>
+              </div>
+              <span class="text-xl font-bold text-primary">$${item.price}</span>
+            </div>
+            <div class="mt-4 flex items-center gap-2">
+              <button class="add-to-cart-btn bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors" 
+                      data-item-id="${item.id}">
+                加入购物车
+              </button>
+            </div>
+          `;
+          marketItemsContainer.appendChild(itemElement);
+        });
+        
+        // 绑定加入购物车事件
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const itemId = this.dataset.itemId;
+            const item = marketItems.find(i => i.id === itemId);
+            if (item) {
+              addToCart(item);
+            }
+          });
+        });
+      }
+
+      let shoppingCart = [];
+      
+      function addToCart(item) {
+        const existingItem = shoppingCart.find(i => i.id === item.id);
+        if (existingItem) {
+          existingItem.quantity++;
+        } else {
+          shoppingCart.push({...item, quantity: 1});
+        }
+        updateCartDisplay();
+        showNotification('添加成功', `${item.name} 已加入购物车`);
+      }
+      
+      function updateCartDisplay() {
+        const cartItemsContainer = document.getElementById('cart-items');
+        const cartEmpty = document.getElementById('cart-empty');
+        const cartTotal = document.getElementById('cart-total');
+        
+        if (shoppingCart.length === 0) {
+          cartEmpty.classList.remove('hidden');
+          cartItemsContainer.classList.add('hidden');
+          cartTotal.textContent = '$0';
+          return;
+        }
+        
+        cartEmpty.classList.add('hidden');
+        cartItemsContainer.classList.remove('hidden');
+        cartItemsContainer.innerHTML = '';
+        
+        let total = 0;
+        shoppingCart.forEach((item, index) => {
+          total += item.price * item.quantity;
+          const cartItemElement = document.createElement('div');
+          cartItemElement.className = 'flex justify-between items-center p-2 bg-gray-50 rounded-lg';
+          cartItemElement.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span>${item.name}</span>
+              <span class="text-sm text-gray-600">x${item.quantity}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-bold">$${(item.price * item.quantity).toLocaleString()}</span>
+              <button class="remove-from-cart-btn text-red-500 hover:text-red-700" 
+                      data-index="${index}">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          `;
+          cartItemsContainer.appendChild(cartItemElement);
+        });
+        
+        cartTotal.textContent = `$${total.toLocaleString()}`;
+        
+        // 绑定移除购物车事件
+        document.querySelectorAll('.remove-from-cart-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const index = parseInt(this.dataset.index);
+            shoppingCart.splice(index, 1);
+            updateCartDisplay();
+          });
+        });
+      }
+      
+      function confirmPurchase() {
+        if (shoppingCart.length === 0) {
+          showNotification('提示', '购物车为空', 'warning');
+          return;
+        }
+        
+        const total = shoppingCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        if (gameState.money < total) {
+          showNotification('资金不足', '您的资金不足以完成购买', 'error');
+          return;
+        }
+        
+        // 扣除资金
+        gameState.money -= total;
+        gameState.dailyStats.inventoryCost += total;
+        
+        // 添加到库存
+        shoppingCart.forEach(item => {
+          gameState.inventory[item.id] = (gameState.inventory[item.id] || 0) + item.quantity;
+        });
+        
+        showNotification('购买成功', `成功购买商品，花费 $${total.toLocaleString()}`);
+        shoppingCart = [];
+        updateCartDisplay();
+        updateWarehouseScreen();
+        updateDisplay();
+      }
+
+      // 显示客房服务请求
+      function showRoomServiceRequests() {
+        const activeRequests = gameState.roomServices.filter(r => !r.completed && r.expiresAt >= gameState.day);
+        
+        if (activeRequests.length === 0) {
+          showNotification('客房服务', '当前没有待处理的客房服务请求', 'info');
+          return;
+        }
+        
+        let message = '当前客房服务请求：\n\n';
+        activeRequests.forEach(request => {
+          message += `${request.roomNumber}号房: ${request.description} - $${request.price}\n`;
+        });
+        
+        if (confirm(message + '\n是否处理这些请求？')) {
+          processRoomServiceRequests(activeRequests);
+        }
+      }
+
+      function processRoomServiceRequests(requests) {
+        requests.forEach(request => {
+          // 检查库存
+          if (gameState.inventory[request.item] >= request.quantity) {
+            // 扣除库存
+            gameState.inventory[request.item] -= request.quantity;
+            request.completed = true;
+            gameState.money += request.price;
+            gameState.dailyStats.serviceIncome += request.price;
+            showNotification('服务完成', `${request.roomNumber}号房服务完成，收入$${request.price}`, 'success');
+          } else {
+            showNotification('库存不足', `缺少${marketItems.find(i => i.id === request.item)?.name}，无法完成服务`, 'error');
+          }
+        });
+        
+        // 更新仓库显示
+        updateWarehouseScreen();
+      }
+
+      // 显示客人投诉
+      function showGuestComplaints() {
+        const recentComplaints = gameState.guestComplaints.filter(c => c.day >= gameState.day - 3);
+        
+        if (recentComplaints.length === 0) {
+          showNotification('客人反馈', '最近没有客人投诉', 'info');
+          return;
+        }
+        
+        let message = '最近的客人投诉：\n\n';
+        recentComplaints.forEach((complaint, index) => {
+          message += `${index + 1}. ${complaint.message} (声誉影响: ${complaint.impact > 0 ? '+' : ''}${complaint.impact})\n`;
+        });
+        
+        alert(message);
+      }
+
+      function updateWarehouseScreen() {
+        const roomSuppliesContainer = document.getElementById('room-supplies');
+        const foodSuppliesContainer = document.getElementById('food-supplies');
+        const luxuryItemsContainer = document.getElementById('luxury-items');
+        
+        roomSuppliesContainer.innerHTML = '';
+        foodSuppliesContainer.innerHTML = '';
+        luxuryItemsContainer.innerHTML = '';
+        
+        Object.entries(gameState.inventory).forEach(([itemId, quantity]) => {
+          if (quantity === 0) return;
+          
+          const item = marketItems.find(i => i.id === itemId);
+          if (!item) return;
+          
+          const itemElement = document.createElement('div');
+          itemElement.className = 'flex justify-between items-center p-2 bg-white rounded-lg';
+          itemElement.innerHTML = `
+            <span>${item.name}</span>
+            <span class="font-bold">${quantity} ${item.unit}</span>
+          `;
+          
+          switch(item.category) {
+            case 'room':
+              roomSuppliesContainer.appendChild(itemElement);
+              break;
+            case 'food':
+              foodSuppliesContainer.appendChild(itemElement);
+              break;
+            case 'luxury':
+              luxuryItemsContainer.appendChild(itemElement);
+              break;
+            default:
+              roomSuppliesContainer.appendChild(itemElement);
+          }
+        });
+        
+        // 如果某个分类没有物品，显示提示
+        if (roomSuppliesContainer.children.length === 0) {
+          roomSuppliesContainer.innerHTML = '<div class="text-gray-500 text-center">暂无物品</div>';
+        }
+        if (foodSuppliesContainer.children.length === 0) {
+          foodSuppliesContainer.innerHTML = '<div class="text-gray-500 text-center">暂无物品</div>';
+        }
+        if (luxuryItemsContainer.children.length === 0) {
+          luxuryItemsContainer.innerHTML = '<div class="text-gray-500 text-center">暂无物品</div>';
+        }
+      }
+      
+      document.getElementById('luxury-banquet-input').addEventListener('input', (e) => {
+        document.getElementById('luxury-banquet-price').textContent = e.target.value;
+      });
+      
+      document.getElementById('premium-banquet-input').addEventListener('input', (e) => {
+        document.getElementById('premium-banquet-price').textContent = e.target.value;
+      });
+    }
+
+    // 开始游戏
+    function startGame() {
+      console.log('开始游戏');
+      
+      const hotelName = document.getElementById('hotel-name').value.trim() || '我的酒店';
+      const initialMoney = parseInt(document.getElementById('initial-money').value) || 1000000;
+      
+      gameState.hotelName = hotelName;
+      gameState.money = initialMoney;
+      
+      document.getElementById('new-game-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      
+      updateDisplay();
+      startGameLoop();
+      
+      showNotification('欢迎', `欢迎来到${hotelName}！开始你的酒店管理之旅吧！`);
+    }
+
+    // 游戏主循环
+    function startGameLoop() {
+      console.log('游戏循环开始');
+      
+      // 记录游戏开始时间
+      if (!gameState.lastDayChange) {
+        gameState.lastDayChange = Date.now();
+      }
+      
+      setInterval(() => {
+        if (!gameState.isPaused) {
+          updateGame();
+          checkDayChange();
+          
+          // 每10秒尝试生成客房服务请求
+          if (Math.random() < 0.3) { // 30%概率
+            generateRoomServiceRequest();
+          }
+          
+          // 每30秒尝试生成客人投诉
+          if (Math.random() < 0.1) { // 10%概率
+            generateGuestComplaint();
+          }
+        }
+      }, 1000 / gameState.gameSpeed);
+    }
+
+    // 检查日期变更（10分钟现实时间 = 1天游戏时间）
+    function checkDayChange() {
+      const now = Date.now();
+      const dayDuration = 10 * 60 * 1000; // 10分钟（毫秒）
+      
+      if (now - gameState.lastDayChange >= dayDuration) {
+        gameState.day++;
+        gameState.lastDayChange = now;
+        
+        // 生成新的特殊任务
+        if (Math.random() < 0.3) { // 30%概率生成新任务
+          generateTasks();
+        }
+        
+        // 可能生成特殊客人
+        if (Math.random() < 0.2 && gameState.reputation > 70) { // 20%概率生成特殊客人
+          generateSpecialGuest();
+        }
+        
+        // 可能生成宴会预订
+        if (Math.random() < 0.15 && gameState.facilities.some(f => f.name === '宴会厅')) {
+          generateBanquetBooking();
+        }
+        
+        // 检查是否需要明星试睡员来访（大约5天来一次）
+        if (gameState.day - gameState.lastStarReviewerDay >= 5) {
+          generateStarReviewer();
+        }
+        
+        // 每日自动生成客房服务请求
+        for (let i = 0; i < Math.min(gameState.guests.length, 5); i++) {
+          generateRoomServiceRequest();
+        }
+        
+        showNotification('新的一天', `今天是第 ${gameState.day} 天！`);
+      }
+    }
+
+    // 更新游戏状态
+    function updateGame() {
+      // 重置每日统计
+      gameState.dailyIncome = 0;
+      gameState.dailyExpenses = 0;
+      
+      // 生成客人
+      generateGuests();
+      
+      // 计算收入和支出
+      calculateIncome();
+      calculateExpenses();
+      
+      // 更新资金
+      gameState.money += (gameState.dailyIncome - gameState.dailyExpenses);
+      
+      // 设施损耗
+      degradeFacilities();
+      
+      // 维修工自动维修
+      repairFacilities();
+      
+      // 更新显示
+      updateDisplay();
+    }
+
+    // 计算收入
+    function calculateIncome() {
+      // 房间收入
+      gameState.facilities.forEach(facility => {
+        if (facility.type === 'room' && facility.durability > 50) {
+          gameState.dailyIncome += facility.income;
+        }
+      });
+      
+      // 服务设施收入
+      gameState.facilities.forEach(facility => {
+        if (facility.type === 'service' && facility.durability > 50) {
+          gameState.dailyIncome += facility.income;
+        }
+      });
+      
+      // 餐票收入
+      const restaurant = gameState.facilities.find(f => f.name === '自助餐厅');
+      if (restaurant && restaurant.durability > 50) {
+        const potentialBuyers = Math.floor(Math.random() * 20) + 10;
+        gameState.mealTicketsSold = Math.min(potentialBuyers, restaurant.capacity);
+        gameState.dailyIncome += (gameState.mealTicketsSold * gameState.mealTicketPrice);
+      }
+      
+      // 纪念品商店收入
+      const souvenirShop = gameState.facilities.find(f => f.name === '纪念品商店');
+      if (souvenirShop && souvenirShop.durability > 50) {
+        const tshirtSales = Math.floor(Math.random() * 5) + 1;
+        const mugSales = Math.floor(Math.random() * 8) + 2;
+        
+        gameState.dailyIncome += (tshirtSales * gameState.souvenirPrices.tshirt);
+        gameState.dailyIncome += (mugSales * gameState.souvenirPrices.mug);
+      }
+      
+      // 宴会厅收入
+      gameState.banquetBookings.forEach(booking => {
+        if (booking.day === gameState.day) {
+          const price = gameState.banquetPrices[booking.type];
+          gameState.dailyIncome += (price * booking.tables);
+        }
+      });
+      
+      // 移除已完成的宴会预订
+      gameState.banquetBookings = gameState.banquetBookings.filter(booking => booking.day > gameState.day);
+    }
+
+    // 计算支出
+    function calculateExpenses() {
+      // 设施维护
+      gameState.facilities.forEach(facility => {
+        gameState.dailyExpenses += facility.maintenance;
+      });
+      
+      // 员工工资
+      gameState.employees.forEach(employee => {
+        gameState.dailyExpenses += (employee.salary / 30); // 日薪
+      });
+    }
+
+    // 设施损耗
+    function degradeFacilities() {
+      gameState.facilities.forEach(facility => {
+        if (Math.random() < 0.1) { // 10%概率损耗
+          facility.durability = Math.max(0, facility.durability - Math.random() * 10);
+        }
+      });
+    }
+
+    // 维修工自动维修
+    function repairFacilities() {
+      const technicians = gameState.employees.filter(e => e.name === '维修工');
+      const brokenFacilities = gameState.facilities.filter(f => f.durability < 100);
+      
+      technicians.forEach(technician => {
+        const repairAmount = technician.efficiency * 2; // 每次维修量
+        
+        brokenFacilities.forEach(facility => {
+          if (facility.durability < 100) {
+            facility.durability = Math.min(100, facility.durability + repairAmount);
+          }
+        });
+      });
+    }
+
+    // 生成客人
+    function generateGuests() {
+      // 计算可容纳的客人数量
+      let totalCapacity = 0;
+      gameState.facilities.forEach(facility => {
+        if (facility.type === 'room' && facility.durability > 50) {
+          totalCapacity += facility.capacity;
+        }
+      });
+      
+      // 基础客人数量
+      let baseGuests = Math.floor(Math.random() * 5) + 3;
+      
+      // 根据声誉调整
+      baseGuests = Math.floor(baseGuests * (1 + gameState.reputation / 100));
+      
+      // 根据营销活动调整
+      gameState.marketing.forEach(campaign => {
+        baseGuests = Math.floor(baseGuests * (1 + campaign.guestIncrease));
+      });
+      
+      // 限制在容量范围内
+      const newGuests = Math.min(baseGuests, totalCapacity - gameState.guests.length);
+      
+      // 生成客人名称
+      const guestNames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十', '郑十一', '王十二'];
+      
+      // 添加新客人
+      for (let i = 0; i < newGuests; i++) {
+        if (gameState.guests.length < totalCapacity) {
+          const guest = {
+            name: guestNames[Math.floor(Math.random() * guestNames.length)] + Math.floor(Math.random() * 1000),
+            room: `房间${Math.floor(Math.random() * 100) + 1}`,
+            checkInDay: gameState.day
+          };
+          gameState.guests.push(guest);
+        }
+      }
+      
+      // 随机退房
+      gameState.guests = gameState.guests.filter(guest => {
+        return Math.random() > 0.3; // 70%概率留下
+      });
+    }
+
+    // 更新显示
+    function updateDisplay() {
+      // 基本信息
+      document.getElementById('hotel-name-display').textContent = gameState.hotelName;
+      document.getElementById('money-display').textContent = `$${gameState.money.toLocaleString()}`;
+      document.getElementById('reputation-display').style.width = `${gameState.reputation}%`;
+      document.getElementById('reputation-text').textContent = `${gameState.reputation}%`;
+      document.getElementById('day-display').textContent = gameState.day;
+      document.getElementById('hotel-level').textContent = gameState.level;
+      
+      // 显示酒店星级
+      document.getElementById('hotel-rating').textContent = `${gameState.rating}⭐`;
+      
+      // 员工数量
+      document.getElementById('receptionist-count').textContent = gameState.employees.filter(e => e.name === '接待员').length;
+      document.getElementById('technician-count').textContent = gameState.employees.filter(e => e.name === '维修工').length;
+      
+      // 设施状态
+      updateFacilityStatus();
+      
+      // 客人信息
+      updateGuestsDisplay();
+      
+      // 更新今日统计
+      const totalIncome = Object.values(gameState.dailyStats).slice(0, 5).reduce((a, b) => a + b, 0);
+      const totalExpenses = Object.values(gameState.dailyStats).slice(5).reduce((a, b) => a + b, 0);
+      document.getElementById('daily-income').textContent = `+$${totalIncome.toLocaleString()}`;
+      document.getElementById('daily-expenses').textContent = `-$${totalExpenses.toLocaleString()}`;
+      const profit = totalIncome - totalExpenses;
+      document.getElementById('daily-profit').textContent = `${profit >= 0 ? '+' : ''}$${profit.toLocaleString()}`;
+      document.getElementById('daily-profit').className = `font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`;
+      
+      // 更新客人数量
+      document.getElementById('guest-count').textContent = gameState.guests.length;
+      
+      // 更新餐票销售信息
+      document.getElementById('dining-guests').textContent = gameState.mealTicketsSold;
+      
+      // 更新房间信息
+      const totalRooms = gameState.facilities.filter(f => f.type === 'room').length;
+      const occupiedRooms = Math.ceil(gameState.guests.length / 2); // 假设每间房住2人
+      document.getElementById('room-count').textContent = totalRooms;
+      document.getElementById('occupied-rooms').textContent = occupiedRooms;
+      
+      // 更新等待客人数量
+      const receptionists = gameState.employees.filter(e => e.name === '接待员').length;
+      const waitingGuests = Math.max(0, Math.floor(Math.random() * 5) - receptionists);
+      document.getElementById('waiting-guests').textContent = Math.max(0, waitingGuests);
+    }
+
+    // 更新设施状态显示
+    function updateFacilityStatus() {
+      const statusBars = document.querySelectorAll('#facilities-status .progress-bar-fill');
+      
+      // 简化的状态显示
+      statusBars.forEach(bar => {
+        bar.style.width = '100%';
+        bar.className = 'progress-bar-fill bg-success';
+      });
+      
+      // 如果有损坏的设施，显示警告
+      const brokenFacility = gameState.facilities.find(f => f.durability < 50);
+      if (brokenFacility) {
+        statusBars[1].style.width = '50%';
+        statusBars[1].className = 'progress-bar-fill bg-warning';
+      }
+    }
+
+    // 更新客人显示
+    function updateGuestsDisplay() {
+      const container = document.getElementById('guests-container');
+      
+      if (gameState.guests.length === 0) {
+        container.innerHTML = '<div class="text-gray-500 text-sm text-center py-4">暂无客人</div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      gameState.guests.slice(0, 5).forEach(guest => {
+        const guestElement = document.createElement('div');
+        guestElement.className = 'bg-gray-50 p-2 rounded text-sm';
+        guestElement.innerHTML = `
+          <div class="flex justify-between">
+            <span>${guest.name}</span>
+            <span class="text-primary">${guest.room}</span>
+          </div>
+        `;
+        container.appendChild(guestElement);
+      });
+    }
+
+    // 切换屏幕
+    function toggleScreen(screenId) {
+      const screen = document.getElementById(screenId);
+      screen.classList.toggle('hidden');
+      
+      if (!screen.classList.contains('hidden')) {
+        gameState.isPaused = true;
+        updateScreenContent(screenId);
+      } else {
+        gameState.isPaused = false;
+      }
+    }
+
+    // 更新屏幕内容
+    function updateScreenContent(screenId) {
+      if (screenId === 'facilities-screen') {
+        updateFacilitiesScreen();
+      } else if (screenId === 'employees-screen') {
+        updateEmployeesScreen();
+      } else if (screenId === 'marketing-screen') {
+        updateMarketingScreen();
+      } else if (screenId === 'souvenir-screen') {
+        updateSouvenirDisplay();
+      } else if (screenId === 'banquet-screen') {
+        updateBanquetDisplay();
+      } else if (screenId === 'task-screen') {
+        generateTasks();
+      }
+    }
+
+    // 更新纪念品商店显示
+    function updateSouvenirDisplay() {
+      document.getElementById('tshirt-price-input').value = gameState.souvenirPrices.tshirt;
+      document.getElementById('tshirt-price').textContent = gameState.souvenirPrices.tshirt;
+      document.getElementById('mug-price-input').value = gameState.souvenirPrices.mug;
+      document.getElementById('mug-price').textContent = gameState.souvenirPrices.mug;
+    }
+
+    // 更新宴会厅显示
+    function updateBanquetDisplay() {
+      const bookingsContainer = document.getElementById('banquet-bookings');
+      
+      if (gameState.banquetBookings.length === 0) {
+        bookingsContainer.innerHTML = '暂无预订';
+      } else {
+        bookingsContainer.innerHTML = '';
+        gameState.banquetBookings.forEach(booking => {
+          const div = document.createElement('div');
+          div.className = 'p-2 border-b border-gray-200';
+          div.innerHTML = `
+            <div class="font-bold">${booking.customer}</div>
+            <div class="text-xs text-gray-600">
+              ${booking.type === 'standard' ? '标准' : booking.type === 'luxury' ? '豪华' : '至尊'}宴席 - 
+              ${booking.tables}桌 - 第${booking.day}天
+            </div>
+          `;
+          bookingsContainer.appendChild(div);
+        });
+      }
+      
+      // 更新价格滑块
+      document.getElementById('standard-banquet-input').value = gameState.banquetPrices.standard;
+      document.getElementById('standard-banquet-price').textContent = gameState.banquetPrices.standard;
+      document.getElementById('luxury-banquet-input').value = gameState.banquetPrices.luxury;
+      document.getElementById('luxury-banquet-price').textContent = gameState.banquetPrices.luxury;
+      document.getElementById('premium-banquet-input').value = gameState.banquetPrices.premium;
+      document.getElementById('premium-banquet-price').textContent = gameState.banquetPrices.premium;
+    }
+
+    // 生成特殊任务
+    function generateTasks() {
+      const tasks = [
+        {
+          id: 'task_1',
+          title: '紧急维修',
+          description: '酒店的空调系统出现故障，需要立即修复。',
+          requirements: {
+            employees: {
+              维修工: 2
+            },
+            facilities: ['空调系统']
+          },
+          reward: {
+            money: 20000,
+            reputation: 5
+          },
+          difficulty: 'easy'
+        },
+        {
+          id: 'task_2',
+          title: 'VIP接待',
+          description: '一位重要客人即将到来，需要准备豪华套房和专属服务。',
+          requirements: {
+            facilities: ['豪华套房']
+          },
+          reward: {
+            money: 50000,
+            reputation: 10
+          },
+          difficulty: 'medium'
+        },
+        {
+          id: 'task_3',
+          title: '大型会议',
+          description: '承办一个大型商务会议，需要多个会议室和专业设备。',
+          requirements: {
+            facilities: ['会议室', '音响系统'],
+            employees: {
+              接待员: 3
+            }
+          },
+          reward: {
+            money: 80000,
+            reputation: 15
+          },
+          difficulty: 'hard'
+        },
+        {
+          id: 'task_4',
+          title: '节日庆典',
+          description: '准备新年庆典活动，需要装饰酒店并提供特色餐饮。',
+          requirements: {
+            facilities: ['宴会厅', '自助餐厅']
+          },
+          reward: {
+            money: 100000,
+            reputation: 20
+          },
+          difficulty: 'expert'
+        }
+      ];
+      
+      // 随机选择2-3个任务
+      const availableTasks = tasks.sort(() => 0.5 - Math.random()).slice(0, Math.floor(Math.random() * 2) + 2);
+      // 为任务添加限时属性
+      gameState.tasks = availableTasks.map(task => ({
+        ...task,
+        expiresAt: gameState.day + 1, // 任务只在当天有效
+        completed: false
+      }));
+      
+      // 显示任务
+      const container = document.getElementById('available-tasks');
+      container.innerHTML = '';
+      
+      gameState.tasks.forEach(task => {
+        const remainingDays = task.expiresAt - gameState.day;
+        const isExpired = remainingDays <= 0;
+        
+        const taskElement = document.createElement('div');
+        taskElement.className = `bg-white border-2 ${isExpired ? 'border-red-300' : 'border-gray-200'} rounded-lg p-4 card-shadow`;
+        
+        const difficultyColors = {
+          easy: 'bg-green-100 text-green-800',
+          medium: 'bg-yellow-100 text-yellow-800',
+          hard: 'bg-orange-100 text-orange-800',
+          expert: 'bg-red-100 text-red-800'
+        };
+        
+        taskElement.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <h3 class="font-bold text-lg">${task.title}</h3>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-1 text-xs rounded-full ${difficultyColors[task.difficulty]}">
+                ${task.difficulty === 'easy' ? '简单' : task.difficulty === 'medium' ? '中等' : task.difficulty === 'hard' ? '困难' : '专家'}
+              </span>
+              <span class="px-2 py-1 text-xs rounded-full bg-${isExpired ? 'red' : 'orange'}-100 text-${isExpired ? 'red' : 'orange'}-800">
+                <i class="fa fa-clock-o mr-1"></i> ${isExpired ? '已过期' : `${remainingDays}天`}
+              </span>
+            </div>
+          </div>
+          <p class="text-gray-600 mb-4">${task.description}</p>
+          <div class="mb-4">
+            <h4 class="font-bold text-sm mb-2">需求:</h4>
+            <ul class="text-sm text-gray-600">
+              ${task.requirements.facilities ? task.requirements.facilities.map(f => `<li>• ${f}</li>`).join('') : ''}
+              ${task.requirements.employees ? Object.entries(task.requirements.employees).map(([type, count]) => `<li>• ${type} x${count}</li>`).join('') : ''}
+            </ul>
+          </div>
+          <div class="flex justify-between items-center text-sm font-bold">
+            <span class="text-success">奖励: $${task.reward.money.toLocaleString()}</span>
+            <span class="text-primary">声誉: +${task.reward.reputation}%</span>
+          </div>
+          <button class="complete-task-btn mt-4 w-full button-3d-primary py-2 ${isExpired ? 'opacity-50 cursor-not-allowed' : ''}" 
+                  data-task-id="${task.id}" ${isExpired ? 'disabled' : ''}>
+            ${isExpired ? '已过期' : '完成任务'}
+          </button>
+        `;
+        
+        container.appendChild(taskElement);
+      });
+      
+      // 绑定任务完成按钮事件
+      document.querySelectorAll('.complete-task-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          completeTask(this.dataset.taskId);
+        });
+      });
+    }
+
+    // 完成任务
+    function completeTask(taskId) {
+      const task = gameState.tasks.find(t => t.id === taskId);
+      
+      if (!task || task.expiresAt <= gameState.day) {
+        showNotification('任务已过期', '该任务已经过期，无法完成', 'warning');
+        return;
+      }
+      
+      // 检查任务需求
+      let canComplete = true;
+      
+      // 检查设施需求
+      if (task.requirements.facilities) {
+        task.requirements.facilities.forEach(facilityName => {
+          if (!gameState.facilities.some(f => f.name === facilityName)) {
+            canComplete = false;
+          }
+        });
+      }
+      
+      // 检查员工需求
+      if (task.requirements.employees) {
+        Object.entries(task.requirements.employees).forEach(([type, count]) => {
+          const employeeCount = gameState.employees.filter(e => e.name === type).length;
+          if (employeeCount < count) {
+            canComplete = false;
+          }
+        });
+      }
+      
+      if (canComplete) {
+        // 完成任务
+        gameState.money += task.reward.money;
+        gameState.reputation = Math.min(100, gameState.reputation + task.reward.reputation);
+        gameState.completedTasks.push(task);
+        gameState.tasks = gameState.tasks.filter(t => t.id !== taskId);
+        
+        showNotification('任务完成', `恭喜！获得奖励 $${task.reward.money.toLocaleString()} 和 ${task.reward.reputation}% 声誉！`);
+        
+        // 重新生成任务
+        generateTasks();
+      } else {
+        showNotification('无法完成', '你尚未满足任务的所有需求。');
+      }
+    }
+
+    // 生成特殊客人
+    function generateSpecialGuest() {
+      const specialGuests = [
+        {
+          name: '美食评论家',
+          effect: '提高餐厅声誉',
+          ratingEffect: 0.5
+        },
+        {
+          name: '旅游博主',
+          effect: '提高整体声誉',
+          ratingEffect: 1
+        },
+        {
+          name: '酒店评测师',
+          effect: '可能提高酒店星级',
+          ratingEffect: 2
+        }
+      ];
+      
+      const guest = specialGuests[Math.floor(Math.random() * specialGuests.length)];
+      gameState.specialGuests.push(guest);
+      
+      showNotification('特殊客人到来', `${guest.name}来到了你的酒店！`);
+      
+      // 特殊客人效果
+      setTimeout(() => {
+        if (Math.random() < 0.7) { // 70%概率成功
+          gameState.reputation = Math.min(100, gameState.reputation + 5);
+          
+          // 可能提高星级
+          if (guest.ratingEffect >= 2 && Math.random() < 0.3) {
+            gameState.rating = Math.min(5, gameState.rating + 1);
+            showNotification('星级提升', `恭喜！你的酒店升级为 ${gameState.rating}⭐ 酒店！`);
+          } else {
+            showNotification('声誉提升', `${guest.name}对你的酒店印象很好，声誉提升了！`);
+          }
+        } else {
+          gameState.reputation = Math.max(0, gameState.reputation - 3);
+          showNotification('声誉下降', `${guest.name}对你的酒店印象不佳，声誉下降了。`);
+        }
+      }, 30000); // 30秒后生效
+    }
+
+    // 生成宴会预订
+    function generateBanquetBooking() {
+      const customers = ['张先生', '李女士', '王总', '赵经理', '陈董事长'];
+      const types = ['standard', 'luxury', 'premium'];
+      
+      const booking = {
+        id: 'booking_' + Date.now(),
+        customer: customers[Math.floor(Math.random() * customers.length)],
+        type: types[Math.floor(Math.random() * types.length)],
+        tables: Math.floor(Math.random() * 10) + 5, // 5-15桌
+        day: gameState.day + Math.floor(Math.random() * 7) + 1 // 1-7天后
+      };
+      
+      gameState.banquetBookings.push(booking);
+      
+      showNotification('宴会预订', `${booking.customer}预订了${booking.tables}桌${booking.type === 'standard' ? '标准' : booking.type === 'luxury' ? '豪华' : '至尊'}宴席！`);
+    }
+
+    // 保存游戏
+    function saveGame() {
+      console.log('保存游戏...');
+      
+      try {
+        const saveData = {
+          gameState: gameState,
+          timestamp: new Date().toISOString(),
+          version: '1.0'
+        };
+        
+        localStorage.setItem('hotelManagerSave', JSON.stringify(saveData));
+        
+        showNotification('保存成功', '游戏进度已保存！');
+        checkForSavedGame(); // 更新加载按钮状态
+        
+      } catch (error) {
+        console.error('保存游戏失败:', error);
+        showNotification('保存失败', '无法保存游戏进度，请稍后再试。');
+      }
+    }
+
+    // 加载游戏
+    function loadGame() {
+      console.log('加载游戏...');
+      
+      try {
+        const savedData = localStorage.getItem('hotelManagerSave');
+        
+        if (!savedData) {
+          showNotification('加载失败', '没有找到存档文件。');
+          return;
+        }
+        
+        const saveData = JSON.parse(savedData);
+        
+        // 恢复游戏状态
+        Object.assign(gameState, saveData.gameState);
+        
+        // 显示游戏界面
+        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('new-game-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
+        // 更新显示
+        updateDisplay();
+        
+        // 重新开始游戏循环
+        startGameLoop();
+        
+        showNotification('加载成功', '游戏进度已恢复！');
+        
+      } catch (error) {
+        console.error('加载游戏失败:', error);
+        showNotification('加载失败', '无法加载游戏进度，存档文件可能已损坏。');
+      }
+    }
+
+    // 更新设施屏幕
+    function updateFacilitiesScreen() {
+      const container = document.getElementById('existing-facilities');
+      
+      if (gameState.facilities.length === 0) {
+        container.innerHTML = '<div class="bg-gray-50 p-4 rounded-lg"><p class="text-gray-500 text-center">你还没有任何设施，请从右侧建造。</p></div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      gameState.facilities.forEach(facility => {
+        const element = document.createElement('div');
+        element.className = 'bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow';
+        element.innerHTML = `
+          <div class="p-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-gray-700">${facility.name}</h4>
+                <p class="text-sm text-gray-500">${facility.description}</p>
+              </div>
+              <span class="bg-${facility.type === 'room' ? 'primary' : 'secondary'} text-white text-xs px-2 py-1 rounded-full">${facility.type === 'room' ? '客房' : '服务'}</span>
+            </div>
+            
+            <div class="mt-3 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">每日收入:</span>
+                <span class="font-bold text-green-600">+$${facility.income}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">每日维护:</span>
+                <span class="font-bold text-red-600">-$${facility.maintenance}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">状态:</span>
+                <div class="flex items-center">
+                  <div class="progress-bar w-24 mr-2">
+                    <div class="progress-bar-fill bg-${facility.durability > 50 ? 'success' : 'warning'}" style="width: ${facility.durability}%"></div>
+                  </div>
+                  <span class="font-bold">${facility.durability}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(element);
+      });
+    }
+
+    // 更新员工屏幕
+    function updateEmployeesScreen() {
+      const container = document.getElementById('existing-employees');
+      
+      if (gameState.employees.length === 0) {
+        container.innerHTML = '<div class="bg-gray-50 p-4 rounded-lg"><p class="text-gray-500 text-center">你还没有任何员工，请从右侧雇佣。</p></div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      gameState.employees.forEach(employee => {
+        const element = document.createElement('div');
+        element.className = 'bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow';
+        element.innerHTML = `
+          <div class="p-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-gray-700">${employee.name}</h4>
+                <p class="text-sm text-gray-500">${employee.description}</p>
+              </div>
+              <span class="bg-primary text-white text-xs px-2 py-1 rounded-full">${employee.type}</span>
+            </div>
+            
+            <div class="mt-3 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">月薪:</span>
+                <span class="font-bold text-red-600">-$${employee.salary}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">效率:</span>
+                <span class="font-bold text-gray-700">${employee.efficiency}/小时</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(element);
+      });
+    }
+
+    // 更新营销屏幕
+    function updateMarketingScreen() {
+      const container = document.getElementById('active-marketing');
+      
+      if (gameState.marketing.length === 0) {
+        container.innerHTML = '<div class="bg-gray-50 p-4 rounded-lg"><p class="text-gray-500 text-center">暂无进行中的营销活动。</p></div>';
+        return;
+      }
+      
+      container.innerHTML = '';
+      gameState.marketing.forEach(campaign => {
+        const element = document.createElement('div');
+        element.className = 'bg-white border-2 border-gray-200 rounded-lg overflow-hidden card-shadow';
+        element.innerHTML = `
+          <div class="p-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-bold text-gray-700">${campaign.name}</h4>
+                <p class="text-sm text-gray-500">${campaign.description}</p>
+              </div>
+              <span class="bg-info text-white text-xs px-2 py-1 rounded-full">进行中</span>
+            </div>
+            
+            <div class="mt-3 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">剩余时间:</span>
+                <span class="font-bold text-primary">${campaign.daysRemaining}天</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">效果:</span>
+                <span class="font-bold text-green-600">客人 +${campaign.guestIncrease * 100}%</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(element);
+      });
+    }
+
+    // 建造设施
+    function buildFacility(type) {
+      const data = facilityData[type];
+      
+      if (!data) {
+        console.error('未知设施类型:', type);
+        return;
+      }
+      
+      if (gameState.money < data.cost) {
+        showNotification('资金不足', `建造${data.name}需要 $${data.cost}`);
+        return;
+      }
+      
+      // 扣除资金
+      gameState.money -= data.cost;
+      
+      // 添加设施
+      const facility = {
+        ...data,
+        durability: 100
+      };
+      
+      gameState.facilities.push(facility);
+      
+      // 更新显示
+      updateFacilitiesScreen();
+      updateDisplay();
+      
+      showNotification('建造成功', `${data.name}建造完成！`);
+    }
+
+    // 雇佣员工
+    function hireEmployee(type) {
+      const data = employeeData[type];
+      
+      if (!data) {
+        console.error('未知员工类型:', type);
+        return;
+      }
+      
+      if (gameState.money < data.cost) {
+        showNotification('资金不足', `雇佣${data.name}需要 $${data.cost}`);
+        return;
+      }
+      
+      // 扣除资金
+      gameState.money -= data.cost;
+      
+      // 添加员工
+      const employee = {
+        ...data
+      };
+      
+      gameState.employees.push(employee);
+      
+      // 更新显示
+      updateEmployeesScreen();
+      updateDisplay();
+      
+      showNotification('雇佣成功', `${data.name}已加入你的团队！`);
+    }
+
+    // 开始营销活动
+    function startMarketing(type) {
+      const data = marketingData[type];
+      
+      if (!data) {
+        console.error('未知营销活动类型:', type);
+        return;
+      }
+      
+      if (gameState.money < data.cost) {
+        showNotification('资金不足', `开展${data.name}需要 $${data.cost}`);
+        return;
+      }
+      
+      // 检查是否已有相同活动
+      if (gameState.marketing.some(c => c.name === data.name)) {
+        showNotification('活动冲突', `${data.name}已经在进行中！`);
+        return;
+      }
+      
+      // 扣除资金
+      gameState.money -= data.cost;
+      
+      // 添加活动
+      const campaign = {
+        ...data,
+        daysRemaining: data.duration
+      };
+      
+      gameState.marketing.push(campaign);
+      
+      // 立即提升声誉
+      if (data.reputationIncrease > 0) {
+        gameState.reputation = Math.min(100, gameState.reputation + data.reputationIncrease);
+      }
+      
+      // 更新显示
+      updateMarketingScreen();
+      updateDisplay();
+      
+      showNotification('活动开始', `${data.name}已开始！`);
+    }
+
+    // 筛选设施
+    function filterFacilities(type) {
+      const cards = document.querySelectorAll('.facility-card');
+      
+      cards.forEach(card => {
+        if (type === 'all' || card.dataset.type === type) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    }
+
+    // 显示区域信息
+    function showAreaInfo(areaType) {
+      switch (areaType) {
+        case 'reception':
+          showNotification('接待区', '客人办理入住和退房的地方。雇佣更多接待员可以提高服务效率。');
+          break;
+        case 'rooms':
+          // 显示客房服务请求
+          showRoomServiceRequests();
+          break;
+        case 'restaurant':
+          // 显示餐票价格设置
+          const mealTicketScreen = document.getElementById('meal-ticket-screen');
+          const mealTicketPriceInput = document.getElementById('meal-ticket-price-input');
+          const mealTicketPriceDisplay = document.getElementById('meal-ticket-price-display');
+          
+          // 确保在显示弹窗前更新价格
+          if (mealTicketPriceInput && mealTicketPriceDisplay) {
+            mealTicketPriceInput.value = gameState.mealTicketPrice;
+            mealTicketPriceDisplay.textContent = gameState.mealTicketPrice;
+            console.log('餐厅区域点击 - 更新餐票价格:', gameState.mealTicketPrice);
+          }
+          
+          mealTicketScreen.classList.remove('hidden');
+          gameState.isPaused = true;
+          break;
+      }
+    }
+
+    // 显示客房服务请求
+    function showRoomServiceRequests() {
+      if (gameState.roomServices.length > 0) {
+        const requestsText = gameState.roomServices.map(req => 
+          `房间${req.roomNumber}: ${req.item} x${req.quantity}`
+        ).join('\\n');
+        showNotification('客房服务请求', requestsText);
+      } else {
+        showNotification('客房服务', '当前没有客房服务请求。');
+      }
+    }
+
+    // 显示通知
+    // 显示每日结算报告
+    function showDailyReport() {
+      const totalIncome = Object.values(gameState.dailyStats).slice(0, 5).reduce((a, b) => a + b, 0);
+      const totalExpenses = Object.values(gameState.dailyStats).slice(5).reduce((a, b) => a + b, 0);
+      const profit = totalIncome - totalExpenses;
+
+      // 更新报告数据
+      document.getElementById('report-day').textContent = gameState.day;
+      document.getElementById('report-room-income').textContent = `$${gameState.dailyStats.roomIncome.toLocaleString()}`;
+      document.getElementById('report-service-income').textContent = `$${gameState.dailyStats.serviceIncome.toLocaleString()}`;
+      document.getElementById('report-meal-income').textContent = `$${gameState.dailyStats.mealIncome.toLocaleString()}`;
+      document.getElementById('report-banquet-income').textContent = `$${gameState.dailyStats.banquetIncome.toLocaleString()}`;
+      document.getElementById('report-total-income').textContent = `$${totalIncome.toLocaleString()}`;
+      
+      document.getElementById('report-maintenance').textContent = `$${gameState.dailyStats.facilityMaintenance.toLocaleString()}`;
+      document.getElementById('report-salary').textContent = `$${gameState.dailyStats.employeeSalary.toLocaleString()}`;
+      document.getElementById('report-inventory').textContent = `$${gameState.dailyStats.inventoryCost.toLocaleString()}`;
+      document.getElementById('report-loan').textContent = `$${gameState.dailyStats.loanPayment.toLocaleString()}`;
+      document.getElementById('report-total-expenses').textContent = `$${totalExpenses.toLocaleString()}`;
+      
+      document.getElementById('report-profit').textContent = `$${profit.toLocaleString()}`;
+      document.getElementById('report-profit').className = `text-3xl font-bold ${profit >= 0 ? 'text-blue-700' : 'text-red-700'}`;
+
+      // 显示弹窗
+      document.getElementById('daily-report-screen').classList.remove('hidden');
+      
+      // 暂停游戏
+      gameState.isPaused = true;
+    }
+
+    // 生成客房服务请求
+    function generateRoomServiceRequest() {
+      if (Math.random() < 0.3 && gameState.guests.length > 0) {
+        const request = roomServiceRequests[Math.floor(Math.random() * roomServiceRequests.length)];
+        const roomNumber = Math.floor(Math.random() * 100) + 1;
+        
+        const serviceRequest = {
+          id: Date.now(),
+          roomNumber,
+          item: request.item,
+          quantity: request.quantity,
+          price: request.price,
+          description: request.description,
+          day: gameState.day,
+          completed: false,
+          expiresAt: gameState.day + 1
+        };
+        
+        gameState.roomServices.push(serviceRequest);
+        showNotification('客房服务请求', `${roomNumber}号房需要: ${request.description}`, 'info');
+      }
+    }
+
+    // 生成客人投诉
+    function generateGuestComplaint() {
+      if (Math.random() < 0.2) {
+        const complaint = guestComplaints[Math.floor(Math.random() * guestComplaints.length)];
+        gameState.guestComplaints.push({
+          ...complaint,
+          id: Date.now(),
+          day: gameState.day
+        });
+        
+        gameState.reputation = Math.max(0, gameState.reputation + complaint.impact);
+        showNotification('客人投诉', complaint.message, 'warning');
+      }
+    }
+
+    // 检查任务过期
+    function checkTaskExpiration() {
+      const expiredTasks = gameState.tasks.filter(task => task.expiresAt <= gameState.day);
+      if (expiredTasks.length > 0) {
+        expiredTasks.forEach(task => {
+          gameState.reputation = Math.max(0, gameState.reputation - 5); // 过期任务扣除声誉
+          showNotification('任务过期', `任务"${task.title}"已过期，声誉-5`, 'warning');
+        });
+        // 移除过期任务
+        gameState.tasks = gameState.tasks.filter(task => task.expiresAt > gameState.day);
+        updateGameUI();
+      }
+    }
+
+    function showNotification(title, message, type = 'success') {
+      const container = document.getElementById('notifications');
+      const notification = document.createElement('div');
+      
+      notification.className = 'bg-blue-50 border-l-4 border-info p-3 rounded animate-fade-in';
+      notification.innerHTML = `
+        <p class="font-bold text-gray-700">${title}</p>
+        <p class="text-sm text-gray-600">${message}</p>
+      `;
+      
+      container.insertBefore(notification, container.firstChild);
+      
+      // 限制通知数量
+      if (container.children.length > 5) {
+        container.removeChild(container.lastChild);
+      }
+      
+      // 3秒后自动移除
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.classList.add('animate-fade-out');
+          setTimeout(() => {
+            if (notification.parentNode) {
+              container.removeChild(notification);
+            }
+          }, 300);
+        }
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网页版安卓14模拟器 - 支持Root权限</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 统一的 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1A68E5',
+                        secondary: '#D83A30',
+                        neutral: '#F8F9FA',
+                        'neutral-dark': '#333333',
+                        'neutral-medium': '#666666',
+                        'primary-light': '#E8F1FF',
+                        'secondary-light': '#FFECEB',
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'android': '0 4px 20px rgba(0, 0, 0, 0.15)',
+                        'button': '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        'card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 基础样式 */
+        .text-shadow {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .text-shadow-lg {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .glass-effect-dark {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        /* 按钮样式 */
+        .android-button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: #1A68E5;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .android-button:hover {
+            background-color: rgba(26, 104, 229, 0.9);
+        }
+        
+        .android-button:active {
+            transform: scale(0.98);
+        }
+        
+        .android-button-secondary {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background-color: #D83A30;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .android-button-secondary:hover {
+            background-color: rgba(216, 58, 48, 0.9);
+        }
+        
+        .android-button-secondary:active {
+            transform: scale(0.98);
+        }
+        
+        /* 卡片样式 */
+        .android-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            transition: all 0.3s;
+        }
+        
+        .android-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            height: 24px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+        
+        /* 导航栏 */
+        .nav-bar {
+            height: 48px;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-button {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        .nav-button:active {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 应用图标 */
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .app-icon:active {
+            transform: scale(0.95);
+        }
+        
+        .app-label {
+            font-size: 12px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 72px;
+        }
+        
+        /* 开关样式 */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #1A68E5;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Root授权样式 */
+        .root-granted {
+            border: 2px solid #1A68E5;
+            box-shadow: 0 0 8px rgba(26, 104, 229, 0.4);
+        }
+        
+        /* 文件管理器样式 */
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .file-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .file-name {
+            flex: 1;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #666;
+            margin-left: 8px;
+        }
+        
+        /* 进度条 */
+        .progress-bar {
+            height: 4px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #1A68E5;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        /* 屏幕旋转 */
+        .screen-rotation {
+            transition: transform 0.5s ease;
+        }
+        
+        .screen-rotation.rotated {
+            transform: rotate(90deg) scale(0.75);
+        }
+        
+        /* 动画 */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideUp {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideDown {
+            0% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .animate-slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+        
+        .animate-slide-down {
+            animation: slideDown 0.4s ease-out;
+        }
+        
+        .animate-slide-in-left {
+            animation: slideInLeft 0.3s ease-out;
+        }
+        
+        .animate-slide-in-right {
+            animation: slideInRight 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-neutral-dark mb-2">网页版安卓14模拟器</h1>
+            <p class="text-neutral-medium">支持Root权限，在浏览器中体验完整的安卓14系统</p>
+        </header>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- 左侧控制栏 -->
+            <div class="lg:w-64 bg-white rounded-xl shadow-android p-4">
+                <h2 class="text-xl font-bold mb-4 text-neutral-dark">模拟器控制</h2>
+                
+                <!-- Root权限开关 -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-medium text-neutral-dark">Root权限</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="root-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <p class="text-sm text-neutral-medium" id="root-status">未开启</p>
+                </div>
+                
+                <!-- 性能监控 -->
+                <div class="mb-6">
+                    <h3 class="font-medium text-neutral-dark mb-3">性能监控</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>CPU使用率</span>
+                                <span id="cpu-usage">32%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="cpu-bar" style="width: 32%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>内存使用率</span>
+                                <span id="memory-usage">45%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="memory-bar" style="width: 45%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 系统控制 -->
+                <div class="mb-6">
+                    <h3 class="font-medium text-neutral-dark mb-3">系统控制</h3>
+                    <div class="space-y-2">
+                        <button id="install-app-btn" class="w-full android-button flex items-center justify-center">
+                            <i class="fa fa-download mr-2"></i> 安装应用
+                        </button>
+                        <button id="file-manager-btn" class="w-full android-button flex items-center justify-center">
+                            <i class="fa fa-folder mr-2"></i> 文件管理器
+                        </button>
+                        <button id="screen-record-btn" class="w-full android-button flex items-center justify-center">
+                            <i class="fa fa-video-camera mr-2"></i> 屏幕录制
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 设备信息 -->
+                <div>
+                    <h3 class="font-medium text-neutral-dark mb-3">设备信息</h3>
+                    <div class="text-sm space-y-1 text-neutral-medium">
+                        <p>设备型号: Android Emulator</p>
+                        <p>系统版本: Android 14</p>
+                        <p>屏幕分辨率: 1080 x 1920</p>
+                        <p id="battery-status">电池电量: 78%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 中央模拟器区域 -->
+            <div class="flex-1 flex flex-col items-center">
+                <div class="relative w-full max-w-md">
+                    <!-- 模拟器外壳 -->
+                    <div class="bg-black rounded-[40px] p-2 shadow-xl w-full">
+                        <!-- 状态栏 -->
+                        <div class="status-bar rounded-t-[32px] px-4">
+                            <div class="flex items-center">
+                                <span id="current-time">13:14</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fa fa-signal"></i>
+                                <i class="fa fa-wifi"></i>
+                                <i class="fa fa-battery-three-quarters"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- 屏幕区域 -->
+                        <div class="relative bg-neutral rounded-[28px] overflow-hidden" style="height: 600px;">
+                            <!-- 主屏幕 -->
+                            <div id="home-screen" class="absolute inset-0 bg-gradient-to-b from-blue-100 to-blue-200">
+                                <!-- 应用图标网格 -->
+                                <div class="grid grid-cols-4 gap-4 p-6 pt-12">
+                                    <div class="flex flex-col items-center app-item" data-app="settings">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-cog text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">设置</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="camera">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-camera text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">相机</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="gallery">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-picture-o text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">相册</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="messages">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-comment text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">短信</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="phone">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-phone text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">电话</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="browser">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-globe text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">浏览器</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="calendar">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-calendar text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">日历</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="root">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-shield text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">Root管理</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 第二页应用图标 -->
+                                <div class="grid grid-cols-4 gap-4 p-6 pt-2">
+                                    <div class="flex flex-col items-center app-item" data-app="playstore">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-shopping-bag text-green-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">应用商店</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="music">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-music text-purple-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">音乐</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="video">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-film text-red-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">视频</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="calculator">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-calculator text-blue-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">计算器</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="clock">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-clock-o text-orange-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">时钟</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="weather">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-cloud text-sky-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">天气</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="notepad">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-sticky-note text-yellow-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">记事本</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="contacts">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-address-book text-indigo-600 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">联系人</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="browser">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-globe text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">浏览器</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="calendar">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-calendar text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">日历</span>
+                                    </div>
+                                    <div class="flex flex-col items-center app-item" data-app="root">
+                                        <div class="app-icon bg-white">
+                                            <i class="fa fa-shield text-gray-700 text-xl"></i>
+                                        </div>
+                                        <span class="app-label">Root管理</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 设置页面 -->
+                            <div id="settings-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b">
+                                    <h2 class="text-xl font-bold">设置</h2>
+                                </div>
+                                <div class="p-4 space-y-2">
+                                    <div class="bg-white rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-medium">关于手机</h3>
+                                            <p class="text-sm text-neutral-medium">Android 14 中文版</p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-medium">系统更新</h3>
+                                            <p class="text-sm text-neutral-medium">当前已是最新版本</p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-medium">安全</h3>
+                                            <p class="text-sm text-neutral-medium">设备安全状态良好</p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-medium">应用管理</h3>
+                                            <p class="text-sm text-neutral-medium">已安装 8 个应用</p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4 flex items-center justify-between">
+                                        <div>
+                                            <h3 class="font-medium">存储</h3>
+                                            <p class="text-sm text-neutral-medium">已使用 2.3GB / 16GB</p>
+                                        </div>
+                                        <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Root管理页面 -->
+                            <div id="root-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-primary p-4 flex items-center">
+                                    <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center mr-3">
+                                        <i class="fa fa-shield text-primary text-xl"></i>
+                                    </div>
+                                    <h2 class="text-xl font-bold text-white">Root权限管理</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div class="bg-white rounded-lg p-4 mb-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="font-medium">Root权限状态</h3>
+                                            <span id="root-status-badge" class="px-2 py-1 bg-gray-200 text-xs rounded-full">未开启</span>
+                                        </div>
+                                        <p class="text-sm text-neutral-medium">Root权限允许应用访问系统核心功能，但可能带来安全风险。</p>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-4">
+                                        <h3 class="font-medium mb-3">已授权应用</h3>
+                                        <div id="root-apps-list" class="text-sm text-neutral-medium">
+                                            <p class="text-center py-4">暂无已授权应用</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 文件管理器页面 -->
+                            <div id="file-manager-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="file-manager-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">文件管理器</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div id="file-path" class="text-sm text-neutral-medium mb-4">/</div>
+                                    <div id="file-list" class="space-y-1">
+                                        <!-- 文件列表将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 应用安装页面 -->
+                            <div id="install-app-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="install-app-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">安装应用</h2>
+                                </div>
+                                <div class="p-6 flex flex-col items-center justify-center">
+                                    <div class="w-24 h-24 rounded-full bg-primary-light flex items-center justify-center mb-4">
+                                        <i class="fa fa-download text-4xl text-primary"></i>
+                                    </div>
+                                    <h3 class="text-lg font-medium mb-2">选择APK文件</h3>
+                                    <p class="text-sm text-neutral-medium text-center mb-6">上传APK文件以安装应用</p>
+                                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 w-full text-center">
+                                        <input type="file" id="apk-file" accept=".apk" class="hidden">
+                                        <label for="apk-file" class="cursor-pointer">
+                                            <i class="fa fa-cloud-upload text-3xl text-neutral-medium mb-2"></i>
+                                            <p class="text-sm">点击或拖拽APK文件到此处</p>
+                                            <p class="text-xs text-neutral-medium mt-1">支持的文件格式: .apk</p>
+                                        </label>
+                                    </div>
+                                    <div id="install-progress" class="w-full mt-6 hidden">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>安装进度</span>
+                                            <span id="install-percentage">0%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="install-progress-bar" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 屏幕录制提示 -->
+                            <div id="screen-record-indicator" class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm hidden">
+                                <i class="fa fa-circle animate-pulse mr-1"></i> 录制中
+                            </div>
+                            
+                            <!-- 应用商店页面 -->
+                            <div id="playstore-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="playstore-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">应用商店</h2>
+                                </div>
+                                <div class="p-4">
+                                    <!-- 搜索栏 -->
+                                    <div class="relative mb-4">
+                                        <input type="text" id="playstore-search" placeholder="搜索应用" class="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
+                                        <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    </div>
+                                    
+                                    <!-- 应用分类 -->
+                                    <div class="mb-6">
+                                        <h3 class="font-medium mb-3">推荐应用</h3>
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div class="app-store-item bg-white rounded-lg p-3 text-center cursor-pointer" data-app="game1">
+                                                <div class="w-16 h-16 mx-auto bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                                                    <i class="fa fa-gamepad text-blue-600 text-2xl"></i>
+                                                </div>
+                                                <h4 class="text-sm font-medium">游戏大师</h4>
+                                                <p class="text-xs text-neutral-medium">4.8 ★</p>
+                                            </div>
+                                            <div class="app-store-item bg-white rounded-lg p-3 text-center cursor-pointer" data-app="social1">
+                                                <div class="w-16 h-16 mx-auto bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                                                    <i class="fa fa-users text-green-600 text-2xl"></i>
+                                                </div>
+                                                <h4 class="text-sm font-medium">社交圈</h4>
+                                                <p class="text-xs text-neutral-medium">4.5 ★</p>
+                                            </div>
+                                            <div class="app-store-item bg-white rounded-lg p-3 text-center cursor-pointer" data-app="tool1">
+                                                <div class="w-16 h-16 mx-auto bg-purple-100 rounded-lg flex items-center justify-center mb-2">
+                                                    <i class="fa fa-tools text-purple-600 text-2xl"></i>
+                                                </div>
+                                                <h4 class="text-sm font-medium">工具箱</h4>
+                                                <p class="text-xs text-neutral-medium">4.7 ★</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-6">
+                                        <h3 class="font-medium mb-3">热门游戏</h3>
+                                        <div class="space-y-3">
+                                            <div class="app-store-list-item bg-white rounded-lg p-3 flex items-center cursor-pointer" data-app="game2">
+                                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fa fa-rocket text-red-600 text-xl"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-medium">太空冒险</h4>
+                                                    <p class="text-xs text-neutral-medium">动作游戏 · 1000万+下载</p>
+                                                </div>
+                                                <button class="android-button text-xs py-1 px-3">安装</button>
+                                            </div>
+                                            <div class="app-store-list-item bg-white rounded-lg p-3 flex items-center cursor-pointer" data-app="game3">
+                                                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-3">
+                                                    <i class="fa fa-puzzle-piece text-yellow-600 text-xl"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h4 class="font-medium">解谜挑战</h4>
+                                                    <p class="text-xs text-neutral-medium">益智游戏 · 500万+下载</p>
+                                                </div>
+                                                <button class="android-button text-xs py-1 px-3">安装</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 音乐应用页面 -->
+                            <div id="music-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="music-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">音乐</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div class="bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl p-6 text-white text-center mb-6">
+                                        <div class="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center mb-4">
+                                            <i class="fa fa-music text-purple-600 text-4xl"></i>
+                                        </div>
+                                        <h3 class="text-lg font-bold mb-1">正在播放</h3>
+                                        <p class="text-sm opacity-80">无音乐播放</p>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium">我的音乐</h4>
+                                                <p class="text-xs text-neutral-medium">本地音乐</p>
+                                            </div>
+                                            <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                        </div>
+                                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium">播放列表</h4>
+                                                <p class="text-xs text-neutral-medium">创建的播放列表</p>
+                                            </div>
+                                            <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 视频应用页面 -->
+                            <div id="video-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="video-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">视频</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div class="grid grid-cols-2 gap-4 mb-6">
+                                        <div class="bg-black rounded-lg aspect-video flex items-center justify-center">
+                                            <i class="fa fa-film text-white text-2xl"></i>
+                                        </div>
+                                        <div class="bg-black rounded-lg aspect-video flex items-center justify-center">
+                                            <i class="fa fa-film text-white text-2xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                                            <div>
+                                                <h4 class="font-medium">我的视频</h4>
+                                                <p class="text-xs text-neutral-medium">本地视频</p>
+                                            </div>
+                                            <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 计算器应用页面 -->
+                            <div id="calculator-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="calculator-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">计算器</h2>
+                                </div>
+                                <div class="p-4 flex flex-col h-[calc(100%-60px)]">
+                                    <div class="bg-white rounded-lg p-4 mb-4 text-right">
+                                        <div id="calculator-display" class="text-3xl font-bold">0</div>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-3 flex-1">
+                                        <button class="calculator-btn bg-gray-200 rounded-lg py-4 text-xl font-medium">C</button>
+                                        <button class="calculator-btn bg-gray-200 rounded-lg py-4 text-xl font-medium">±</button>
+                                        <button class="calculator-btn bg-gray-200 rounded-lg py-4 text-xl font-medium">%</button>
+                                        <button class="calculator-btn bg-orange-500 text-white rounded-lg py-4 text-xl font-medium">÷</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">7</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">8</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">9</button>
+                                        <button class="calculator-btn bg-orange-500 text-white rounded-lg py-4 text-xl font-medium">×</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">4</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">5</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">6</button>
+                                        <button class="calculator-btn bg-orange-500 text-white rounded-lg py-4 text-xl font-medium">-</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">1</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">2</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">3</button>
+                                        <button class="calculator-btn bg-orange-500 text-white rounded-lg py-4 text-xl font-medium">+</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium col-span-2">0</button>
+                                        <button class="calculator-btn bg-white rounded-lg py-4 text-xl font-medium">.</button>
+                                        <button class="calculator-btn bg-orange-500 text-white rounded-lg py-4 text-xl font-medium">=</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 时钟应用页面 -->
+                            <div id="clock-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="clock-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">时钟</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div class="bg-white rounded-lg p-6 text-center mb-6">
+                                        <div id="clock-display" class="text-4xl font-bold mb-2">13:14</div>
+                                        <p class="text-neutral-medium">当前时间</p>
+                                    </div>
+                                    <div class="space-y-3">
+                                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <i class="fa fa-clock-o text-orange-500 mr-3 text-xl"></i>
+                                                <div>
+                                                    <h4 class="font-medium">闹钟</h4>
+                                                    <p class="text-xs text-neutral-medium">设置闹钟</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                        </div>
+                                        <div class="bg-white rounded-lg p-3 flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <i class="fa fa-hourglass-half text-blue-500 mr-3 text-xl"></i>
+                                                <div>
+                                                    <h4 class="font-medium">计时器</h4>
+                                                    <p class="text-xs text-neutral-medium">倒计时功能</p>
+                                                </div>
+                                            </div>
+                                            <i class="fa fa-chevron-right text-neutral-medium"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 天气应用页面 -->
+                            <div id="weather-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="weather-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">天气</h2>
+                                </div>
+                                <div class="p-4">
+                                    <div class="bg-gradient-to-b from-blue-400 to-blue-600 rounded-xl p-6 text-white text-center mb-6">
+                                        <div class="mb-4">
+                                            <i class="fa fa-sun-o text-yellow-300 text-5xl"></i>
+                                        </div>
+                                        <div class="text-4xl font-bold mb-2">25°C</div>
+                                        <p class="text-lg mb-1">晴天</p>
+                                        <p class="text-sm opacity-80">北京市</p>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-4 text-center">
+                                        <div class="bg-white rounded-lg p-3">
+                                            <i class="fa fa-tint text-blue-500 mb-2"></i>
+                                            <p class="text-sm">湿度</p>
+                                            <p class="font-medium">45%</p>
+                                        </div>
+                                        <div class="bg-white rounded-lg p-3">
+                                            <i class="fa fa-location-arrow text-green-500 mb-2"></i>
+                                            <p class="text-sm">风速</p>
+                                            <p class="font-medium">3.2 m/s</p>
+                                        </div>
+                                        <div class="bg-white rounded-lg p-3">
+                                            <i class="fa fa-cloud text-gray-500 mb-2"></i>
+                                            <p class="text-sm">云量</p>
+                                            <p class="font-medium">10%</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 记事本应用页面 -->
+                            <div id="notepad-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="notepad-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">记事本</h2>
+                                    <button class="ml-auto android-button text-sm py-1 px-3" id="new-note-btn">
+                                        新建
+                                    </button>
+                                </div>
+                                <div class="p-4">
+                                    <div id="notes-list" class="space-y-3">
+                                        <div class="bg-white rounded-lg p-3 cursor-pointer note-item">
+                                            <h4 class="font-medium mb-1">欢迎使用记事本</h4>
+                                            <p class="text-sm text-neutral-medium">这是你的第一个笔记</p>
+                                            <p class="text-xs text-neutral-medium mt-2">今天 13:14</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 联系人应用页面 -->
+                            <div id="contacts-screen" class="absolute inset-0 bg-neutral hidden">
+                                <div class="bg-white p-4 border-b flex items-center">
+                                    <button class="contacts-back mr-4">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <h2 class="text-xl font-bold">联系人</h2>
+                                </div>
+                                <div class="p-4">
+                                    <!-- 搜索栏 -->
+                                    <div class="relative mb-4">
+                                        <input type="text" placeholder="搜索联系人" class="w-full p-3 pl-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary">
+                                        <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div class="bg-white rounded-lg p-3 flex items-center">
+                                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                                                <span class="font-medium text-blue-600">张</span>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium">张三</h4>
+                                                <p class="text-sm text-neutral-medium">13800138000</p>
+                                            </div>
+                                        </div>
+                                        <div class="bg-white rounded-lg p-3 flex items-center">
+                                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                                                <span class="font-medium text-green-600">李</span>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium">李四</h4>
+                                                <p class="text-sm text-neutral-medium">13900139000</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 导航栏 -->
+                        <div class="nav-bar rounded-b-[32px]">
+                            <div class="nav-button" id="back-button">
+                                <i class="fa fa-arrow-left"></i>
+                            </div>
+                            <div class="nav-button" id="home-button">
+                                <i class="fa fa-home"></i>
+                            </div>
+                            <div class="nav-button" id="recent-button">
+                                <i class="fa fa-square-o"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let isRootEnabled = false;
+        let rootApps = JSON.parse(localStorage.getItem('rootApps')) || [];
+        let currentScreen = 'home-screen';
+        let isRecording = false;
+        let recordingInterval;
+        let currentPath = '/';
+        let fileSystem = JSON.parse(localStorage.getItem('fileSystem')) || {
+            '/': {
+                'system': { type: 'directory', size: 0 },
+                'data': { type: 'directory', size: 0 },
+                'storage': { type: 'directory', size: 0 },
+                'sdcard': { type: 'directory', size: 0 }
+            },
+            '/system': {
+                'app': { type: 'directory', size: 0 },
+                'bin': { type: 'directory', size: 0 },
+                'lib': { type: 'directory', size: 0 }
+            },
+            '/data': {
+                'app': { type: 'directory', size: 0 },
+                'user': { type: 'directory', size: 0 }
+            },
+            '/storage': {
+                'emulated': { type: 'directory', size: 0 }
+            },
+            '/sdcard': {
+                'Download': { type: 'directory', size: 0 },
+                'Pictures': { type: 'directory', size: 0 },
+                'Music': { type: 'directory', size: 0 },
+                'Movies': { type: 'directory', size: 0 }
+            }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            updateTime();
+            setInterval(updateTime, 60000);
+            
+            updateBatteryStatus();
+            setInterval(updateBatteryStatus, 30000);
+            
+            simulatePerformance();
+            setInterval(simulatePerformance, 2000);
+            
+            setupEventListeners();
+            updateRootStatus();
+            renderFileList();
+        }
+
+        // 更新时间
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+        }
+
+        // 更新电池状态
+        function updateBatteryStatus() {
+            const batteryLevel = Math.floor(Math.random() * 20) + 70; // 70-90%
+            document.getElementById('battery-status').textContent = `电池电量: ${batteryLevel}%`;
+        }
+
+        // 模拟性能数据
+        function simulatePerformance() {
+            const cpuUsage = Math.floor(Math.random() * 30) + 20; // 20-50%
+            const memoryUsage = Math.floor(Math.random() * 30) + 40; // 40-70%
+            
+            document.getElementById('cpu-usage').textContent = `${cpuUsage}%`;
+            document.getElementById('cpu-bar').style.width = `${cpuUsage}%`;
+            
+            document.getElementById('memory-usage').textContent = `${memoryUsage}%`;
+            document.getElementById('memory-bar').style.width = `${memoryUsage}%`;
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // Root权限开关
+            document.getElementById('root-toggle').addEventListener('change', toggleRoot);
+            
+            // 应用图标点击
+            document.querySelectorAll('.app-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const app = item.dataset.app;
+                    openApp(app);
+                });
+            });
+            
+            // 导航按钮
+            document.getElementById('back-button').addEventListener('click', goBack);
+            document.getElementById('home-button').addEventListener('click', goHome);
+            document.getElementById('recent-button').addEventListener('click', showRecentApps);
+            
+            // 控制栏按钮
+            document.getElementById('install-app-btn').addEventListener('click', openInstallApp);
+            document.getElementById('file-manager-btn').addEventListener('click', openFileManager);
+            document.getElementById('screen-record-btn').addEventListener('click', toggleScreenRecord);
+            
+            // 文件管理器返回按钮
+            document.querySelector('.file-manager-back').addEventListener('click', goHome);
+            
+            // 应用安装返回按钮
+            document.querySelector('.install-app-back').addEventListener('click', goHome);
+            
+            // 应用商店返回按钮
+            document.querySelector('.playstore-back').addEventListener('click', goHome);
+            
+            // 音乐应用返回按钮
+            document.querySelector('.music-back').addEventListener('click', goHome);
+            
+            // 视频应用返回按钮
+            document.querySelector('.video-back').addEventListener('click', goHome);
+            
+            // 计算器应用返回按钮
+            document.querySelector('.calculator-back').addEventListener('click', goHome);
+            
+            // 时钟应用返回按钮
+            document.querySelector('.clock-back').addEventListener('click', goHome);
+            
+            // 天气应用返回按钮
+            document.querySelector('.weather-back').addEventListener('click', goHome);
+            
+            // 记事本应用返回按钮
+            document.querySelector('.notepad-back').addEventListener('click', goHome);
+            
+            // 联系人应用返回按钮
+            document.querySelector('.contacts-back').addEventListener('click', goHome);
+            
+            // 应用商店安装按钮
+            document.querySelectorAll('.app-store-list-item button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const appItem = btn.closest('.app-store-list-item');
+                    const appName = appItem.dataset.app;
+                    simulateAppInstallation(`${appName}.apk`);
+                });
+            });
+            
+            // 计算器按钮
+            setupCalculator();
+            
+            // 记事本功能
+            setupNotepad();
+            
+            // APK文件上传
+            document.getElementById('apk-file').addEventListener('change', handleApkUpload);
+        }
+
+        // 切换Root权限
+        function toggleRoot() {
+            isRootEnabled = !isRootEnabled;
+            updateRootStatus();
+            
+            if (isRootEnabled) {
+                showToast('Root权限已开启');
+            } else {
+                showToast('Root权限已关闭');
+            }
+        }
+
+        // 更新Root状态
+        function updateRootStatus() {
+            const rootToggle = document.getElementById('root-toggle');
+            const rootStatus = document.getElementById('root-status');
+            const rootStatusBadge = document.getElementById('root-status-badge');
+            
+            rootToggle.checked = isRootEnabled;
+            rootStatus.textContent = isRootEnabled ? '已开启' : '未开启';
+            
+            if (isRootEnabled) {
+                rootStatusBadge.textContent = '已开启';
+                rootStatusBadge.className = 'px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full';
+            } else {
+                rootStatusBadge.textContent = '未开启';
+                rootStatusBadge.className = 'px-2 py-1 bg-gray-200 text-xs rounded-full';
+            }
+            
+            updateRootAppsList();
+        }
+
+        // 打开应用
+        function openApp(appName) {
+            hideAllScreens();
+            
+            switch(appName) {
+                case 'settings':
+                    document.getElementById('settings-screen').classList.remove('hidden');
+                    currentScreen = 'settings-screen';
+                    break;
+                case 'root':
+                    document.getElementById('root-screen').classList.remove('hidden');
+                    currentScreen = 'root-screen';
+                    break;
+                case 'playstore':
+                    document.getElementById('playstore-screen').classList.remove('hidden');
+                    currentScreen = 'playstore-screen';
+                    break;
+                case 'music':
+                    document.getElementById('music-screen').classList.remove('hidden');
+                    currentScreen = 'music-screen';
+                    break;
+                case 'video':
+                    document.getElementById('video-screen').classList.remove('hidden');
+                    currentScreen = 'video-screen';
+                    break;
+                case 'calculator':
+                    document.getElementById('calculator-screen').classList.remove('hidden');
+                    currentScreen = 'calculator-screen';
+                    break;
+                case 'clock':
+                    document.getElementById('clock-screen').classList.remove('hidden');
+                    currentScreen = 'clock-screen';
+                    updateClockDisplay();
+                    break;
+                case 'weather':
+                    document.getElementById('weather-screen').classList.remove('hidden');
+                    currentScreen = 'weather-screen';
+                    break;
+                case 'notepad':
+                    document.getElementById('notepad-screen').classList.remove('hidden');
+                    currentScreen = 'notepad-screen';
+                    break;
+                case 'contacts':
+                    document.getElementById('contacts-screen').classList.remove('hidden');
+                    currentScreen = 'contacts-screen';
+                    break;
+                case 'camera':
+                    showToast('相机应用已打开');
+                    goHome();
+                    break;
+                case 'gallery':
+                    showToast('相册应用已打开');
+                    goHome();
+                    break;
+                case 'messages':
+                    showToast('短信应用已打开');
+                    goHome();
+                    break;
+                case 'phone':
+                    showToast('电话应用已打开');
+                    goHome();
+                    break;
+                case 'browser':
+                    showToast('浏览器应用已打开');
+                    goHome();
+                    break;
+                case 'calendar':
+                    showToast('日历应用已打开');
+                    goHome();
+                    break;
+                default:
+                    goHome();
+            }
+            
+            // 模拟Root授权请求
+            if (isRootEnabled && Math.random() > 0.5) {
+                setTimeout(() => {
+                    requestRootPermission(appName);
+                }, 1000);
+            }
+        }
+
+        // 请求Root权限
+        function requestRootPermission(appName) {
+            if (rootApps.includes(appName)) return;
+            
+            const appNames = {
+                'settings': '设置',
+                'camera': '相机',
+                'gallery': '相册',
+                'messages': '短信',
+                'phone': '电话',
+                'browser': '浏览器',
+                'calendar': '日历'
+            };
+            
+            const appLabel = appNames[appName] || appName;
+            
+            if (confirm(`应用"${appLabel}"请求获取Root权限，是否允许？`)) {
+                rootApps.push(appName);
+                localStorage.setItem('rootApps', JSON.stringify(rootApps));
+                updateRootAppsList();
+                showToast(`已授予"${appLabel}"Root权限`);
+            }
+        }
+
+        // 更新Root应用列表
+        function updateRootAppsList() {
+            const rootAppsList = document.getElementById('root-apps-list');
+            const appNames = {
+                'settings': '设置',
+                'camera': '相机',
+                'gallery': '相册',
+                'messages': '短信',
+                'phone': '电话',
+                'browser': '浏览器',
+                'calendar': '日历'
+            };
+            
+            if (rootApps.length === 0) {
+                rootAppsList.innerHTML = '<p class="text-center py-4">暂无已授权应用</p>';
+                return;
+            }
+            
+            let html = '<div class="space-y-2">';
+            rootApps.forEach(appName => {
+                const appLabel = appNames[appName] || appName;
+                html += `
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded">
+                        <span>${appLabel}</span>
+                        <button class="text-red-500 text-xs" onclick="revokeRootPermission('${appName}')">
+                            撤销
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            rootAppsList.innerHTML = html;
+        }
+
+        // 撤销Root权限
+        function revokeRootPermission(appName) {
+            rootApps = rootApps.filter(app => app !== appName);
+            localStorage.setItem('rootApps', JSON.stringify(rootApps));
+            updateRootAppsList();
+            
+            const appNames = {
+                'settings': '设置',
+                'camera': '相机',
+                'gallery': '相册',
+                'messages': '短信',
+                'phone': '电话',
+                'browser': '浏览器',
+                'calendar': '日历'
+            };
+            
+            const appLabel = appNames[appName] || appName;
+            showToast(`已撤销"${appLabel}"的Root权限`);
+        }
+
+        // 返回按钮
+        function goBack() {
+            goHome();
+        }
+
+        // 主页按钮
+        function goHome() {
+            hideAllScreens();
+            document.getElementById('home-screen').classList.remove('hidden');
+            currentScreen = 'home-screen';
+        }
+
+        // 最近应用
+        function showRecentApps() {
+            showToast('最近应用列表');
+        }
+
+        // 打开应用安装
+        function openInstallApp() {
+            hideAllScreens();
+            document.getElementById('install-app-screen').classList.remove('hidden');
+            currentScreen = 'install-app-screen';
+        }
+
+        // 打开文件管理器
+        function openFileManager() {
+            hideAllScreens();
+            document.getElementById('file-manager-screen').classList.remove('hidden');
+            currentScreen = 'file-manager-screen';
+            currentPath = '/';
+            renderFileList();
+        }
+
+        // 渲染文件列表
+        function renderFileList() {
+            const fileList = document.getElementById('file-list');
+            const filePath = document.getElementById('file-path');
+            
+            filePath.textContent = currentPath;
+            
+            if (!fileSystem[currentPath]) {
+                fileList.innerHTML = '<p class="text-center py-4 text-neutral-medium">文件夹为空</p>';
+                return;
+            }
+            
+            const files = fileSystem[currentPath];
+            let html = '';
+            
+            Object.keys(files).forEach(fileName => {
+                const file = files[fileName];
+                const isDirectory = file.type === 'directory';
+                
+                html += `
+                    <div class="file-item ${isDirectory ? 'cursor-pointer' : ''}" data-file="${fileName}" data-type="${file.type}">
+                        <div class="file-icon">
+                            <i class="fa ${isDirectory ? 'fa-folder text-blue-500' : 'fa-file text-gray-500'}"></i>
+                        </div>
+                        <span class="file-name">${fileName}</span>
+                        <span class="file-size">${formatFileSize(file.size)}</span>
+                    </div>
+                `;
+            });
+            
+            fileList.innerHTML = html;
+            
+            // 添加点击事件
+            document.querySelectorAll('.file-item[data-type="directory"]').forEach(item => {
+                item.addEventListener('click', () => {
+                    const fileName = item.dataset.file;
+                    navigateToDirectory(fileName);
+                });
+            });
+        }
+
+        // 导航到目录
+        function navigateToDirectory(directoryName) {
+            const newPath = currentPath === '/' ? `/${directoryName}` : `${currentPath}/${directoryName}`;
+            
+            if (fileSystem[newPath]) {
+                currentPath = newPath;
+                renderFileList();
+            }
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+            return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        }
+
+        // 处理APK上传
+        function handleApkUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (file.name.endsWith('.apk')) {
+                simulateAppInstallation(file.name);
+            } else {
+                showToast('请选择有效的APK文件');
+            }
+        }
+
+        // 模拟应用安装
+        function simulateAppInstallation(apkName) {
+            const installProgress = document.getElementById('install-progress');
+            const installPercentage = document.getElementById('install-percentage');
+            const installProgressBar = document.getElementById('install-progress-bar');
+            
+            installProgress.classList.remove('hidden');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 10) + 5;
+                if (progress > 100) progress = 100;
+                
+                installPercentage.textContent = `${progress}%`;
+                installProgressBar.style.width = `${progress}%`;
+                
+                if (progress === 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        installProgress.classList.add('hidden');
+                        showToast(`应用"${apkName.replace('.apk', '')}"安装成功`);
+                        goHome();
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        // 切换屏幕录制
+        function toggleScreenRecord() {
+            isRecording = !isRecording;
+            const indicator = document.getElementById('screen-record-indicator');
+            
+            if (isRecording) {
+                indicator.classList.remove('hidden');
+                showToast('屏幕录制已开始');
+                
+                recordingInterval = setInterval(() => {
+                    // 模拟录制过程
+                }, 1000);
+            } else {
+                indicator.classList.add('hidden');
+                clearInterval(recordingInterval);
+                showToast('屏幕录制已结束');
+            }
+        }
+
+        // 隐藏所有屏幕
+        function hideAllScreens() {
+            const screens = [
+                'home-screen',
+                'settings-screen',
+                'root-screen',
+                'file-manager-screen',
+                'install-app-screen'
+            ];
+            
+            screens.forEach(screen => {
+                document.getElementById(screen).classList.add('hidden');
+            });
+        }
+
+        // 显示Toast提示
+        function showToast(message) {
+            // 创建Toast元素
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 bg-neutral-dark text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in';
+            toast.textContent = message;
+            
+            // 添加到页面
+            document.body.appendChild(toast);
+            
+            // 2秒后移除
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 2000);
+        }
+
+        // 更新时钟显示
+        function updateClockDisplay() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('clock-display').textContent = `${hours}:${minutes}`;
+        }
+
+        // 设置计算器功能
+        function setupCalculator() {
+            let currentInput = '0';
+            let operator = null;
+            let previousInput = null;
+            let shouldResetDisplay = false;
+            
+            const display = document.getElementById('calculator-display');
+            
+            document.querySelectorAll('.calculator-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const value = btn.textContent;
+                    
+                    // 数字按钮
+                    if (/[0-9]/.test(value)) {
+                        if (currentInput === '0' || shouldResetDisplay) {
+                            currentInput = value;
+                            shouldResetDisplay = false;
+                        } else {
+                            currentInput += value;
+                        }
+                        display.textContent = currentInput;
+                    }
+                    // 小数点
+                    else if (value === '.') {
+                        if (shouldResetDisplay) {
+                            currentInput = '0.';
+                            shouldResetDisplay = false;
+                        } else if (!currentInput.includes('.')) {
+                            currentInput += '.';
+                        }
+                        display.textContent = currentInput;
+                    }
+                    // 清除按钮
+                    else if (value === 'C') {
+                        currentInput = '0';
+                        operator = null;
+                        previousInput = null;
+                        display.textContent = currentInput;
+                    }
+                    // 运算符
+                    else if (['+', '-', '×', '÷'].includes(value)) {
+                        if (operator && !shouldResetDisplay) {
+                            calculate();
+                        }
+                        previousInput = currentInput;
+                        operator = value;
+                        shouldResetDisplay = true;
+                    }
+                    // 等号
+                    else if (value === '=') {
+                        if (operator && previousInput !== null) {
+                            calculate();
+                            operator = null;
+                            previousInput = null;
+                            shouldResetDisplay = true;
+                        }
+                    }
+                    // 正负号
+                    else if (value === '±') {
+                        currentInput = (parseFloat(currentInput) * -1).toString();
+                        display.textContent = currentInput;
+                    }
+                    // 百分比
+                    else if (value === '%') {
+                        currentInput = (parseFloat(currentInput) / 100).toString();
+                        display.textContent = currentInput;
+                        shouldResetDisplay = true;
+                    }
+                });
+            });
+            
+            function calculate() {
+                const prev = parseFloat(previousInput);
+                const current = parseFloat(currentInput);
+                let result;
+                
+                switch (operator) {
+                    case '+':
+                        result = prev + current;
+                        break;
+                    case '-':
+                        result = prev - current;
+                        break;
+                    case '×':
+                        result = prev * current;
+                        break;
+                    case '÷':
+                        result = prev / current;
+                        break;
+                    default:
+                        return;
+                }
+                
+                currentInput = result.toString();
+                display.textContent = currentInput;
+            }
+        }
+
+        // 设置记事本功能
+        function setupNotepad() {
+            const notesList = document.getElementById('notes-list');
+            const newNoteBtn = document.getElementById('new-note-btn');
+            
+            // 新建笔记
+            newNoteBtn.addEventListener('click', () => {
+                const title = prompt('请输入笔记标题:');
+                if (title) {
+                    const content = prompt('请输入笔记内容:');
+                    if (content !== null) {
+                        addNote(title, content);
+                    }
+                }
+            });
+            
+            // 点击笔记查看详情
+            notesList.addEventListener('click', (e) => {
+                const noteItem = e.target.closest('.note-item');
+                if (noteItem) {
+                    const title = noteItem.querySelector('h4').textContent;
+                    const content = noteItem.querySelector('p:nth-child(2)').textContent;
+                    alert(`${title}\n\n${content}`);
+                }
+            });
+            
+            function addNote(title, content) {
+                const now = new Date();
+                const timeString = now.toLocaleString('zh-CN', { 
+                    month: 'numeric', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                const noteElement = document.createElement('div');
+                noteElement.className = 'bg-white rounded-lg p-3 cursor-pointer note-item animate-fade-in';
+                noteElement.innerHTML = `
+                    <h4 class="font-medium mb-1">${title}</h4>
+                    <p class="text-sm text-neutral-medium">${content}</p>
+                    <p class="text-xs text-neutral-medium mt-2">${timeString}</p>
+                `;
+                
+                notesList.appendChild(noteElement);
+            }
+        }
+    </script>
+</body>
+</html>

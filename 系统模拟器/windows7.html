@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 7 模拟器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'windows-blue': '#0078d7',
+                        'windows-dark-blue': '#005a9e',
+                        'windows-light-blue': '#106ebe',
+                        'taskbar-gray': '#1e1e1e',
+                        'start-menu-blue': '#0078d7',
+                        'start-menu-gradient': 'linear-gradient(to bottom, #0078d7, #005a9e)',
+                        'window-border': '#d4d0c8',
+                        'window-title-bar': '#0078d7',
+                        'window-bg': '#ffffff',
+                        'aero-glass': 'rgba(255, 255, 255, 0.7)',
+                        'aero-glass-dark': 'rgba(0, 0, 0, 0.1)',
+                    },
+                    fontFamily: {
+                        'windows': ['Segoe UI', 'Microsoft YaHei', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'window': '0 0 10px rgba(0, 0, 0, 0.2)',
+                        'taskbar': '0 -1px 3px rgba(0, 0, 0, 0.3)',
+                        'start-menu': '0 4px 12px rgba(0, 0, 0, 0.4)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.2s ease-in-out',
+                        'slide-up': 'slideUp 0.2s ease-in-out',
+                        'slide-down': 'slideDown 0.2s ease-in-out',
+                        'slide-left': 'slideLeft 0.2s ease-in-out',
+                        'slide-right': 'slideRight 0.2s ease-in-out',
+                        'pulse': 'pulse 2s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideDown: {
+                            '0%': { transform: 'translateY(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        slideLeft: {
+                            '0%': { transform: 'translateX(10px)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' },
+                        },
+                        slideRight: {
+                            '0%': { transform: 'translateX(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' },
+                        },
+                        pulse: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.5' },
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .aero-glass-effect {
+                background: rgba(255, 255, 255, 0.7);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            .window-drag {
+                -webkit-app-region: drag;
+            }
+            .window-no-drag {
+                -webkit-app-region: no-drag;
+            }
+            .text-shadow {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            }
+            .icon-shadow {
+                filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            }
+            .taskbar-icon {
+                transition: all 0.2s ease;
+            }
+            .taskbar-icon:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+                border-radius: 3px;
+            }
+            .window-title-bar {
+                background: linear-gradient(to right, #0078d7, #005a9e);
+            }
+            .window-border {
+                border: 1px solid #d4d0c8;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            }
+            .window-button {
+                transition: all 0.1s ease;
+            }
+            .window-button:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+            .window-button:active {
+                background-color: rgba(0, 0, 0, 0.2);
+            }
+            .start-menu-gradient {
+                background: linear-gradient(to bottom, #0078d7, #005a9e);
+            }
+            .desktop-icon {
+                transition: all 0.2s ease;
+                cursor: pointer;
+            }
+            .desktop-icon:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+                border-radius: 3px;
+            }
+            .tooltip {
+                position: relative;
+            }
+            .tooltip:hover::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 4px 8px;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                border-radius: 3px;
+                font-size: 12px;
+                white-space: nowrap;
+                z-index: 1000;
+                margin-bottom: 5px;
+            }
+            .tooltip:hover::before {
+                content: '';
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                border-width: 5px;
+                border-style: solid;
+                border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+                z-index: 1000;
+            }
+            .scrollbar-windows::-webkit-scrollbar {
+                width: 16px;
+            }
+            .scrollbar-windows::-webkit-scrollbar-track {
+                background-color: #f5f5f5;
+                border: 1px solid #d4d0c8;
+            }
+            .scrollbar-windows::-webkit-scrollbar-thumb {
+                background-color: #c0c0c0;
+                border: 1px solid #d4d0c8;
+                border-radius: 0;
+            }
+            .scrollbar-windows::-webkit-scrollbar-thumb:hover {
+                background-color: #a0a0a0;
+            }
+            .scrollbar-windows::-webkit-scrollbar-button {
+                background-color: #c0c0c0;
+                border: 1px solid #d4d0c8;
+                height: 16px;
+            }
+            .scrollbar-windows::-webkit-scrollbar-button:hover {
+                background-color: #a0a0a0;
+            }
+        }
+    </style>
+</head>
+<body class="font-windows overflow-hidden h-screen w-screen bg-cover bg-center" style="background-image: url('https://p26-doubao-search-sign.byteimg.com/labis/ed935df23189ccbe54bfaad0fd6fda97~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=wdnvk%2F%2FaaLeIhC1A66%2BW9IA3rR4%3D');">
+    <!-- 桌面图标 -->
+    <div id="desktop" class="absolute top-0 left-0 w-full h-full z-0">
+        <!-- 计算机图标 -->
+        <div class="desktop-icon flex flex-col items-center justify-center w-20 h-24 mt-8 ml-4" onclick="openWindow('computer')">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/319749acbd11d3bbb3fae5468d3ad864~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=evSml%2F2Gs9IS%2BQMElz5s%2BEaJI5w%3D" alt="计算机" class="w-12 h-12 icon-shadow">
+            <span class="text-white text-shadow text-sm mt-1">计算机</span>
+        </div>
+        
+        <!-- 回收站图标 -->
+        <div class="desktop-icon flex flex-col items-center justify-center w-20 h-24 mt-2 ml-4" onclick="openWindow('recycle-bin')">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/319749acbd11d3bbb3fae5468d3ad864~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=evSml%2F2Gs9IS%2BQMElz5s%2BEaJI5w%3D" alt="回收站" class="w-12 h-12 icon-shadow">
+            <span class="text-white text-shadow text-sm mt-1">回收站</span>
+        </div>
+        
+        <!-- 文档图标 -->
+        <div class="desktop-icon flex flex-col items-center justify-center w-20 h-24 mt-2 ml-4" onclick="openWindow('documents')">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/319749acbd11d3bbb3fae5468d3ad864~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=evSml%2F2Gs9IS%2BQMElz5s%2BEaJI5w%3D" alt="文档" class="w-12 h-12 icon-shadow">
+            <span class="text-white text-shadow text-sm mt-1">文档</span>
+        </div>
+        
+        <!-- 图片图标 -->
+        <div class="desktop-icon flex flex-col items-center justify-center w-20 h-24 mt-2 ml-4" onclick="openWindow('pictures')">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/319749acbd11d3bbb3fae5468d3ad864~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=evSml%2F2Gs9IS%2BQMElz5s%2BEaJI5w%3D" alt="图片" class="w-12 h-12 icon-shadow">
+            <span class="text-white text-shadow text-sm mt-1">图片</span>
+        </div>
+        
+        <!-- 音乐图标 -->
+        <div class="desktop-icon flex flex-col items-center justify-center w-20 h-24 mt-2 ml-4" onclick="openWindow('music')">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/319749acbd11d3bbb3fae5468d3ad864~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=evSml%2F2Gs9IS%2BQMElz5s%2BEaJI5w%3D" alt="音乐" class="w-12 h-12 icon-shadow">
+            <span class="text-white text-shadow text-sm mt-1">音乐</span>
+        </div>
+    </div>
+
+    <!-- 任务栏 -->
+    <div id="taskbar" class="fixed bottom-0 left-0 w-full h-14 bg-taskbar-gray shadow-taskbar z-50 flex items-center justify-between px-2">
+        <!-- 开始按钮 -->
+        <div id="start-button" class="flex items-center justify-center h-10 px-4 mr-2 start-menu-gradient rounded-sm cursor-pointer" onclick="toggleStartMenu()">
+            <i class="fa fa-windows text-white text-xl mr-2"></i>
+            <span class="text-white font-bold">开始</span>
+        </div>
+        
+        <!-- 任务栏图标 -->
+        <div class="flex items-center space-x-1">
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="Windows 资源管理器" onclick="openWindow('explorer')">
+                <i class="fa fa-folder text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="记事本" onclick="openWindow('notepad')">
+                <i class="fa fa-file-text-o text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="计算器" onclick="openWindow('calculator')">
+                <i class="fa fa-calculator text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="画图" onclick="openWindow('paint')">
+                <i class="fa fa-paint-brush text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="Internet Explorer" onclick="openWindow('ie')">
+                <i class="fa fa-globe text-white text-lg"></i>
+            </div>
+        </div>
+        
+        <!-- 系统托盘 -->
+        <div class="flex items-center space-x-2 ml-auto">
+            <div class="taskbar-icon flex items-center justify-center h-10 w-10 tooltip" data-tooltip="显示桌面" onclick="showDesktop()">
+                <i class="fa fa-desktop text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-6 tooltip" data-tooltip="音量">
+                <i class="fa fa-volume-up text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 w-6 tooltip" data-tooltip="网络连接">
+                <i class="fa fa-wifi text-white text-lg"></i>
+            </div>
+            <div class="taskbar-icon flex items-center justify-center h-10 px-2 text-white tooltip" data-tooltip="日期和时间">
+                <span id="datetime">12:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 开始菜单 -->
+    <div id="start-menu" class="fixed bottom-14 left-0 w-80 h-[500px] bg-white shadow-start-menu rounded-t-lg z-40 hidden animate-slide-up">
+        <div class="flex h-full">
+            <!-- 左侧菜单 -->
+            <div class="w-3/5 h-full bg-white">
+                <div class="flex items-center justify-center h-16 border-b border-gray-200">
+                    <div class="start-menu-gradient rounded-full w-10 h-10 flex items-center justify-center">
+                        <i class="fa fa-windows text-white text-xl"></i>
+                    </div>
+                </div>
+                <div class="overflow-y-auto scrollbar-windows h-[calc(100%-16px)]">
+                    <div class="p-2">
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="openWindow('explorer')">
+                            <i class="fa fa-folder text-windows-blue text-xl mr-3"></i>
+                            <span>Windows 资源管理器</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="openWindow('notepad')">
+                            <i class="fa fa-file-text-o text-windows-blue text-xl mr-3"></i>
+                            <span>记事本</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="openWindow('calculator')">
+                            <i class="fa fa-calculator text-windows-blue text-xl mr-3"></i>
+                            <span>计算器</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="openWindow('paint')">
+                            <i class="fa fa-paint-brush text-windows-blue text-xl mr-3"></i>
+                            <span>画图</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer" onclick="openWindow('ie')">
+                            <i class="fa fa-globe text-windows-blue text-xl mr-3"></i>
+                            <span>Internet Explorer</span>
+                        </div>
+                        <div class="border-t border-gray-200 my-2"></div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <i class="fa fa-user text-windows-blue text-xl mr-3"></i>
+                            <span>用户账户</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <i class="fa fa-cog text-windows-blue text-xl mr-3"></i>
+                            <span>控制面板</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧菜单 -->
+            <div class="w-2/5 h-full start-menu-gradient text-white">
+                <div class="p-4">
+                    <div class="flex items-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer mb-4">
+                        <i class="fa fa-user-circle text-2xl mr-3"></i>
+                        <span>用户名</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer" onclick="openWindow('documents')">
+                            <i class="fa fa-file-text text-2xl mb-2"></i>
+                            <span class="text-sm">文档</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer" onclick="openWindow('pictures')">
+                            <i class="fa fa-picture-o text-2xl mb-2"></i>
+                            <span class="text-sm">图片</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer" onclick="openWindow('music')">
+                            <i class="fa fa-music text-2xl mb-2"></i>
+                            <span class="text-sm">音乐</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer" onclick="openWindow('computer')">
+                            <i class="fa fa-desktop text-2xl mb-2"></i>
+                            <span class="text-sm">计算机</span>
+                        </div>
+                    </div>
+                    <div class="border-t border-white border-opacity-30 my-4"></div>
+                    <div class="flex items-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer">
+                        <i class="fa fa-cog text-xl mr-3"></i>
+                        <span>控制面板</span>
+                    </div>
+                    <div class="flex items-center p-2 hover:bg-white hover:bg-opacity-20 rounded cursor-pointer">
+                        <i class="fa fa-question-circle text-xl mr-3"></i>
+                        <span>帮助和支持</span>
+                    </div>
+                </div>
+                <div class="absolute bottom-0 right-0 p-4">
+                    <button class="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded" onclick="shutdown()">
+                        <i class="fa fa-power-off mr-2"></i>
+                        <span>关机</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 窗口容器 -->
+    <div id="windows-container" class="absolute top-0 left-0 w-full h-full z-10 pointer-events-none">
+        <!-- 窗口将通过JavaScript动态创建 -->
+    </div>
+
+    <!-- 右键菜单 -->
+    <div id="context-menu" class="fixed bg-white shadow-lg rounded border border-gray-200 z-50 hidden animate-fade-in">
+        <div class="py-1">
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" onclick="createNewFolder()">新建文件夹</div>
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer">查看</div>
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer">排序方式</div>
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer">刷新</div>
+            <div class="border-t border-gray-200 my-1"></div>
+            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer">个性化</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let windows = [];
+        let activeWindow = null;
+        let startMenuOpen = false;
+        let contextMenuOpen = false;
+        let draggedWindow = null;
+        let dragOffset = { x: 0, y: 0 };
+        let resizingWindow = null;
+        let resizeMode = '';
+        let resizeStart = { x: 0, y: 0 };
+        let resizeStartSize = { width: 0, height: 0 };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // 点击桌面空白处关闭开始菜单和右键菜单
+            document.getElementById('desktop').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeStartMenu();
+                    closeContextMenu();
+                }
+            });
+            
+            // 右键点击桌面
+            document.getElementById('desktop').addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY);
+            });
+            
+            // 点击其他地方关闭右键菜单
+            document.addEventListener('click', function(e) {
+                if (!document.getElementById('context-menu').contains(e.target)) {
+                    closeContextMenu();
+                }
+            });
+            
+            // 窗口拖拽功能
+            document.getElementById('windows-container').addEventListener('mousedown', function(e) {
+                if (e.target.closest('.window-title-bar')) {
+                    const windowElement = e.target.closest('.window');
+                    if (windowElement) {
+                        activateWindow(windowElement);
+                        
+                        if (!e.target.closest('.window-button')) {
+                            startDrag(windowElement, e.clientX, e.clientY);
+                        }
+                    }
+                }
+                
+                // 窗口调整大小
+                const resizeHandle = e.target.closest('.resize-handle');
+                if (resizeHandle) {
+                    const windowElement = resizeHandle.closest('.window');
+                    if (windowElement) {
+                        activateWindow(windowElement);
+                        startResize(windowElement, resizeHandle.dataset.resize, e.clientX, e.clientY);
+                    }
+                }
+            });
+            
+            // 鼠标移动
+            document.addEventListener('mousemove', function(e) {
+                if (draggedWindow) {
+                    dragWindow(e.clientX, e.clientY);
+                }
+                
+                if (resizingWindow) {
+                    resizeWindow(e.clientX, e.clientY);
+                }
+            });
+            
+            // 鼠标释放
+            document.addEventListener('mouseup', function() {
+                draggedWindow = null;
+                resizingWindow = null;
+            });
+            
+            // 键盘快捷键
+            document.addEventListener('keydown', function(e) {
+                // Win + D 显示桌面
+                if (e.key === 'd' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    showDesktop();
+                }
+                
+                // Win + R 运行
+                if (e.key === 'r' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    openWindow('run');
+                }
+                
+                // Alt + Tab 切换窗口
+                if (e.key === 'Tab' && e.altKey) {
+                    e.preventDefault();
+                    cycleWindows();
+                }
+                
+                // Esc 关闭开始菜单或右键菜单
+                if (e.key === 'Escape') {
+                    closeStartMenu();
+                    closeContextMenu();
+                }
+            });
+        });
+        
+        // 更新日期时间
+        function updateDateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('datetime').textContent = `${hours}:${minutes}`;
+        }
+        
+        // 切换开始菜单
+        function toggleStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            if (startMenuOpen) {
+                closeStartMenu();
+            } else {
+                startMenu.classList.remove('hidden');
+                startMenuOpen = true;
+            }
+        }
+        
+        // 关闭开始菜单
+        function closeStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.add('hidden');
+            startMenuOpen = false;
+        }
+        
+        // 显示右键菜单
+        function showContextMenu(x, y) {
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.classList.remove('hidden');
+            contextMenuOpen = true;
+        }
+        
+        // 关闭右键菜单
+        function closeContextMenu() {
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.classList.add('hidden');
+            contextMenuOpen = false;
+        }
+        
+        // 显示桌面
+        function showDesktop() {
+            const windows = document.querySelectorAll('.window');
+            windows.forEach(window => {
+                if (window.classList.contains('minimized')) {
+                    window.classList.remove('minimized');
+                } else {
+                    window.classList.add('minimized');
+                }
+            });
+        }
+        
+        // 打开窗口
+        function openWindow(type) {
+            closeStartMenu();
+            
+            // 检查是否已经打开了该类型的窗口
+            const existingWindow = document.querySelector(`.window[data-type="${type}"]`);
+            if (existingWindow) {
+                activateWindow(existingWindow);
+                existingWindow.classList.remove('minimized');
+                return;
+            }
+            
+            const windowsContainer = document.getElementById('windows-container');
+            const windowId = `window-${Date.now()}`;
+            
+            let windowContent = '';
+            let windowTitle = '';
+            let windowIcon = '';
+            
+            // 根据窗口类型设置内容
+            switch (type) {
+                case 'explorer':
+                    windowTitle = 'Windows 资源管理器';
+                    windowIcon = 'fa-folder';
+                    windowContent = `
+                        <div class="flex h-full">
+                            <div class="w-48 bg-gray-100 border-r border-gray-300 flex flex-col">
+                                <div class="p-2 border-b border-gray-300">
+                                    <div class="font-bold mb-2">导航窗格</div>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-desktop mr-2"></i>
+                                            <span>桌面</span>
+                                        </div>
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-user mr-2"></i>
+                                            <span>用户文件夹</span>
+                                        </div>
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-file-text-o mr-2"></i>
+                                            <span>文档</span>
+                                        </div>
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-picture-o mr-2"></i>
+                                            <span>图片</span>
+                                        </div>
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-music mr-2"></i>
+                                            <span>音乐</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-2 border-b border-gray-300">
+                                    <div class="font-bold mb-2">计算机</div>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-hard-drive mr-2"></i>
+                                            <span>本地磁盘 (C:)</span>
+                                        </div>
+                                        <div class="flex items-center p-1 hover:bg-gray-200 cursor-pointer">
+                                            <i class="fa fa-hard-drive mr-2"></i>
+                                            <span>本地磁盘 (D:)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col">
+                                <div class="p-4 border-b border-gray-300 flex items-center">
+                                    <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                        <i class="fa fa-arrow-left"></i>
+                                    </button>
+                                    <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                        <i class="fa fa-arrow-right"></i>
+                                    </button>
+                                    <button class="p-1 hover:bg-gray-200 rounded mr-4">
+                                        <i class="fa fa-refresh"></i>
+                                    </button>
+                                    <div class="flex-1 bg-gray-100 rounded px-2 py-1 text-sm">
+                                        计算机
+                                    </div>
+                                </div>
+                                <div class="flex-1 p-4 overflow-y-auto">
+                                    <div class="grid grid-cols-4 gap-4">
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-16 h-16 bg-blue-100 rounded flex items-center justify-center mb-2">
+                                                <i class="fa fa-hard-drive text-blue-500 text-2xl"></i>
+                                            </div>
+                                            <span class="text-xs text-center">本地磁盘 (C:)</span>
+                                        </div>
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-16 h-16 bg-green-100 rounded flex items-center justify-center mb-2">
+                                                <i class="fa fa-hard-drive text-green-500 text-2xl"></i>
+                                            </div>
+                                            <span class="text-xs text-center">本地磁盘 (D:)</span>
+                                        </div>
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center mb-2">
+                                                <i class="fa fa-dvd text-gray-500 text-2xl"></i>
+                                            </div>
+                                            <span class="text-xs text-center">DVD 驱动器 (E:)</span>
+                                        </div>
+                                        <div class="flex flex-col items-center">
+                                            <div class="w-16 h-16 bg-yellow-100 rounded flex items-center justify-center mb-2">
+                                                <i class="fa fa-usb text-yellow-500 text-2xl"></i>
+                                            </div>
+                                            <span class="text-xs text-center">可移动磁盘 (F:)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'notepad':
+                    windowTitle = '记事本';
+                    windowIcon = 'fa-file-text-o';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300">
+                                <button class="px-3 py-1 hover:bg-gray-200">文件(F)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">编辑(E)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">格式(O)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">查看(V)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">帮助(H)</button>
+                            </div>
+                            <div class="flex-1 p-4">
+                                <textarea class="w-full h-full resize-none focus:outline-none" placeholder="在此处输入文字..."></textarea>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'calculator':
+                    windowTitle = '计算器';
+                    windowIcon = 'fa-calculator';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300">
+                                <button class="px-3 py-1 hover:bg-gray-200">查看(V)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">帮助(H)</button>
+                            </div>
+                            <div class="p-4 flex flex-col h-[calc(100%-41px)]">
+                                <div class="bg-gray-100 rounded p-2 mb-4 text-right text-xl h-10 flex items-center justify-end">
+                                    <span id="calc-display">0</span>
+                                </div>
+                                <div class="grid grid-cols-4 gap-2 flex-1">
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('7')">7</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('8')">8</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('9')">9</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('/')">/</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('4')">4</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('5')">5</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('6')">6</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('*')">*</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('1')">1</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('2')">2</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('3')">3</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('-')">-</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('0')">0</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('.')">.</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('=')">=</button>
+                                    <button class="bg-gray-200 hover:bg-gray-300 rounded p-2" onclick="calcButton('+')">+</button>
+                                    <button class="bg-red-100 hover:bg-red-200 rounded p-2 col-span-4" onclick="calcClear()">清除</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'paint':
+                    windowTitle = '画图';
+                    windowIcon = 'fa-paint-brush';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300">
+                                <button class="px-3 py-1 hover:bg-gray-200">文件(F)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">编辑(E)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">查看(V)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">工具(T)</button>
+                                <button class="px-3 py-1 hover:bg-gray-200">帮助(H)</button>
+                            </div>
+                            <div class="flex h-[calc(100%-41px)]">
+                                <div class="w-16 bg-gray-100 border-r border-gray-300 flex flex-col items-center py-2 space-y-2">
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="铅笔">
+                                        <i class="fa fa-pencil"></i>
+                                    </button>
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="橡皮擦">
+                                        <i class="fa fa-eraser"></i>
+                                    </button>
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="填充">
+                                        <i class="fa fa-tint"></i>
+                                    </button>
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="文本">
+                                        <i class="fa fa-font"></i>
+                                    </button>
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="矩形">
+                                        <i class="fa fa-square-o"></i>
+                                    </button>
+                                    <button class="w-10 h-10 bg-white border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center" title="圆形">
+                                        <i class="fa fa-circle-o"></i>
+                                    </button>
+                                    <div class="border-t border-gray-300 w-8 my-2"></div>
+                                    <div class="w-10 h-10 bg-black border border-gray-300 rounded"></div>
+                                    <div class="w-10 h-10 bg-red-500 border border-gray-300 rounded"></div>
+                                    <div class="w-10 h-10 bg-blue-500 border border-gray-300 rounded"></div>
+                                    <div class="w-10 h-10 bg-green-500 border border-gray-300 rounded"></div>
+                                    <div class="w-10 h-10 bg-yellow-500 border border-gray-300 rounded"></div>
+                                </div>
+                                <div class="flex-1 bg-white border border-gray-300 m-2">
+                                    <canvas id="paint-canvas" class="w-full h-full"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'ie':
+                    windowTitle = 'Internet Explorer';
+                    windowIcon = 'fa-globe';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-4">
+                                    <i class="fa fa-home"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 flex items-center">
+                                    <i class="fa fa-lock text-gray-500 mr-2"></i>
+                                    <input type="text" class="flex-1 focus:outline-none" value="https://www.microsoft.com">
+                                </div>
+                                <button class="p-2 hover:bg-gray-200 rounded ml-2">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="flex-1 bg-gray-100 flex items-center justify-center">
+                                <div class="text-center">
+                                    <img src="https://p3-doubao-search-sign.byteimg.com/labis/ce3c7e72f2d931c171a2c71aeea7cc49~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=WjpWcoMd6FhgIUhUBFHl46sQ9c8%3D" alt="Internet Explorer" class="w-32 h-32 mx-auto mb-4">
+                                    <h2 class="text-2xl font-bold mb-2">欢迎使用 Internet Explorer</h2>
+                                    <p class="mb-4">这是一个模拟的 Internet Explorer 窗口</p>
+                                    <button class="bg-windows-blue text-white px-4 py-2 rounded hover:bg-windows-dark-blue">
+                                        开始浏览
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'computer':
+                    windowTitle = '计算机';
+                    windowIcon = 'fa-desktop';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 ml-2">
+                                    计算机
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 overflow-y-auto">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-blue-100 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-hard-drive text-blue-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center">本地磁盘 (C:)</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-green-100 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-hard-drive text-green-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center">本地磁盘 (D:)</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-gray-100 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-dvd text-gray-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center">DVD 驱动器 (E:)</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-yellow-100 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-usb text-yellow-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center">可移动磁盘 (F:)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'recycle-bin':
+                    windowTitle = '回收站';
+                    windowIcon = 'fa-trash';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 ml-2">
+                                    回收站
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fa fa-trash text-gray-400 text-5xl mb-4"></i>
+                                    <p>回收站是空的</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'documents':
+                    windowTitle = '文档';
+                    windowIcon = 'fa-file-text-o';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 ml-2">
+                                    文档
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 overflow-y-auto">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-blue-50 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-file-word-o text-blue-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center truncate w-20">文档1.docx</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-green-50 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-file-excel-o text-green-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center truncate w-20">表格1.xlsx</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-orange-50 rounded flex items-center justify-center mb-2">
+                                            <i class="fa fa-file-powerpoint-o text-orange-500 text-2xl"></i>
+                                        </div>
+                                        <span class="text-xs text-center truncate w-20">演示文稿1.pptx</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'pictures':
+                    windowTitle = '图片';
+                    windowIcon = 'fa-picture-o';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 ml-2">
+                                    图片
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 overflow-y-auto">
+                                <div class="grid grid-cols-4 gap-4">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-gray-100 rounded overflow-hidden mb-2">
+                                            <img src="https://p26-doubao-search-sign.byteimg.com/labis/ed935df23189ccbe54bfaad0fd6fda97~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=wdnvk%2F%2FaaLeIhC1A66%2BW9IA3rR4%3D" alt="图片1" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="text-xs text-center truncate w-20">图片1.jpg</span>
+                                    </div>
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-gray-100 rounded overflow-hidden mb-2">
+                                            <img src="https://p26-doubao-search-sign.byteimg.com/labis/6167d73b85cbcd6018805f3f5eb384d2~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=ZUB0AebSFGOhvF8y0qIxbQ%2BoP2k%3D" alt="图片2" class="w-full h-full object-cover">
+                                        </div>
+                                        <span class="text-xs text-center truncate w-20">图片2.jpg</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'music':
+                    windowTitle = '音乐';
+                    windowIcon = 'fa-music';
+                    windowContent = `
+                        <div class="flex flex-col h-full">
+                            <div class="flex border-b border-gray-300 p-2 items-center">
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-left"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-arrow-right"></i>
+                                </button>
+                                <button class="p-1 hover:bg-gray-200 rounded mr-2">
+                                    <i class="fa fa-refresh"></i>
+                                </button>
+                                <div class="flex-1 bg-white border border-gray-300 rounded px-2 py-1 ml-2">
+                                    音乐
+                                </div>
+                            </div>
+                            <div class="flex-1 p-4 overflow-y-auto">
+                                <div class="space-y-2">
+                                    <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                        <i class="fa fa-music text-blue-500 mr-3"></i>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">歌曲1</div>
+                                            <div class="text-xs text-gray-500">艺术家1</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">3:45</div>
+                                    </div>
+                                    <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                        <i class="fa fa-music text-blue-500 mr-3"></i>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">歌曲2</div>
+                                            <div class="text-xs text-gray-500">艺术家2</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">4:12</div>
+                                    </div>
+                                    <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                        <i class="fa fa-music text-blue-500 mr-3"></i>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">歌曲3</div>
+                                            <div class="text-xs text-gray-500">艺术家3</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">2:58</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'run':
+                    windowTitle = '运行';
+                    windowIcon = 'fa-search';
+                    windowContent = `
+                        <div class="p-4">
+                            <div class="flex items-center mb-4">
+                                <i class="fa fa-search text-windows-blue text-2xl mr-3"></i>
+                                <input type="text" class="flex-1 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-windows-blue" placeholder="打开:">
+                            </div>
+                            <div class="flex justify-end space-x-2">
+                                <button class="px-4 py-1 border border-gray-300 rounded hover:bg-gray-100">取消</button>
+                                <button class="px-4 py-1 bg-windows-blue text-white rounded hover:bg-windows-dark-blue">确定</button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                default:
+                    windowTitle = '窗口';
+                    windowIcon = 'fa-window-maximize';
+                    windowContent = `
+                        <div class="p-4">
+                            <p>这是一个空窗口</p>
+                        </div>
+                    `;
+            }
+            
+            // 创建窗口元素
+            const windowElement = document.createElement('div');
+            windowElement.className = 'window absolute bg-window-bg window-border rounded-sm shadow-window animate-fade-in pointer-events-auto';
+            windowElement.style.width = '800px';
+            windowElement.style.height = '600px';
+            windowElement.style.left = '50%';
+            windowElement.style.top = '50%';
+            windowElement.style.transform = 'translate(-50%, -50%)';
+            windowElement.dataset.id = windowId;
+            windowElement.dataset.type = type;
+            
+            // 窗口内容
+            windowElement.innerHTML = `
+                <div class="window-title-bar flex items-center justify-between px-4 py-2 text-white">
+                    <div class="flex items-center window-drag">
+                        <i class="fa ${windowIcon} mr-2"></i>
+                        <span>${windowTitle}</span>
+                    </div>
+                    <div class="flex items-center space-x-1 window-no-drag">
+                        <button class="window-button w-6 h-6 flex items-center justify-center rounded" onclick="minimizeWindow('${windowId}')">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                        <button class="window-button w-6 h-6 flex items-center justify-center rounded" onclick="maximizeWindow('${windowId}')">
+                            <i class="fa fa-square-o"></i>
+                        </button>
+                        <button class="window-button w-6 h-6 flex items-center justify-center rounded" onclick="closeWindow('${windowId}')">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="window-content h-[calc(100%-32px)] overflow-hidden">
+                    ${windowContent}
+                </div>
+                <div class="resize-handle absolute right-0 bottom-0 w-4 h-4 cursor-se-resize" data-resize="se"></div>
+                <div class="resize-handle absolute right-0 top-0 w-4 h-full cursor-ew-resize" data-resize="e"></div>
+                <div class="resize-handle absolute left-0 bottom-0 h-4 w-full cursor-ns-resize" data-resize="s"></div>
+                <div class="resize-handle absolute left-0 top-0 w-4 h-full cursor-ew-resize" data-resize="w"></div>
+                <div class="resize-handle absolute left-0 top-0 h-4 w-full cursor-ns-resize" data-resize="n"></div>
+                <div class="resize-handle absolute left-0 top-0 w-4 h-4 cursor-nw-resize" data-resize="nw"></div>
+                <div class="resize-handle absolute right-0 top-0 w-4 h-4 cursor-ne-resize" data-resize="ne"></div>
+                <div class="resize-handle absolute left-0 bottom-0 w-4 h-4 cursor-sw-resize" data-resize="sw"></div>
+            `;
+            
+            windowsContainer.appendChild(windowElement);
+            activateWindow(windowElement);
+            
+            // 如果是画图窗口，初始化画布
+            if (type === 'paint') {
+                setTimeout(() => {
+                    const canvas = windowElement.querySelector('#paint-canvas');
+                    if (canvas) {
+                        canvas.width = canvas.offsetWidth;
+                        canvas.height = canvas.offsetHeight;
+                    }
+                }, 100);
+            }
+            
+            return windowElement;
+        }
+        
+        // 激活窗口
+        function activateWindow(windowElement) {
+            // 移除其他窗口的激活状态
+            document.querySelectorAll('.window').forEach(window => {
+                window.classList.remove('ring-2', 'ring-windows-blue');
+            });
+            
+            // 添加激活状态
+            windowElement.classList.add('ring-2', 'ring-windows-blue');
+            
+            // 将窗口移到最上层
+            const windows = Array.from(document.querySelectorAll('.window'));
+            windows.forEach(window => {
+                window.style.zIndex = '10';
+            });
+            windowElement.style.zIndex = '20';
+            
+            activeWindow = windowElement;
+        }
+        
+        // 关闭窗口
+        function closeWindow(windowId) {
+            const windowElement = document.querySelector(`.window[data-id="${windowId}"]`);
+            if (windowElement) {
+                windowElement.classList.add('animate-fade-out');
+                setTimeout(() => {
+                    windowElement.remove();
+                }, 200);
+            }
+        }
+        
+        // 最小化窗口
+        function minimizeWindow(windowId) {
+            const windowElement = document.querySelector(`.window[data-id="${windowId}"]`);
+            if (windowElement) {
+                windowElement.classList.add('minimized');
+                windowElement.style.transform = 'translateY(calc(100vh - 50px))';
+                windowElement.style.opacity = '0.5';
+            }
+        }
+        
+        // 最大化窗口
+        function maximizeWindow(windowId) {
+            const windowElement = document.querySelector(`.window[data-id="${windowId}"]`);
+            if (windowElement) {
+                if (windowElement.classList.contains('maximized')) {
+                    // 还原窗口
+                    windowElement.classList.remove('maximized');
+                    windowElement.style.width = windowElement.dataset.originalWidth || '800px';
+                    windowElement.style.height = windowElement.dataset.originalHeight || '600px';
+                    windowElement.style.left = windowElement.dataset.originalLeft || '50%';
+                    windowElement.style.top = windowElement.dataset.originalTop || '50%';
+                    windowElement.style.transform = windowElement.dataset.originalTransform || 'translate(-50%, -50%)';
+                } else {
+                    // 最大化窗口
+                    windowElement.classList.add('maximized');
+                    windowElement.dataset.originalWidth = windowElement.style.width;
+                    windowElement.dataset.originalHeight = windowElement.style.height;
+                    windowElement.dataset.originalLeft = windowElement.style.left;
+                    windowElement.dataset.originalTop = windowElement.style.top;
+                    windowElement.dataset.originalTransform = windowElement.style.transform;
+                    
+                    windowElement.style.width = 'calc(100vw - 20px)';
+                    windowElement.style.height = 'calc(100vh - 70px)';
+                    windowElement.style.left = '10px';
+                    windowElement.style.top = '10px';
+                    windowElement.style.transform = 'none';
+                }
+            }
+        }
+        
+        // 开始拖拽窗口
+        function startDrag(windowElement, x, y) {
+            draggedWindow = windowElement;
+            
+            const rect = windowElement.getBoundingClientRect();
+            dragOffset.x = x - rect.left;
+            dragOffset.y = y - rect.top;
+            
+            // 阻止默认行为和冒泡
+            document.addEventListener('mousedown', preventDefault, true);
+        }
+        
+        // 拖拽窗口
+        function dragWindow(x, y) {
+            if (draggedWindow && !draggedWindow.classList.contains('maximized')) {
+                const containerRect = document.getElementById('windows-container').getBoundingClientRect();
+                
+                let newLeft = x - dragOffset.x;
+                let newTop = y - dragOffset.y;
+                
+                // 限制窗口不超出容器
+                newLeft = Math.max(0, Math.min(newLeft, containerRect.width - draggedWindow.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, containerRect.height - draggedWindow.offsetHeight));
+                
+                draggedWindow.style.left = `${newLeft}px`;
+                draggedWindow.style.top = `${newTop}px`;
+                draggedWindow.style.transform = 'none';
+            }
+        }
+        
+        // 开始调整窗口大小
+        function startResize(windowElement, mode, x, y) {
+            resizingWindow = windowElement;
+            resizeMode = mode;
+            resizeStart.x = x;
+            resizeStart.y = y;
+            resizeStartSize.width = windowElement.offsetWidth;
+            resizeStartSize.height = windowElement.offsetHeight;
+            
+            // 阻止默认行为和冒泡
+            document.addEventListener('mousedown', preventDefault, true);
+        }
+        
+        // 调整窗口大小
+        function resizeWindow(x, y) {
+            if (resizingWindow && !resizingWindow.classList.contains('maximized')) {
+                const deltaX = x - resizeStart.x;
+                const deltaY = y - resizeStart.y;
+                
+                let newWidth = resizeStartSize.width;
+                let newHeight = resizeStartSize.height;
+                let newLeft = parseInt(resizingWindow.style.left);
+                let newTop = parseInt(resizingWindow.style.top);
+                
+                // 根据调整模式计算新的大小和位置
+                switch (resizeMode) {
+                    case 'se':
+                        newWidth = Math.max(100, resizeStartSize.width + deltaX);
+                        newHeight = Math.max(50, resizeStartSize.height + deltaY);
+                        break;
+                    case 'e':
+                        newWidth = Math.max(100, resizeStartSize.width + deltaX);
+                        break;
+                    case 's':
+                        newHeight = Math.max(50, resizeStartSize.height + deltaY);
+                        break;
+                    case 'w':
+                        newWidth = Math.max(100, resizeStartSize.width - deltaX);
+                        newLeft = newLeft + deltaX;
+                        break;
+                    case 'n':
+                        newHeight = Math.max(50, resizeStartSize.height - deltaY);
+                        newTop = newTop + deltaY;
+                        break;
+                    case 'nw':
+                        newWidth = Math.max(100, resizeStartSize.width - deltaX);
+                        newHeight = Math.max(50, resizeStartSize.height - deltaY);
+                        newLeft = newLeft + deltaX;
+                        newTop = newTop + deltaY;
+                        break;
+                    case 'ne':
+                        newWidth = Math.max(100, resizeStartSize.width + deltaX);
+                        newHeight = Math.max(50, resizeStartSize.height - deltaY);
+                        newTop = newTop + deltaY;
+                        break;
+                    case 'sw':
+                        newWidth = Math.max(100, resizeStartSize.width - deltaX);
+                        newHeight = Math.max(50, resizeStartSize.height + deltaY);
+                        newLeft = newLeft + deltaX;
+                        break;
+                }
+                
+                // 应用新的大小和位置
+                resizingWindow.style.width = `${newWidth}px`;
+                resizingWindow.style.height = `${newHeight}px`;
+                
+                if (newLeft !== undefined) {
+                    resizingWindow.style.left = `${newLeft}px`;
+                }
+                
+                if (newTop !== undefined) {
+                    resizingWindow.style.top = `${newTop}px`;
+                }
+                
+                // 如果是画图窗口，更新画布大小
+                if (resizingWindow.dataset.type === 'paint') {
+                    const canvas = resizingWindow.querySelector('#paint-canvas');
+                    if (canvas) {
+                        canvas.width = canvas.offsetWidth;
+                        canvas.height = canvas.offsetHeight;
+                    }
+                }
+            }
+        }
+        
+        // 切换窗口
+        function cycleWindows() {
+            const windows = Array.from(document.querySelectorAll('.window:not(.minimized)'));
+            if (windows.length === 0) return;
+            
+            let nextIndex = 0;
+            if (activeWindow) {
+                const currentIndex = windows.indexOf(activeWindow);
+                nextIndex = (currentIndex + 1) % windows.length;
+            }
+            
+            activateWindow(windows[nextIndex]);
+        }
+        
+        // 创建新文件夹
+        function createNewFolder() {
+            closeContextMenu();
+            
+            const desktop = document.getElementById('desktop');
+            const folderIcon = document.createElement('div');
+            folderIcon.className = 'desktop-icon flex flex-col items-center justify-center w-20 h-24 absolute animate-fade-in';
+            folderIcon.style.left = '20px';
+            folderIcon.style.top = `${desktop.children.length * 100 + 20}px`;
+            
+            folderIcon.innerHTML = `
+                <i class="fa fa-folder text-yellow-500 text-4xl mb-1"></i>
+                <input type="text" class="text-white text-shadow text-sm text-center bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-white" value="新建文件夹" onblur="this.parentElement.querySelector('span').textContent = this.value; this.remove();" onkeydown="if(event.key === 'Enter') this.blur();">
+                <span class="text-white text-shadow text-sm mt-1 hidden">新建文件夹</span>
+            `;
+            
+            desktop.appendChild(folderIcon);
+            
+            // 自动聚焦输入框
+            setTimeout(() => {
+                const input = folderIcon.querySelector('input');
+                if (input) {
+                    input.select();
+                }
+            }, 100);
+        }
+        
+        // 计算器功能
+        let calcValue = '0';
+        let calcOperator = null;
+        let calcWaitingForOperand = false;
+        
+        function calcButton(value) {
+            const display = document.getElementById('calc-display');
+            
+            if (value >= '0' && value <= '9' || value === '.') {
+                if (calcWaitingForOperand) {
+                    display.textContent = value;
+                    calcWaitingForOperand = false;
+                } else {
+                    display.textContent = display.textContent === '0' && value !== '.' ? value : display.textContent + value;
+                }
+            } else if (value === '+' || value === '-' || value === '*' || value === '/') {
+                const inputValue = parseFloat(display.textContent);
+                
+                if (calcOperator && !calcWaitingForOperand) {
+                    const result = calculate(calcValue, inputValue, calcOperator);
+                    display.textContent = parseFloat(result.toFixed(10));
+                    calcValue = result;
+                } else {
+                    calcValue = inputValue;
+                }
+                
+                calcWaitingForOperand = true;
+                calcOperator = value;
+            } else if (value === '=') {
+                const inputValue = parseFloat(display.textContent);
+                
+                if (calcOperator && !calcWaitingForOperand) {
+                    const result = calculate(calcValue, inputValue, calcOperator);
+                    display.textContent = parseFloat(result.toFixed(10));
+                    calcValue = result;
+                }
+                
+                calcWaitingForOperand = true;
+                calcOperator = null;
+            }
+        }
+        
+        function calculate(firstOperand, secondOperand, operator) {
+            switch (operator) {
+                case '+':
+                    return firstOperand + secondOperand;
+                case '-':
+                    return firstOperand - secondOperand;
+                case '*':
+                    return firstOperand * secondOperand;
+                case '/':
+                    return firstOperand / secondOperand;
+                default:
+                    return secondOperand;
+            }
+        }
+        
+        function calcClear() {
+            const display = document.getElementById('calc-display');
+            display.textContent = '0';
+            calcValue = '0';
+            calcOperator = null;
+            calcWaitingForOperand = false;
+        }
+        
+        // 关机功能
+        function shutdown() {
+            closeStartMenu();
+            
+            // 创建关机对话框
+            const shutdownDialog = document.createElement('div');
+            shutdownDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in';
+            shutdownDialog.innerHTML = `
+                <div class="bg-white rounded-lg shadow-lg w-80 p-6 text-center">
+                    <img src="https://p3-doubao-search-sign.byteimg.com/labis/ce3c7e72f2d931c171a2c71aeea7cc49~tplv-be4g95zd3a-image.jpeg?rk3s=542c0f93&x-expires=1781138404&x-signature=WjpWcoMd6FhgIUhUBFHl46sQ9c8%3D" alt="Windows 7" class="w-16 h-16 mx-auto mb-4">
+                    <h2 class="text-xl font-bold mb-4">Windows 正在关机...</h2>
+                    <p class="mb-6">请稍候，Windows 正在关闭所有程序和服务。</p>
+                    <div class="flex justify-center">
+                        <button class="bg-windows-blue text-white px-4 py-2 rounded hover:bg-windows-dark-blue" onclick="cancelShutdown()">
+                            取消
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(shutdownDialog);
+            
+            // 模拟关机过程
+            setTimeout(() => {
+                shutdownDialog.remove();
+                alert('Windows 已成功关机！');
+            }, 3000);
+        }
+        
+        function cancelShutdown() {
+            const shutdownDialog = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+            if (shutdownDialog) {
+                shutdownDialog.remove();
+            }
+        }
+        
+        // 阻止默认行为
+        function preventDefault(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    </script>
+</body>
+</html>

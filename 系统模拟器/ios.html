@@ -1,0 +1,1864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iOS 26 Simulator</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007AFF',
+                        secondary: '#5856D6',
+                        success: '#34C759',
+                        warning: '#FF9500',
+                        danger: '#FF3B30',
+                        dark: '#1C1C1E',
+                        'dark-secondary': '#2C2C2E',
+                        'dark-tertiary': '#3A3A3C',
+                        'glow-blue': 'rgba(0, 122, 255, 0.5)',
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.5s ease-out forwards',
+                        'slide-down': 'slideDown 0.5s ease-out forwards',
+                        'slide-left': 'slideLeft 0.5s ease-out forwards',
+                        'slide-right': 'slideRight 0.5s ease-out forwards',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'fade-out': 'fadeOut 0.5s ease-out forwards',
+                        'scale-in': 'scaleIn 0.3s ease-out forwards',
+                        'scale-out': 'scaleOut 0.3s ease-out forwards',
+                        'bounce-in': 'bounceIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(0, 122, 255, 0.5)' },
+                            '100%': { boxShadow: '0 0 20px rgba(0, 122, 255, 0.8)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)', opacity: 0 },
+                            '100%': { transform: 'translateY(0)', opacity: 1 },
+                        },
+                        slideDown: {
+                            '0%': { transform: 'translateY(-100%)', opacity: 0 },
+                            '100%': { transform: 'translateY(0)', opacity: 1 },
+                        },
+                        slideLeft: {
+                            '0%': { transform: 'translateX(100%)', opacity: 0 },
+                            '100%': { transform: 'translateX(0)', opacity: 1 },
+                        },
+                        slideRight: {
+                            '0%': { transform: 'translateX(-100%)', opacity: 0 },
+                            '100%': { transform: 'translateX(0)', opacity: 1 },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        },
+                        fadeOut: {
+                            '0%': { opacity: 1 },
+                            '100%': { opacity: 0 },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.9)', opacity: 0 },
+                            '100%': { transform: 'scale(1)', opacity: 1 },
+                        },
+                        scaleOut: {
+                            '0%': { transform: 'scale(1)', opacity: 1 },
+                            '100%': { transform: 'scale(0.9)', opacity: 0 },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0.8)', opacity: 0 },
+                            '50%': { transform: 'scale(1.05)', opacity: 1 },
+                            '100%': { transform: 'scale(1)', opacity: 1 },
+                        },
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    },
+                    boxShadow: {
+                        'glow': '0 0 15px rgba(0, 122, 255, 0.5)',
+                        'glow-lg': '0 0 25px rgba(0, 122, 255, 0.7)',
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            }
+            .text-shadow-lg {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            .text-glow {
+                text-shadow: 0 0 10px rgba(0, 122, 255, 0.7);
+            }
+            .bg-glass {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .bg-glass-dark {
+                background: rgba(28, 28, 30, 0.8);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .bg-glass-blue {
+                background: rgba(0, 122, 255, 0.2);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 122, 255, 0.3);
+            }
+            .transition-transform-opacity {
+                transition-property: transform, opacity;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .ios-toggle {
+                position: relative;
+                display: inline-block;
+                width: 51px;
+                height: 31px;
+            }
+            .ios-toggle input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+            .ios-toggle-slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(255, 255, 255, 0.3);
+                transition: .4s;
+                border-radius: 34px;
+            }
+            .ios-toggle-slider:before {
+                position: absolute;
+                content: "";
+                height: 27px;
+                width: 27px;
+                left: 2px;
+                bottom: 2px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            input:checked + .ios-toggle-slider {
+                background-color: #007AFF;
+            }
+            input:checked + .ios-toggle-slider:before {
+                transform: translateX(20px);
+            }
+            .app-icon {
+                transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+            }
+            .app-icon:active {
+                transform: scale(0.9);
+            }
+            .app-icon:hover {
+                transform: translateY(-4px) scale(1.05);
+                box-shadow: 0 10px 25px -5px rgba(0, 122, 255, 0.4);
+            }
+            .app-icon div {
+                transition: box-shadow 0.3s ease;
+            }
+            .app-icon:hover div {
+                box-shadow: 0 0 20px rgba(0, 122, 255, 0.7);
+            }
+            .dock-app-icon {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .dock-app-icon:active {
+                transform: scale(0.9);
+            }
+            .dock-app-icon:hover {
+                transform: translateY(-3px);
+            }
+            .widget {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }
+            .widget:active {
+                transform: scale(0.98);
+            }
+            .slider {
+                -webkit-appearance: none;
+                width: 100%;
+                height: 4px;
+                border-radius: 2px;
+                background: rgba(255, 255, 255, 0.3);
+                outline: none;
+            }
+            .slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: white;
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                transition: transform 0.1s ease;
+            }
+            .slider::-webkit-slider-thumb:active {
+                transform: scale(1.2);
+            }
+            .slider::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: white;
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                transition: transform 0.1s ease;
+                border: none;
+            }
+            .slider::-moz-range-thumb:active {
+                transform: scale(1.2);
+            }
+            .notification-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                background-color: #FF3B30;
+                color: white;
+                font-size: 12px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0 5px;
+            }
+            .assistant-wave {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 40px;
+            }
+            .assistant-wave span {
+                display: inline-block;
+                width: 3px;
+                height: 3px;
+                margin: 0 2px;
+                background-color: #007AFF;
+                border-radius: 50%;
+                animation: wave 1.5s infinite ease-in-out;
+            }
+            .assistant-wave span:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+            .assistant-wave span:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+            .assistant-wave span:nth-child(4) {
+                animation-delay: 0.6s;
+            }
+            .assistant-wave span:nth-child(5) {
+                animation-delay: 0.8s;
+            }
+            @keyframes wave {
+                0%, 100% {
+                    height: 3px;
+                }
+                50% {
+                    height: 15px;
+                }
+            }
+            .weather-icon {
+                filter: drop-shadow(0 0 5px rgba(0, 122, 255, 0.5));
+            }
+            .camera-shutter {
+                transition: transform 0.1s ease;
+            }
+            .camera-shutter:active {
+                transform: scale(0.9);
+            }
+            .camera-mode {
+                transition: all 0.2s ease;
+            }
+            .camera-mode.active {
+                color: #007AFF;
+                font-weight: 600;
+            }
+            .camera-mode:not(.active):active {
+                color: #007AFF;
+            }
+            .keyboard-key {
+                transition: all 0.1s ease;
+            }
+            .keyboard-key:active {
+                background-color: rgba(255, 255, 255, 0.2);
+                transform: scale(0.95);
+            }
+            .contact-avatar {
+                transition: transform 0.2s ease;
+            }
+            .contact-avatar:active {
+                transform: scale(0.95);
+            }
+            .message-bubble {
+                transition: transform 0.2s ease;
+            }
+            .message-bubble:active {
+                transform: scale(0.98);
+            }
+            .folder-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+                padding: 16px;
+            }
+            .home-screen-grid {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 16px;
+                padding: 16px;
+            }
+            .lock-screen-slider {
+                -webkit-appearance: none;
+                width: 100%;
+                height: 44px;
+                background: transparent;
+                outline: none;
+            }
+            .lock-screen-slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                transition: transform 0.2s ease, background 0.2s ease;
+            }
+            .lock-screen-slider::-webkit-slider-thumb:active {
+                transform: scale(1.1);
+                background: rgba(255, 255, 255, 0.4);
+            }
+            .lock-screen-slider::-moz-range-thumb {
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+                transition: transform 0.2s ease, background 0.2s ease;
+            }
+            .lock-screen-slider::-moz-range-thumb:active {
+                transform: scale(1.1);
+                background: rgba(255, 255, 255, 0.4);
+            }
+        }
+    </style>
+</head>
+<body class="bg-dark text-white font-sans overflow-hidden h-screen">
+    <!-- iOS Device Container -->
+    <div id="ios-device" class="relative mx-auto mt-4 w-[375px] h-[812px] rounded-[40px] overflow-hidden shadow-2xl border-8 border-black bg-dark">
+        <!-- Status Bar (Always Visible) -->
+        <div id="status-bar" class="fixed top-0 left-0 right-0 h-6 px-4 flex items-center justify-between z-50 bg-transparent">
+            <div class="flex items-center space-x-1">
+                <span id="status-time" class="text-xs font-medium">9:41</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <i class="fa fa-signal text-xs"></i>
+                <i class="fa fa-wifi text-xs"></i>
+                <div class="flex items-center">
+                    <i class="fa fa-battery-three-quarters text-xs"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lock Screen -->
+        <div id="lock-screen" class="absolute inset-0 z-40 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] flex flex-col items-center justify-between p-6">
+            <!-- Dynamic Background Elements -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute top-20 left-10 w-40 h-40 rounded-full bg-blue-500 opacity-10 blur-3xl animate-pulse-slow"></div>
+                <div class="absolute bottom-40 right-10 w-60 h-60 rounded-full bg-purple-500 opacity-10 blur-3xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-green-500 opacity-5 blur-3xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+            </div>
+            <!-- Time and Date -->
+            <div class="mt-16 text-center">
+                <h1 id="lock-time" class="text-[72px] font-light text-glow">9:41</h1>
+                <p id="lock-date" class="text-xl text-gray-300 mt-2">Monday, June 5</p>
+            </div>
+
+            <!-- Widgets -->
+            <div class="w-full max-w-xs space-y-3 mb-8">
+                <!-- Weather Widget -->
+                <div class="bg-glass-blue rounded-2xl p-4 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <p class="text-sm text-gray-300">Weather</p>
+                        <i class="fa fa-sun-o text-3xl text-yellow-400 weather-icon"></i>
+                    </div>
+                    <div class="flex items-baseline mb-3">
+                        <span class="text-3xl font-light">22°</span>
+                        <span class="text-sm text-gray-300 ml-1">Sunny</span>
+                    </div>
+                    <div class="h-16 w-full">
+                        <canvas id="weatherChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Calendar Widget -->
+                <div class="bg-glass rounded-2xl p-4">
+                    <p class="text-sm text-gray-300">Calendar</p>
+                    <div class="mt-2">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-sm font-medium">14</div>
+                            <div class="ml-3">
+                                <p class="font-medium">Meeting</p>
+                                <p class="text-xs text-gray-400">2:00 PM - 3:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Widget -->
+                <div class="bg-glass rounded-2xl p-4">
+                    <p class="text-sm text-gray-300">Messages</p>
+                    <div class="mt-2">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-sm font-medium">JD</div>
+                            <div class="ml-3 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-medium">John Doe</p>
+                                    <p class="text-xs text-gray-400">10:30 AM</p>
+                                </div>
+                                <p class="text-sm text-gray-300 truncate">Hey, are we still meeting today?</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="w-full flex justify-between px-8 mb-4">
+                <button id="lock-camera-btn" class="w-12 h-12 rounded-full bg-glass flex items-center justify-center shadow-glow">
+                    <i class="fa fa-camera text-xl"></i>
+                </button>
+                <button id="lock-flashlight-btn" class="w-12 h-12 rounded-full bg-glass flex items-center justify-center shadow-glow">
+                    <i class="fa fa-flash text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Slide to Unlock -->
+            <div class="w-full max-w-xs mb-8">
+                <p class="text-center text-sm text-gray-400 mb-2">Slide to unlock</p>
+                <input type="range" min="0" max="100" value="0" class="lock-screen-slider" id="unlock-slider">
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="home-screen" class="absolute inset-0 z-30 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] hidden">
+            <!-- Status Bar Spacer -->
+            <div class="h-12"></div>
+
+            <!-- App Grid -->
+            <div class="home-screen-grid mb-20">
+                <!-- Row 1 -->
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-phone text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Phone</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-green-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-commenting-o text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Messages</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-yellow-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-calendar text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Calendar</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-camera text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Camera</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-red-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-heartbeat text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Health</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-cloud text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Weather</span>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-safari text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Safari</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-gray-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-music text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Music</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-map-marker text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Maps</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-gamepad text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Games</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-pink-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-photo text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Photos</span>
+                </div>
+
+                <!-- Row 3 -->
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-orange-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-shopping-bag text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Store</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-cloud text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">iCloud</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-gray-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-cog text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Settings</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-blue-300 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-microphone text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Assistant</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-green-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-wifi text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Home</span>
+                </div>
+
+                <!-- Row 4 -->
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-purple-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-folder text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Productivity</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-red-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-folder text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Social</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-yellow-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-folder text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Entertainment</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-folder text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">Utilities</span>
+                </div>
+                <div class="app-icon flex flex-col items-center">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-400 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-plus text-2xl"></i>
+                    </div>
+                    <span class="text-xs mt-1">App Store</span>
+                </div>
+            </div>
+
+            <!-- Dock -->
+            <div class="absolute bottom-0 left-0 right-0 h-20 bg-glass-dark rounded-t-3xl flex items-center justify-around px-4">
+                <div class="dock-app-icon flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-phone text-xl"></i>
+                    </div>
+                </div>
+                <div class="dock-app-icon flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-commenting-o text-xl"></i>
+                    </div>
+                </div>
+                <div class="dock-app-icon flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-camera text-xl"></i>
+                    </div>
+                </div>
+                <div class="dock-app-icon flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-2xl bg-gray-500 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-cog text-xl"></i>
+                    </div>
+                </div>
+                <div class="dock-app-icon flex flex-col items-center">
+                    <div class="w-12 h-12 rounded-2xl bg-blue-300 flex items-center justify-center shadow-glow">
+                        <i class="fa fa-microphone text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Center -->
+        <div id="control-center" class="absolute inset-0 z-20 bg-transparent hidden">
+            <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+            <div class="absolute bottom-0 left-0 right-0 bg-glass-dark rounded-t-3xl p-6 animate-slide-up">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-medium">Control Center</h2>
+                    <i class="fa fa-chevron-down text-gray-400"></i>
+                </div>
+
+                <!-- Top Controls -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-wifi text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Wi-Fi</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-bluetooth text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Bluetooth</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-plane text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Airplane</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-moon-o text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Focus</span>
+                    </div>
+                </div>
+
+                <!-- Middle Controls -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-bell-slash-o text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Do Not Disturb</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-flash text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Flashlight</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-camera text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Camera</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-2xl bg-glass flex items-center justify-center">
+                            <i class="fa fa-home text-2xl"></i>
+                        </div>
+                        <span class="text-xs mt-1">Home</span>
+                    </div>
+                </div>
+
+                <!-- Bottom Controls -->
+                <div class="space-y-4">
+                    <!-- Volume -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm">Volume</span>
+                            <i class="fa fa-volume-up text-sm"></i>
+                        </div>
+                        <input type="range" min="0" max="100" value="70" class="slider">
+                    </div>
+
+                    <!-- Brightness -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm">Brightness</span>
+                            <i class="fa fa-sun-o text-sm"></i>
+                        </div>
+                        <input type="range" min="0" max="100" value="50" class="slider">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather App -->
+        <div id="weather-app" class="absolute inset-0 z-10 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] hidden">
+            <!-- Header -->
+            <div class="bg-glass-dark p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <h2 class="text-lg font-medium">Weather</h2>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-ellipsis-v"></i>
+                </button>
+            </div>
+
+            <!-- Weather Content -->
+            <div class="p-6">
+                <!-- Location -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-medium">New York</h3>
+                        <p class="text-sm text-gray-400">Today, June 5</p>
+                    </div>
+                    <button class="w-10 h-10 rounded-full bg-glass flex items-center justify-center">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                </div>
+
+                <!-- Current Weather -->
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <div class="flex items-baseline">
+                            <span class="text-7xl font-light">22°</span>
+                            <span class="text-xl text-gray-400 ml-2">Sunny</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Feels like 24°</p>
+                    </div>
+                    <i class="fa fa-sun-o text-8xl text-yellow-400 weather-icon"></i>
+                </div>
+
+                <!-- Weather Details -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-glass rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm text-gray-400">Humidity</p>
+                            <i class="fa fa-tint text-blue-400"></i>
+                        </div>
+                        <p class="text-xl font-medium">65%</p>
+                    </div>
+                    <div class="bg-glass rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm text-gray-400">Wind</p>
+                            <i class="fa fa-location-arrow text-blue-400"></i>
+                        </div>
+                        <p class="text-xl font-medium">12 km/h</p>
+                    </div>
+                    <div class="bg-glass rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm text-gray-400">UV Index</p>
+                            <i class="fa fa-sun-o text-yellow-400"></i>
+                        </div>
+                        <p class="text-xl font-medium">8</p>
+                    </div>
+                    <div class="bg-glass rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-sm text-gray-400">Pressure</p>
+                            <i class="fa fa-dashboard text-blue-400"></i>
+                        </div>
+                        <p class="text-xl font-medium">1013 hPa</p>
+                    </div>
+                </div>
+
+                <!-- Forecast Chart -->
+                <div class="bg-glass rounded-xl p-4 mb-8">
+                    <h4 class="text-lg font-medium mb-4">7-Day Forecast</h4>
+                    <div class="h-64 w-full">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Hourly Forecast -->
+                <div>
+                    <h4 class="text-lg font-medium mb-4">Hourly Forecast</h4>
+                    <div class="flex overflow-x-auto scrollbar-hide space-x-4 pb-4">
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">6AM</p>
+                            <i class="fa fa-cloud text-2xl text-gray-400 mb-2"></i>
+                            <p class="font-medium">18°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">9AM</p>
+                            <i class="fa fa-cloud-sun text-2xl text-yellow-400 mb-2"></i>
+                            <p class="font-medium">20°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">12PM</p>
+                            <i class="fa fa-sun-o text-2xl text-yellow-400 mb-2"></i>
+                            <p class="font-medium">22°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">3PM</p>
+                            <i class="fa fa-sun-o text-2xl text-yellow-400 mb-2"></i>
+                            <p class="font-medium">23°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">6PM</p>
+                            <i class="fa fa-sun-o text-2xl text-yellow-400 mb-2"></i>
+                            <p class="font-medium">21°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">9PM</p>
+                            <i class="fa fa-moon-o text-2xl text-blue-300 mb-2"></i>
+                            <p class="font-medium">19°</p>
+                        </div>
+                        <div class="flex flex-col items-center min-w-[80px] bg-glass rounded-xl p-4">
+                            <p class="text-sm text-gray-400 mb-2">12AM</p>
+                            <i class="fa fa-moon-o text-2xl text-blue-300 mb-2"></i>
+                            <p class="font-medium">17°</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Screens -->
+        <!-- Phone App -->
+        <div id="phone-app" class="absolute inset-0 z-10 bg-dark-secondary hidden">
+            <!-- Header -->
+            <div class="bg-glass-dark p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <h2 class="text-lg font-medium">Phone</h2>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-ellipsis-v"></i>
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-700">
+                <button class="flex-1 py-3 text-center text-primary border-b-2 border-primary">Keypad</button>
+                <button class="flex-1 py-3 text-center text-gray-400">Recents</button>
+                <button class="flex-1 py-3 text-center text-gray-400">Contacts</button>
+                <button class="flex-1 py-3 text-center text-gray-400">Voicemail</button>
+            </div>
+
+            <!-- Keypad -->
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-6 mb-8">
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">1</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">2</span>
+                        <span class="text-xs text-gray-400">ABC</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">3</span>
+                        <span class="text-xs text-gray-400">DEF</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">4</span>
+                        <span class="text-xs text-gray-400">GHI</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">5</span>
+                        <span class="text-xs text-gray-400">JKL</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">6</span>
+                        <span class="text-xs text-gray-400">MNO</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">7</span>
+                        <span class="text-xs text-gray-400">PQRS</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">8</span>
+                        <span class="text-xs text-gray-400">TUV</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">9</span>
+                        <span class="text-xs text-gray-400">WXYZ</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <i class="fa fa-star text-2xl"></i>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <span class="text-2xl">0</span>
+                        <span class="text-xs text-gray-400">+</span>
+                    </button>
+                    <button class="keyboard-key w-full aspect-square rounded-full bg-glass flex flex-col items-center justify-center">
+                        <i class="fa fa-delete text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Call Button -->
+                <button class="w-full aspect-square max-w-[60px] mx-auto rounded-full bg-green-500 flex items-center justify-center shadow-glow">
+                    <i class="fa fa-phone text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages App -->
+        <div id="messages-app" class="absolute inset-0 z-10 bg-dark-secondary hidden">
+            <!-- Header -->
+            <div class="bg-glass-dark p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <h2 class="text-lg font-medium">Messages</h2>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-edit"></i>
+                </button>
+            </div>
+
+            <!-- Search -->
+            <div class="p-4">
+                <div class="bg-glass rounded-full p-3 flex items-center">
+                    <i class="fa fa-search text-gray-400 mr-2"></i>
+                    <input type="text" placeholder="Search" class="bg-transparent border-none outline-none flex-1">
+                </div>
+            </div>
+
+            <!-- Conversations -->
+            <div class="overflow-y-auto h-[calc(100%-128px)]">
+                <div class="border-b border-gray-700 p-4 flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-sm font-medium relative">
+                        JD
+                        <span class="notification-badge">2</span>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium">John Doe</p>
+                            <p class="text-xs text-gray-400">10:30 AM</p>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">Hey, are we still meeting today?</p>
+                    </div>
+                </div>
+                <div class="border-b border-gray-700 p-4 flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-sm font-medium">
+                        AS
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium">Alice Smith</p>
+                            <p class="text-xs text-gray-400">Yesterday</p>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">Thanks for the help!</p>
+                    </div>
+                </div>
+                <div class="border-b border-gray-700 p-4 flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-sm font-medium">
+                        MB
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium">Mike Brown</p>
+                            <p class="text-xs text-gray-400">Yesterday</p>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">Let me know what you think about the project.</p>
+                    </div>
+                </div>
+                <div class="border-b border-gray-700 p-4 flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-sm font-medium">
+                        EJ
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium">Emma Johnson</p>
+                            <p class="text-xs text-gray-400">Monday</p>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">See you at the conference next week!</p>
+                    </div>
+                </div>
+                <div class="border-b border-gray-700 p-4 flex items-center">
+                    <div class="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center text-sm font-medium">
+                        RT
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="font-medium">Robert Taylor</p>
+                            <p class="text-xs text-gray-400">Friday</p>
+                        </div>
+                        <p class="text-sm text-gray-300 truncate">Can you send me the report?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera App -->
+        <div id="camera-app" class="absolute inset-0 z-10 bg-black hidden">
+            <!-- Top Controls -->
+            <div class="p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full bg-black bg-opacity-30 flex items-center justify-center">
+                    <i class="fa fa-times"></i>
+                </button>
+                <div class="flex space-x-4">
+                    <button class="w-10 h-10 rounded-full bg-black bg-opacity-30 flex items-center justify-center">
+                        <i class="fa fa-cog"></i>
+                    </button>
+                    <button class="w-10 h-10 rounded-full bg-black bg-opacity-30 flex items-center justify-center">
+                        <i class="fa fa-flash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Camera Viewfinder (Placeholder) -->
+            <div class="flex-1 flex items-center justify-center">
+                <div class="w-full h-full bg-gradient-to-b from-gray-800 to-gray-900 flex items-center justify-center">
+                    <p class="text-gray-500 text-lg">Camera Viewfinder</p>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="p-4">
+                <!-- Camera Modes -->
+                <div class="flex justify-center space-x-6 mb-4">
+                    <button class="camera-mode active">Photo</button>
+                    <button class="camera-mode text-gray-400">Video</button>
+                    <button class="camera-mode text-gray-400">Portrait</button>
+                    <button class="camera-mode text-gray-400">Pano</button>
+                </div>
+
+                <!-- Capture Controls -->
+                <div class="flex items-center justify-between">
+                    <button class="w-12 h-12">
+                        <i class="fa fa-image text-2xl"></i>
+                    </button>
+                    <button class="camera-shutter w-16 h-16 rounded-full border-4 border-white flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-white"></div>
+                    </button>
+                    <button class="w-12 h-12">
+                        <i class="fa fa-refresh text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings App -->
+        <div id="settings-app" class="absolute inset-0 z-10 bg-dark-secondary hidden">
+            <!-- Header -->
+            <div class="bg-glass-dark p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <h2 class="text-lg font-medium">Settings</h2>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+
+            <!-- Settings Sections -->
+            <div class="overflow-y-auto h-[calc(100%-64px)]">
+                <!-- Profile Section -->
+                <div class="p-4 border-b border-gray-700">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-sm font-medium">
+                            JD
+                        </div>
+                        <div class="ml-3">
+                            <p class="font-medium">John Doe</p>
+                            <p class="text-sm text-gray-400">Apple ID, iCloud, Media & Purchases</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Airplane Mode -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Airplane Mode</p>
+                    </div>
+                    <label class="ios-toggle">
+                        <input type="checkbox">
+                        <span class="ios-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- Wi-Fi -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Wi-Fi</p>
+                        <p class="text-sm text-gray-400">Connected to Home Wi-Fi</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Bluetooth -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Bluetooth</p>
+                        <p class="text-sm text-gray-400">On</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Cellular -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Cellular</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Personal Hotspot -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Personal Hotspot</p>
+                        <p class="text-sm text-gray-400">Off</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Notifications -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Notifications</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Focus -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Focus</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- Do Not Disturb -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Do Not Disturb</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+
+                <!-- General -->
+                <div class="p-4 border-b border-gray-700 flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">General</p>
+                    </div>
+                    <i class="fa fa-chevron-right text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assistant App -->
+        <div id="assistant-app" class="absolute inset-0 z-10 bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] hidden">
+            <!-- Header -->
+            <div class="p-4 flex items-center justify-between">
+                <button class="app-back-btn w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-chevron-left"></i>
+                </button>
+                <h2 class="text-lg font-medium">Assistant</h2>
+                <button class="w-10 h-10 rounded-full flex items-center justify-center">
+                    <i class="fa fa-ellipsis-v"></i>
+                </button>
+            </div>
+
+            <!-- Assistant Interface -->
+            <div class="flex flex-col items-center justify-center h-[calc(100%-64px)] p-6">
+                <div class="w-24 h-24 rounded-full bg-blue-500 flex items-center justify-center mb-8 animate-pulse-slow">
+                    <i class="fa fa-microphone text-4xl"></i>
+                </div>
+                <p class="text-xl font-medium mb-2 text-center">How can I help you today?</p>
+                <p class="text-gray-400 mb-8 text-center">You can ask me anything</p>
+
+                <!-- Voice Wave Animation -->
+                <div class="assistant-wave mb-8">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <!-- Suggestions -->
+                <div class="w-full space-y-3">
+                    <button class="w-full bg-glass rounded-xl p-4 text-left">
+                        What's the weather today?
+                    </button>
+                    <button class="w-full bg-glass rounded-xl p-4 text-left">
+                        Set an alarm for 7:00 AM
+                    </button>
+                    <button class="w-full bg-glass rounded-xl p-4 text-left">
+                        Play my favorite playlist
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multitasking View -->
+        <div id="multitasking-view" class="absolute inset-0 z-50 bg-black bg-opacity-70 hidden">
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="flex space-x-4 overflow-x-auto scrollbar-hide pb-8">
+                    <!-- Phone App Preview -->
+                    <div class="w-64 h-80 bg-dark-secondary rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+                        <div class="bg-glass-dark p-3 flex items-center justify-between">
+                            <h3 class="text-sm font-medium">Phone</h3>
+                            <button class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-xs">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="grid grid-cols-3 gap-4 mb-4">
+                                <div class="w-full aspect-square rounded-full bg-glass flex items-center justify-center">
+                                    <span class="text-lg">1</span>
+                                </div>
+                                <div class="w-full aspect-square rounded-full bg-glass flex items-center justify-center">
+                                    <span class="text-lg">2</span>
+                                </div>
+                                <div class="w-full aspect-square rounded-full bg-glass flex items-center justify-center">
+                                    <span class="text-lg">3</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages App Preview -->
+                    <div class="w-64 h-80 bg-dark-secondary rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+                        <div class="bg-glass-dark p-3 flex items-center justify-between">
+                            <h3 class="text-sm font-medium">Messages</h3>
+                            <button class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-xs">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="border-b border-gray-700 p-3 flex items-center">
+                                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-xs font-medium">
+                                    JD
+                                </div>
+                                <div class="ml-2 flex-1">
+                                    <p class="text-sm font-medium">John Doe</p>
+                                    <p class="text-xs text-gray-400 truncate">Hey, are we still meeting today?</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Camera App Preview -->
+                    <div class="w-64 h-80 bg-black rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+                        <div class="p-3 flex items-center justify-between">
+                            <h3 class="text-sm font-medium">Camera</h3>
+                            <button class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-xs">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 bg-gradient-to-b from-gray-800 to-gray-900"></div>
+                    </div>
+
+                    <!-- Settings App Preview -->
+                    <div class="w-64 h-80 bg-dark-secondary rounded-xl overflow-hidden shadow-lg flex-shrink-0">
+                        <div class="bg-glass-dark p-3 flex items-center justify-between">
+                            <h3 class="text-sm font-medium">Settings</h3>
+                            <button class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center text-xs">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-4">
+                            <div class="border-b border-gray-700 p-3 flex items-center justify-between">
+                                <p class="text-sm font-medium">Airplane Mode</p>
+                                <label class="ios-toggle">
+                                    <input type="checkbox">
+                                    <span class="ios-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="mt-8 text-center text-gray-600 max-w-md mx-auto px-4">
+        <h3 class="text-lg font-medium mb-2">iOS 26 Simulator Instructions</h3>
+        <ul class="text-sm space-y-1 text-left">
+            <li>• Slide the unlock slider on the lock screen to access the home screen</li>
+            <li>• Tap app icons to open applications</li>
+            <li>• Swipe down from the top-right corner to open Control Center</li>
+            <li>• Swipe up from the bottom to access Multitasking View</li>
+            <li>• Tap the back button in apps to return to the home screen</li>
+        </ul>
+    </div>
+
+    <script>
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            const timeString = `${hours}:${minutes}`;
+            document.getElementById('status-time').textContent = timeString;
+            document.getElementById('lock-time').textContent = timeString;
+        }
+        
+        // Update date
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            const dateString = now.toLocaleDateString('en-US', options);
+            document.getElementById('lock-date').textContent = dateString;
+        }
+        
+        // Initialize time and date
+        updateTime();
+        updateDate();
+        
+        // Initialize weather chart
+        function initWeatherChart() {
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            const weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['6AM', '9AM', '12PM', '3PM', '6PM', '9PM', '12AM'],
+                    datasets: [{
+                        label: 'Temperature',
+                        data: [18, 20, 22, 23, 21, 19, 17],
+                        borderColor: '#007AFF',
+                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#007AFF',
+                        pointRadius: 3,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: false
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+        
+        // Initialize weather chart when page loads
+        window.addEventListener('load', initWeatherChart);
+        
+        // Lock screen quick actions
+        const lockCameraBtn = document.getElementById('lock-camera-btn');
+        const lockFlashlightBtn = document.getElementById('lock-flashlight-btn');
+        let isFlashlightOn = false;
+        
+        // Open Camera from lock screen
+        lockCameraBtn.addEventListener('click', function() {
+            lockScreen.classList.add('animate-fade-out');
+            setTimeout(() => {
+                lockScreen.classList.add('hidden');
+                cameraApp.classList.remove('hidden');
+                cameraApp.classList.add('animate-fade-in');
+            }, 300);
+        });
+        
+        // Toggle flashlight from lock screen
+        lockFlashlightBtn.addEventListener('click', function() {
+            isFlashlightOn = !isFlashlightOn;
+            if (isFlashlightOn) {
+                this.classList.add('bg-yellow-500', 'shadow-glow-lg');
+                this.querySelector('i').classList.add('text-white');
+            } else {
+                this.classList.remove('bg-yellow-500', 'shadow-glow-lg');
+                this.querySelector('i').classList.remove('text-white');
+            }
+        });
+        
+        // Update time every minute
+        setInterval(updateTime, 60000);
+        
+        // Unlock slider functionality
+        const unlockSlider = document.getElementById('unlock-slider');
+        const lockScreen = document.getElementById('lock-screen');
+        const homeScreen = document.getElementById('home-screen');
+        
+        unlockSlider.addEventListener('input', function() {
+            if (this.value >= 80) {
+                lockScreen.classList.add('animate-fade-out');
+                setTimeout(() => {
+                    lockScreen.classList.add('hidden');
+                    homeScreen.classList.remove('hidden');
+                    homeScreen.classList.add('animate-fade-in');
+                    this.value = 0;
+                }, 500);
+            }
+        });
+        
+        // App icons functionality
+        const appIcons = document.querySelectorAll('.app-icon');
+        const dockAppIcons = document.querySelectorAll('.dock-app-icon');
+        const phoneApp = document.getElementById('phone-app');
+        const messagesApp = document.getElementById('messages-app');
+        const cameraApp = document.getElementById('camera-app');
+        const settingsApp = document.getElementById('settings-app');
+        const assistantApp = document.getElementById('assistant-app');
+        const weatherApp = document.getElementById('weather-app');
+        const backButtons = document.querySelectorAll('.app-back-btn');
+        
+        // Open Phone app
+        document.querySelectorAll('.app-icon')[0].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            phoneApp.classList.remove('hidden');
+            phoneApp.classList.add('animate-slide-up');
+        });
+        
+        document.querySelectorAll('.dock-app-icon')[0].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            phoneApp.classList.remove('hidden');
+            phoneApp.classList.add('animate-slide-up');
+        });
+        
+        // Open Messages app
+        document.querySelectorAll('.app-icon')[1].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            messagesApp.classList.remove('hidden');
+            messagesApp.classList.add('animate-slide-up');
+        });
+        
+        document.querySelectorAll('.dock-app-icon')[1].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            messagesApp.classList.remove('hidden');
+            messagesApp.classList.add('animate-slide-up');
+        });
+        
+        // Open Camera app
+        document.querySelectorAll('.app-icon')[3].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            cameraApp.classList.remove('hidden');
+            cameraApp.classList.add('animate-fade-in');
+        });
+        
+        document.querySelectorAll('.dock-app-icon')[2].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            cameraApp.classList.remove('hidden');
+            cameraApp.classList.add('animate-fade-in');
+        });
+        
+        // Open Settings app
+        document.querySelectorAll('.app-icon')[12].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            settingsApp.classList.remove('hidden');
+            settingsApp.classList.add('animate-slide-up');
+        });
+        
+        document.querySelectorAll('.dock-app-icon')[3].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            settingsApp.classList.remove('hidden');
+            settingsApp.classList.add('animate-slide-up');
+        });
+        
+        // Open Assistant app
+        document.querySelectorAll('.app-icon')[13].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            assistantApp.classList.remove('hidden');
+            assistantApp.classList.add('animate-fade-in');
+        });
+        
+        document.querySelectorAll('.dock-app-icon')[4].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            assistantApp.classList.remove('hidden');
+            assistantApp.classList.add('animate-fade-in');
+        });
+        
+        // Open Weather app
+        document.querySelectorAll('.app-icon')[5].addEventListener('click', function() {
+            homeScreen.classList.add('hidden');
+            weatherApp.classList.remove('hidden');
+            weatherApp.classList.add('animate-slide-up');
+            
+            // Initialize forecast chart when Weather app opens
+            setTimeout(() => {
+                const ctx = document.getElementById('forecastChart').getContext('2d');
+                const forecastChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'High',
+                            data: [22, 24, 25, 23, 21, 20, 22],
+                            borderColor: '#FF9500',
+                            backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#FF9500',
+                            pointRadius: 4,
+                            tension: 0.4,
+                            fill: false
+                        }, {
+                            label: 'Low',
+                            data: [17, 18, 19, 18, 16, 15, 16],
+                            borderColor: '#007AFF',
+                            backgroundColor: 'rgba(0, 122, 255, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#007AFF',
+                            pointRadius: 4,
+                            tension: 0.4,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                ticks: {
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    callback: function(value) {
+                                        return value + '°';
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            duration: 2000,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            }, 100);
+        });
+        
+        // Back buttons functionality
+        backButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const currentApp = this.closest('[id$="-app"]');
+                currentApp.classList.add('animate-fade-out');
+                setTimeout(() => {
+                    currentApp.classList.add('hidden');
+                    currentApp.classList.remove('animate-slide-up', 'animate-fade-in', 'animate-fade-out');
+                    homeScreen.classList.remove('hidden');
+                }, 300);
+            });
+        });
+        
+        // Control Center functionality
+        const controlCenter = document.getElementById('control-center');
+        let isControlCenterOpen = false;
+        
+        // Open Control Center with a swipe down from top-right
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.changedTouches[0].screenY;
+        }, false);
+        
+        document.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, false);
+        
+        function handleSwipe() {
+            const swipeDistance = touchStartY - touchEndY;
+            
+            // Swipe down from top-right to open Control Center
+            if (swipeDistance > 50 && touchStartY < 100 && window.innerWidth - e.changedTouches[0].screenX < 100) {
+                if (!isControlCenterOpen && homeScreen.classList.contains('hidden') === false) {
+                    controlCenter.classList.remove('hidden');
+                    isControlCenterOpen = true;
+                }
+            }
+            
+            // Swipe up from bottom to close Control Center
+            if (swipeDistance < -50 && window.innerHeight - touchStartY < 100) {
+                if (isControlCenterOpen) {
+                    controlCenter.classList.add('hidden');
+                    isControlCenterOpen = false;
+                }
+            }
+        }
+        
+        // Mouse events for desktop
+        document.addEventListener('mousedown', function(e) {
+            touchStartY = e.clientY;
+        }, false);
+        
+        document.addEventListener('mouseup', function(e) {
+            touchEndY = e.clientY;
+            handleMouseSwipe(e);
+        }, false);
+        
+        function handleMouseSwipe(e) {
+            const swipeDistance = touchStartY - touchEndY;
+            
+            // Swipe down from top-right to open Control Center
+            if (swipeDistance > 50 && touchStartY < 100 && window.innerWidth - e.clientX < 100) {
+                if (!isControlCenterOpen && homeScreen.classList.contains('hidden') === false) {
+                    controlCenter.classList.remove('hidden');
+                    isControlCenterOpen = true;
+                }
+            }
+            
+            // Swipe up from bottom to close Control Center
+            if (swipeDistance < -50 && window.innerHeight - touchStartY < 100) {
+                if (isControlCenterOpen) {
+                    controlCenter.classList.add('hidden');
+                    isControlCenterOpen = false;
+                }
+            }
+        }
+        
+        // Multitasking View functionality
+        const multitaskingView = document.getElementById('multitasking-view');
+        let isMultitaskingViewOpen = false;
+        
+        // Open Multitasking View with a swipe up from bottom
+        document.addEventListener('touchstart', function(e) {
+            touchStartY = e.changedTouches[0].screenY;
+        }, false);
+        
+        document.addEventListener('touchend', function(e) {
+            touchEndY = e.changedTouches[0].screenY;
+            handleMultitaskingSwipe(e);
+        }, false);
+        
+        function handleMultitaskingSwipe(e) {
+            const swipeDistance = touchEndY - touchStartY;
+            
+            // Swipe up from bottom to open Multitasking View
+            if (swipeDistance > 100 && window.innerHeight - touchStartY < 100) {
+                if (!isMultitaskingViewOpen && homeScreen.classList.contains('hidden') === false) {
+                    multitaskingView.classList.remove('hidden');
+                    isMultitaskingViewOpen = true;
+                }
+            }
+            
+            // Tap to close Multitasking View
+            if (e.target === multitaskingView) {
+                multitaskingView.classList.add('hidden');
+                isMultitaskingViewOpen = false;
+            }
+        }
+        
+        // Mouse events for desktop
+        document.addEventListener('mousedown', function(e) {
+            touchStartY = e.clientY;
+        }, false);
+        
+        document.addEventListener('mouseup', function(e) {
+            touchEndY = e.clientY;
+            handleMultitaskingMouseSwipe(e);
+        }, false);
+        
+        function handleMultitaskingMouseSwipe(e) {
+            const swipeDistance = touchEndY - touchStartY;
+            
+            // Swipe up from bottom to open Multitasking View
+            if (swipeDistance > 100 && window.innerHeight - touchStartY < 100) {
+                if (!isMultitaskingViewOpen && homeScreen.classList.contains('hidden') === false) {
+                    multitaskingView.classList.remove('hidden');
+                    isMultitaskingViewOpen = true;
+                }
+            }
+            
+            // Click to close Multitasking View
+            if (e.target === multitaskingView) {
+                multitaskingView.classList.add('hidden');
+                isMultitaskingViewOpen = false;
+            }
+        }
+        
+        // Close Multitasking View when clicking on it
+        multitaskingView.addEventListener('click', function(e) {
+            if (e.target === multitaskingView) {
+                multitaskingView.classList.add('hidden');
+                isMultitaskingViewOpen = false;
+            }
+        });
+        
+        // Close Control Center when clicking on it
+        controlCenter.addEventListener('click', function(e) {
+            if (e.target === controlCenter) {
+                controlCenter.classList.add('hidden');
+                isControlCenterOpen = false;
+            }
+        });
+        
+        // Close Multitasking View when clicking on app previews
+        const appPreviews = multitaskingView.querySelectorAll('.w-64');
+        appPreviews.forEach(preview => {
+            preview.addEventListener('click', function(e) {
+                e.stopPropagation();
+                multitaskingView.classList.add('hidden');
+                isMultitaskingViewOpen = false;
+                
+                // Open the corresponding app
+                const appName = this.querySelector('h3').textContent;
+                if (appName === 'Phone') {
+                    homeScreen.classList.add('hidden');
+                    phoneApp.classList.remove('hidden');
+                    phoneApp.classList.add('animate-slide-up');
+                } else if (appName === 'Messages') {
+                    homeScreen.classList.add('hidden');
+                    messagesApp.classList.remove('hidden');
+                    messagesApp.classList.add('animate-slide-up');
+                } else if (appName === 'Camera') {
+                    homeScreen.classList.add('hidden');
+                    cameraApp.classList.remove('hidden');
+                    cameraApp.classList.add('animate-fade-in');
+                } else if (appName === 'Settings') {
+                    homeScreen.classList.add('hidden');
+                    settingsApp.classList.remove('hidden');
+                    settingsApp.classList.add('animate-slide-up');
+                }
+            });
+        });
+        
+        // Close app from Multitasking View
+        const closeButtons = multitaskingView.querySelectorAll('.fa-times');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const appPreview = this.closest('.w-64');
+                appPreview.classList.add('animate-scale-out');
+                setTimeout(() => {
+                    appPreview.remove();
+                }, 300);
+            });
+        });
+        
+        // Toggle switches in Settings app
+        const toggles = document.querySelectorAll('.ios-toggle input');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                // Add animation effect
+                this.nextElementSibling.classList.add('transition-all', 'duration-300');
+            });
+        });
+        
+        // Sliders in Control Center
+        const sliders = document.querySelectorAll('.slider');
+        sliders.forEach(slider => {
+            slider.addEventListener('input', function() {
+                // Add visual feedback
+                this.style.background = `linear-gradient(to right, #007AFF 0%, #007AFF ${this.value}%, rgba(255, 255, 255, 0.3) ${this.value}%, rgba(255, 255, 255, 0.3) 100%)`;
+            });
+        });
+        
+        // Initialize sliders with gradient
+        sliders.forEach(slider => {
+            slider.style.background = `linear-gradient(to right, #007AFF 0%, #007AFF ${slider.value}%, rgba(255, 255, 255, 0.3) ${slider.value}%, rgba(255, 255, 255, 0.3) 100%)`;
+        });
+        
+        // Camera shutter button
+        const cameraShutter = document.querySelector('.camera-shutter');
+        cameraShutter.addEventListener('click', function() {
+            // Add animation effect
+            this.classList.add('animate-bounce-in');
+            setTimeout(() => {
+                this.classList.remove('animate-bounce-in');
+            }, 500);
+        });
+        
+        // Camera mode buttons
+        const cameraModes = document.querySelectorAll('.camera-mode');
+        cameraModes.forEach(mode => {
+            mode.addEventListener('click', function() {
+                cameraModes.forEach(m => m.classList.remove('active'));
+                cameraModes.forEach(m => m.classList.add('text-gray-400'));
+                this.classList.add('active');
+                this.classList.remove('text-gray-400');
+            });
+        });
+        
+        // Assistant suggestions
+        const assistantSuggestions = document.querySelectorAll('.assistant-wave + div button');
+        assistantSuggestions.forEach(suggestion => {
+            suggestion.addEventListener('click', function() {
+                const text = this.textContent.trim();
+                alert(`You asked: "${text}"\n\nThis is a demo of iOS 26 Simulator. In a real iOS device, the assistant would respond to your query.`);
+            });
+        });
+    </script>
+</body>
+</html>

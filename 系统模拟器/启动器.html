@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统模拟器</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .systems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+        }
+        
+        .system-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .system-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        
+        .system-card a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .system-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .system-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+        
+        .system-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 15px 15px 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .system-card:hover::before {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+            
+            .systems-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            
+            .system-card {
+                padding: 20px 15px;
+            }
+            
+            .system-card h2 {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>系统模拟器</h1>
+        <div class="systems-grid">
+            <div class="system-card">
+                <a href="windowsxp/index.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows XP</h2>
+                    <p>经典操作系统</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows7.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 7</h2>
+                    <p>稳定可靠</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows8.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 8</h2>
+                    <p>触控友好</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows10.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 10</h2>
+                    <p>现代体验</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows11.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 11</h2>
+                    <p>全新设计</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows12.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 12</h2>
+                    <p>未来系统</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="windows98.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #0078d7;">🪟</div>
+                    <h2>Windows 98</h2>
+                    <p>怀旧经典</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="Linux桌面版.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #000000;">🐧</div>
+                    <h2>Linux 桌面版</h2>
+                    <p>开源系统</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="Linux终端版.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #000000;">🐧</div>
+                    <h2>Linux 终端版</h2>
+                    <p>命令行界面</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="macos.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #a2aaad;">🍎</div>
+                    <h2>macOS</h2>
+                    <p>苹果系统</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="ios.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #a2aaad;">📱</div>
+                    <h2>iOS</h2>
+                    <p>移动系统</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="安卓.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #3ddc84;">🤖</div>
+                    <h2>安卓</h2>
+                    <p>移动平台</p>
+                </a>
+            </div>
+            <div class="system-card">
+                <a href="鸿蒙.html">
+                    <div style="font-size: 3rem; margin-bottom: 15px; color: #ff6a00;">🔥</div>
+                    <h2>鸿蒙</h2>
+                    <p>华为系统</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

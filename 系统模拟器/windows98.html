@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows 98 模拟器</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'win98-blue': '#008080',
+            'win98-light-blue': '#00a0a0',
+            'win98-dark-blue': '#006060',
+            'win98-yellow': '#ffcc00',
+            'win98-taskbar': '#c0c0c0',
+            'win98-border': '#000000',
+            'win98-window-bg': '#ffffff',
+            'win98-titlebar': '#000080',
+          },
+          fontFamily: {
+            'win98': ['MS Sans Serif', 'Arial', 'sans-serif'],
+          },
+          boxShadow: {
+            'win98-inset': 'inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080',
+            'win98-button': '1px 1px 0 #000000',
+            'win98-window': '2px 2px 0 #000000',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .win98-border {
+        border: 1px solid #000000;
+        box-shadow: inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080;
+      }
+      
+      .win98-button {
+        border: 1px solid #000000;
+        background-color: #c0c0c0;
+        box-shadow: 1px 1px 0 #000000;
+      }
+      
+      .win98-button:active {
+        box-shadow: inset -1px -1px 0 #000000, inset 1px 1px 0 #808080;
+        transform: translate(1px, 1px);
+      }
+      
+      .win98-window {
+        border: 1px solid #000000;
+        background-color: #ffffff;
+        box-shadow: 2px 2px 0 #000000;
+      }
+      
+      .win98-titlebar {
+        background-color: #000080;
+        color: #ffffff;
+        border-bottom: 1px solid #000000;
+      }
+      
+      .win98-icon {
+        transition: transform 0.1s;
+      }
+      
+      .win98-icon:hover {
+        transform: scale(1.05);
+      }
+      
+      .win98-icon:active {
+        transform: scale(0.95);
+      }
+      
+      .window-content {
+        display: none;
+        position: absolute;
+        z-index: 10;
+      }
+      
+      .window-content.active {
+        display: block;
+      }
+      
+      .taskbar-button.active {
+        background-color: #000080;
+        color: #ffffff;
+      }
+      
+      /* 自定义滚动条 */
+      ::-webkit-scrollbar {
+        width: 16px;
+        height: 16px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #c0c0c0;
+        border: 1px solid #000000;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border: 1px solid #000000;
+        box-shadow: inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080;
+      }
+      
+      ::-webkit-scrollbar-button {
+        background: #c0c0c0;
+        border: 1px solid #000000;
+        box-shadow: 1px 1px 0 #000000;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  </style>
+</head>
+<body class="font-win98 overflow-hidden">
+  <!-- Windows 98 桌面背景 -->
+  <div id="desktop" class="fixed inset-0 bg-gradient-to-br from-win98-blue to-win98-light-blue p-4">
+    <!-- 桌面图标 -->
+    <div class="flex flex-col gap-8 p-4">
+      <!-- 我的电脑 -->
+      <div class="win98-icon flex flex-col items-center cursor-pointer select-none" data-target="my-computer-window">
+        <img src="https://p11-doubao-search-sign.byteimg.com/labis/7054bc907c647ef444a2975feaad0be1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=vOLV%2BRjaDo4HL8Qk9t88tcSTCUM%3D" alt="我的电脑" class="w-12 h-12 object-contain">
+        <span class="text-white text-sm mt-1">我的电脑</span>
+      </div>
+    </div>
+    
+    <div class="flex flex-col gap-8 p-4" style="position: absolute; top: 0; left: 120px;">
+      <!-- Internet Explorer -->
+      <div class="win98-icon flex flex-col items-center cursor-pointer select-none" data-target="ie-window">
+        <img src="https://p11-doubao-search-sign.byteimg.com/labis/image/771b07a6cb45f57e4fab1dc8b285790b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=6tjCRaVTGbjGkPeviyoNzPauVDo%3D" alt="Internet Explorer" class="w-12 h-12 object-contain">
+        <span class="text-white text-sm mt-1">Internet Explorer</span>
+      </div>
+    </div>
+    
+    <div class="flex flex-col gap-8 p-4" style="position: absolute; top: 0; left: 240px;">
+      <!-- 回收站 -->
+      <div class="win98-icon flex flex-col items-center cursor-pointer select-none" data-target="recycle-bin-window">
+        <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1856867675317862401~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300303&x-signature=2mS7VIwnvdRqqdoOI%2BvVrodjicw%3D" alt="回收站" class="w-12 h-12 object-contain">
+        <span class="text-white text-sm mt-1">回收站</span>
+      </div>
+    </div>
+    
+    <div class="flex flex-col gap-8 p-4" style="position: absolute; top: 120px; left: 0;">
+      <!-- readme.txt -->
+      <div class="win98-icon flex flex-col items-center cursor-pointer select-none" data-target="notepad-window">
+        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/993200888032002085~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300303&x-signature=PiDYzLaRrqP1KrmlkR4U7KqxzTE%3D" alt="readme.txt" class="w-12 h-12 object-contain">
+        <span class="text-white text-sm mt-1">readme.txt</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 我的电脑窗口 -->
+  <div id="my-computer-window" class="window-content win98-window" style="width: 640px; height: 480px; top: 100px; left: 100px;">
+    <div class="win98-titlebar flex items-center justify-between p-2 cursor-move">
+      <div class="flex items-center">
+        <img src="https://p11-doubao-search-sign.byteimg.com/labis/7054bc907c647ef444a2975feaad0be1~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=vOLV%2BRjaDo4HL8Qk9t88tcSTCUM%3D" alt="我的电脑" class="w-6 h-6 mr-2">
+        <span>我的电脑</span>
+      </div>
+      <div class="flex gap-1">
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="minimize">
+          <i class="fa fa-minus text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="maximize">
+          <i class="fa fa-square text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="close">
+          <i class="fa fa-times text-xs"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-4 h-full overflow-auto">
+      <div class="flex flex-wrap gap-6">
+        <div class="flex flex-col items-center cursor-pointer">
+          <div class="win98-border bg-win98-taskbar p-4 flex items-center justify-center w-20 h-20">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/82db66eb4b9fe8f73d855dd74ef56959~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=FoGj%2BYLfdsA7rUZ8qn6Yp0U936U%3D" alt="3.5软盘 (A:)" class="w-12 h-12 object-contain">
+          </div>
+          <span class="text-sm mt-2 text-center">3.5软盘 (A:)</span>
+        </div>
+        <div class="flex flex-col items-center cursor-pointer">
+          <div class="win98-border bg-win98-taskbar p-4 flex items-center justify-center w-20 h-20">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/82db66eb4b9fe8f73d855dd74ef56959~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=FoGj%2BYLfdsA7rUZ8qn6Yp0U936U%3D" alt="本地磁盘 (C:)" class="w-12 h-12 object-contain">
+          </div>
+          <span class="text-sm mt-2 text-center">本地磁盘 (C:)</span>
+        </div>
+        <div class="flex flex-col items-center cursor-pointer">
+          <div class="win98-border bg-win98-taskbar p-4 flex items-center justify-center w-20 h-20">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/82db66eb4b9fe8f73d855dd74ef56959~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=FoGj%2BYLfdsA7rUZ8qn6Yp0U936U%3D" alt="本地磁盘 (D:)" class="w-12 h-12 object-contain">
+          </div>
+          <span class="text-sm mt-2 text-center">本地磁盘 (D:)</span>
+        </div>
+        <div class="flex flex-col items-center cursor-pointer">
+          <div class="win98-border bg-win98-taskbar p-4 flex items-center justify-center w-20 h-20">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/82db66eb4b9fe8f73d855dd74ef56959~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=FoGj%2BYLfdsA7rUZ8qn6Yp0U936U%3D" alt="光盘驱动器 (E:)" class="w-12 h-12 object-contain">
+          </div>
+          <span class="text-sm mt-2 text-center">光盘驱动器 (E:)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Internet Explorer 窗口 -->
+  <div id="ie-window" class="window-content win98-window" style="width: 800px; height: 600px; top: 150px; left: 200px;">
+    <div class="win98-titlebar flex items-center justify-between p-2 cursor-move">
+      <div class="flex items-center">
+        <img src="https://p11-doubao-search-sign.byteimg.com/labis/image/771b07a6cb45f57e4fab1dc8b285790b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=6tjCRaVTGbjGkPeviyoNzPauVDo%3D" alt="Internet Explorer" class="w-6 h-6 mr-2">
+        <span>Internet Explorer</span>
+      </div>
+      <div class="flex gap-1">
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="minimize">
+          <i class="fa fa-minus text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="maximize">
+          <i class="fa fa-square text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="close">
+          <i class="fa fa-times text-xs"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-4 h-full flex flex-col">
+      <div class="win98-border bg-win98-taskbar p-2 mb-4">
+        <div class="flex items-center gap-2">
+          <button class="win98-button px-2 py-1 text-sm">后退</button>
+          <button class="win98-button px-2 py-1 text-sm">前进</button>
+          <button class="win98-button px-2 py-1 text-sm">刷新</button>
+          <button class="win98-button px-2 py-1 text-sm">主页</button>
+          <div class="flex-grow win98-border bg-white p-1">
+            <input type="text" class="w-full border-none outline-none text-sm" value="https://www.microsoft.com" readonly>
+          </div>
+          <button class="win98-button px-2 py-1 text-sm">转到</button>
+        </div>
+      </div>
+      <div class="win98-border bg-white flex-grow p-4 overflow-auto">
+        <div class="text-center">
+          <img src="https://p3-doubao-search-sign.byteimg.com/labis/b7e6423c23e7fefdbf5c511349024a58~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300289&x-signature=8pBOPW7d5%2FqUNz%2B%2FoRPWIYI6J1o%3D" alt="Microsoft" class="w-64 h-auto mx-auto mb-4">
+          <h1 class="text-2xl font-bold mb-4">欢迎使用 Internet Explorer</h1>
+          <p class="mb-4">这是一个模拟的 Internet Explorer 浏览器窗口。</p>
+          <p class="mb-4">在真实的 Windows 98 系统中，您可以通过这个浏览器访问互联网。</p>
+          <p>由于这是一个模拟器，此浏览器窗口仅用于展示，无法进行实际的网络访问。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 记事本窗口 -->
+  <div id="notepad-window" class="window-content win98-window" style="width: 500px; height: 300px; top: 200px; left: 300px;">
+    <div class="win98-titlebar flex items-center justify-between p-2 cursor-move">
+      <div class="flex items-center">
+        <img src="https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/993200888032002085~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300303&x-signature=PiDYzLaRrqP1KrmlkR4U7KqxzTE%3D" alt="记事本" class="w-6 h-6 mr-2">
+        <span>readme.txt - 记事本</span>
+      </div>
+      <div class="flex gap-1">
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="minimize">
+          <i class="fa fa-minus text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="maximize">
+          <i class="fa fa-square text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="close">
+          <i class="fa fa-times text-xs"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-4 h-full">
+      <textarea class="w-full h-full bg-white border-none outline-none font-mono text-sm" readonly>我的名字叫王二小</textarea>
+    </div>
+  </div>
+  
+  <!-- 回收站窗口 -->
+  <div id="recycle-bin-window" class="window-content win98-window" style="width: 640px; height: 480px; top: 150px; left: 200px;">
+    <div class="win98-titlebar flex items-center justify-between p-2 cursor-move">
+      <div class="flex items-center">
+        <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1856867675317862401~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300303&x-signature=2mS7VIwnvdRqqdoOI%2BvVrodjicw%3D" alt="回收站" class="w-6 h-6 mr-2">
+        <span>回收站</span>
+      </div>
+      <div class="flex gap-1">
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="minimize">
+          <i class="fa fa-minus text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="maximize">
+          <i class="fa fa-square text-xs"></i>
+        </button>
+        <button class="window-button win98-button w-6 h-6 flex items-center justify-center" data-action="close">
+          <i class="fa fa-times text-xs"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-4 h-full">
+      <div class="text-center h-full flex flex-col items-center justify-center">
+        <img src="https://p26-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1856867675317862401~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1785300303&x-signature=2mS7VIwnvdRqqdoOI%2BvVrodjicw%3D" alt="回收站" class="w-24 h-24 object-contain mb-4">
+        <p class="text-lg">回收站是空的</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 任务栏 -->
+  <div id="taskbar" class="fixed bottom-0 left-0 right-0 h-12 bg-win98-taskbar border-t border-x border-black flex items-center px-2">
+    <button id="start-button" class="win98-button flex items-center gap-2 px-4 py-1 mr-4">
+      <i class="fa fa-windows text-white"></i>
+      <span class="font-bold">开始</span>
+    </button>
+    
+    <div id="taskbar-buttons" class="flex gap-2">
+      <!-- 任务栏按钮将通过 JavaScript 动态添加 -->
+    </div>
+    
+    <div class="ml-auto flex items-center gap-2">
+      <div class="win98-border bg-win98-taskbar px-2 py-1 text-sm">
+        <span id="current-time">10:00</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 开始菜单 -->
+  <div id="start-menu" class="hidden fixed bottom-12 left-2 win98-window" style="width: 200px; z-index: 100;">
+    <div class="p-2">
+      <div class="flex items-center gap-2 mb-4">
+        <i class="fa fa-windows text-4xl text-white"></i>
+        <div class="text-xl font-bold">开始</div>
+      </div>
+      <div class="border-t border-black pt-2">
+        <div class="flex items-center gap-2 p-2 hover:bg-win98-titlebar hover:text-white cursor-pointer">
+          <i class="fa fa-programming"></i>
+          <span>程序</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 hover:bg-win98-titlebar hover:text-white cursor-pointer">
+          <i class="fa fa-document"></i>
+          <span>文档</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 hover:bg-win98-titlebar hover:text-white cursor-pointer">
+          <i class="fa fa-setting"></i>
+          <span>设置</span>
+        </div>
+        <div class="flex items-center gap-2 p-2 hover:bg-win98-titlebar hover:text-white cursor-pointer">
+          <i class="fa fa-help"></i>
+          <span>帮助</span>
+        </div>
+        <div class="border-t border-black my-2"></div>
+        <div class="flex items-center gap-2 p-2 hover:bg-win98-titlebar hover:text-white cursor-pointer">
+          <i class="fa fa-shutdown"></i>
+          <span>关闭系统</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 更新当前时间
+      function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+      }
+      
+      updateTime();
+      setInterval(updateTime, 60000);
+      
+      // 窗口管理
+      const windows = document.querySelectorAll('.window-content');
+      const taskbarButtons = document.getElementById('taskbar-buttons');
+      let activeWindow = null;
+      
+      // 激活窗口函数
+      function activateWindow(windowElement) {
+        // 移除所有窗口的活动状态
+        windows.forEach(win => win.classList.remove('active'));
+        
+        // 移除所有任务栏按钮的活动状态
+        document.querySelectorAll('.taskbar-button').forEach(btn => btn.classList.remove('active'));
+        
+        // 激活当前窗口
+        windowElement.classList.add('active');
+        activeWindow = windowElement;
+        
+        // 激活对应的任务栏按钮
+        const windowId = windowElement.id;
+        const taskbarButton = document.querySelector(`.taskbar-button[data-window="${windowId}"]`);
+        if (taskbarButton) {
+          taskbarButton.classList.add('active');
+        }
+        
+        // 将窗口移到最前面
+        windows.forEach(win => win.style.zIndex = '10');
+        windowElement.style.zIndex = '20';
+      }
+      
+      // 创建任务栏按钮
+      function createTaskbarButton(windowElement) {
+        const windowId = windowElement.id;
+        const windowTitle = windowElement.querySelector('.win98-titlebar span').textContent;
+        const windowIcon = windowElement.querySelector('.win98-titlebar img').src;
+        
+        // 检查是否已存在该窗口的任务栏按钮
+        if (document.querySelector(`.taskbar-button[data-window="${windowId}"]`)) {
+          return;
+        }
+        
+        const button = document.createElement('button');
+        button.className = 'taskbar-button win98-button px-3 py-1 text-sm flex items-center gap-1';
+        button.setAttribute('data-window', windowId);
+        button.innerHTML = `
+          <img src="${windowIcon}" alt="${windowTitle}" class="w-4 h-4">
+          <span>${windowTitle}</span>
+        `;
+        
+        button.addEventListener('click', function() {
+          const targetWindow = document.getElementById(windowId);
+          if (targetWindow.classList.contains('active')) {
+            // 如果窗口已经是活动的，则最小化
+            targetWindow.classList.remove('active');
+            this.classList.remove('active');
+          } else {
+            // 否则激活窗口
+            activateWindow(targetWindow);
+          }
+        });
+        
+        taskbarButtons.appendChild(button);
+      }
+      
+      // 关闭窗口函数
+      function closeWindow(windowElement) {
+        windowElement.classList.remove('active');
+        
+        // 移除对应的任务栏按钮
+        const windowId = windowElement.id;
+        const taskbarButton = document.querySelector(`.taskbar-button[data-window="${windowId}"]`);
+        if (taskbarButton) {
+          taskbarButton.remove();
+        }
+        
+        // 如果关闭的是活动窗口，激活下一个窗口
+        if (activeWindow === windowElement) {
+          const remainingWindows = Array.from(windows).filter(win => win.classList.contains('active'));
+          if (remainingWindows.length > 0) {
+            activateWindow(remainingWindows[0]);
+          } else {
+            activeWindow = null;
+          }
+        }
+      }
+      
+      // 最小化窗口函数
+      function minimizeWindow(windowElement) {
+        windowElement.classList.remove('active');
+        
+        // 移除任务栏按钮的活动状态
+        const windowId = windowElement.id;
+        const taskbarButton = document.querySelector(`.taskbar-button[data-window="${windowId}"]`);
+        if (taskbarButton) {
+          taskbarButton.classList.remove('active');
+        }
+      }
+      
+      // 最大化窗口函数
+      function maximizeWindow(windowElement) {
+        const rect = windowElement.getBoundingClientRect();
+        const isMaximized = windowElement.classList.contains('maximized');
+        
+        if (isMaximized) {
+          // 恢复原始大小和位置
+          windowElement.classList.remove('maximized');
+          windowElement.style.width = windowElement.dataset.originalWidth;
+          windowElement.style.height = windowElement.dataset.originalHeight;
+          windowElement.style.top = windowElement.dataset.originalTop;
+          windowElement.style.left = windowElement.dataset.originalLeft;
+        } else {
+          // 保存原始大小和位置
+          windowElement.dataset.originalWidth = rect.width + 'px';
+          windowElement.dataset.originalHeight = rect.height + 'px';
+          windowElement.dataset.originalTop = windowElement.style.top;
+          windowElement.dataset.originalLeft = windowElement.style.left;
+          
+          // 最大化窗口
+          windowElement.classList.add('maximized');
+          windowElement.style.width = (window.innerWidth - 40) + 'px';
+          windowElement.style.height = (window.innerHeight - 100) + 'px';
+          windowElement.style.top = '20px';
+          windowElement.style.left = '20px';
+        }
+      }
+      
+      // 窗口拖拽功能
+      windows.forEach(window => {
+        const titlebar = window.querySelector('.win98-titlebar');
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        titlebar.addEventListener('mousedown', function(e) {
+          if (e.target.tagName === 'BUTTON' || e.target.parentElement.tagName === 'BUTTON') {
+            return; // 如果点击的是按钮，不启动拖拽
+          }
+          
+          isDragging = true;
+          offsetX = e.clientX - window.getBoundingClientRect().left;
+          offsetY = e.clientY - window.getBoundingClientRect().top;
+          
+          // 激活当前窗口
+          activateWindow(window);
+          
+          // 阻止默认行为和冒泡
+          e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          
+          const x = e.clientX - offsetX;
+          const y = e.clientY - offsetY;
+          
+          // 限制窗口不超出视口
+          const maxX = window.innerWidth - window.offsetWidth - 10;
+          const maxY = window.innerHeight - window.offsetHeight - 10;
+          
+          window.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
+          window.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
+        });
+        
+        document.addEventListener('mouseup', function() {
+          isDragging = false;
+        });
+        
+        // 窗口按钮事件
+        window.querySelectorAll('.window-button').forEach(button => {
+          button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            
+            switch (action) {
+              case 'close':
+                closeWindow(window);
+                break;
+              case 'minimize':
+                minimizeWindow(window);
+                break;
+              case 'maximize':
+                maximizeWindow(window);
+                break;
+            }
+          });
+        });
+      });
+      
+      // 桌面图标双击事件
+      document.querySelectorAll('.win98-icon').forEach(icon => {
+        icon.addEventListener('dblclick', function() {
+          const targetWindowId = this.getAttribute('data-target');
+          const targetWindow = document.getElementById(targetWindowId);
+          
+          if (targetWindow) {
+            // 创建任务栏按钮
+            createTaskbarButton(targetWindow);
+            
+            // 激活窗口
+            activateWindow(targetWindow);
+          }
+        });
+      });
+      
+      // 开始菜单
+      const startButton = document.getElementById('start-button');
+      const startMenu = document.getElementById('start-menu');
+      
+      startButton.addEventListener('click', function() {
+        startMenu.classList.toggle('hidden');
+      });
+      
+      // 点击其他地方关闭开始菜单
+      document.addEventListener('click', function(e) {
+        if (!startButton.contains(e.target) && !startMenu.contains(e.target)) {
+          startMenu.classList.add('hidden');
+        }
+      });
+      
+      // 点击窗口外部时不关闭窗口
+      document.getElementById('desktop').addEventListener('click', function(e) {
+        if (e.target === this) {
+          // 可以在这里添加点击桌面的效果，比如显示桌面
+        }
+      });
+    });
+  </script>
+</body>
+</html>

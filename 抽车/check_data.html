@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>检查游戏数据</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-4">
+    <h1 class="text-2xl font-bold mb-4">游戏数据检查与恢复</h1>
+    <div id="data-status" class="mb-4 p-4 bg-gray-800 rounded-lg"></div>
+    <button onclick="checkData()" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500">检查数据</button>
+    <button onclick="restoreData()" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-500 ml-2">恢复数据</button>
+    <button onclick="clearData()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-500 ml-2">清除数据</button>
+
+    <script>
+        function checkData() {
+            const data = localStorage.getItem('carCollectionGame');
+            const statusDiv = document.getElementById('data-status');
+            
+            if (data) {
+                try {
+                    const parsedData = JSON.parse(data);
+                    statusDiv.innerHTML = `
+                        <h3 class="font-bold">数据状态: 存在</h3>
+                        <pre class="text-sm mt-2">${JSON.stringify(parsedData, null, 2)}</pre>
+                    `;
+                } catch (e) {
+                    statusDiv.innerHTML = `
+                        <h3 class="font-bold text-red-400">数据状态: 损坏</h3>
+                        <p class="text-red-400">错误: ${e.message}</p>
+                    `;
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <h3 class="font-bold text-yellow-400">数据状态: 不存在</h3>
+                    <p>localStorage中没有游戏数据</p>
+                `;
+            }
+        }
+
+        function restoreData() {
+            const initialData = {
+                gold: 10000,
+                premium: 100,
+                normalTickets: 10,
+                premiumTickets: 5,
+                dreamTickets: 3,
+                garage: [],
+                lastSave: Date.now()
+            };
+            
+            localStorage.setItem('carCollectionGame', JSON.stringify(initialData));
+            document.getElementById('data-status').innerHTML = `
+                <h3 class="font-bold text-green-400">数据已恢复</h3>
+                <pre class="text-sm mt-2">${JSON.stringify(initialData, null, 2)}</pre>
+            `;
+        }
+
+        function clearData() {
+            localStorage.removeItem('carCollectionGame');
+            document.getElementById('data-status').innerHTML = `
+                <h3 class="font-bold text-yellow-400">数据已清除</h3>
+                <p>localStorage中的游戏数据已删除</p>
+            `;
+        }
+
+        // 页面加载时自动检查数据
+        window.onload = checkData;
+    </script>
+</body>
+</html>

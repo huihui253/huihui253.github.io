@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极速收藏 - 车辆收集养成游戏</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2a2a2a 100%);
+            background-attachment: fixed;
+            overflow-x: hidden;
+        }
+        
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 69, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 80%, rgba(70, 130, 180, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(15px);
+            background: rgba(42, 42, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-effect:hover {
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav-btn {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 215, 0, 0.1);
+        }
+        
+        .nav-btn.active {
+            background: rgba(255, 215, 0, 0.2);
+            border-bottom: 2px solid #ffd700;
+        }
+        
+        /* 稀有度样式增强 */
+        .rarity-Common {
+            border-color: #888;
+            box-shadow: 0 0 10px rgba(128, 128, 128, 0.3);
+        }
+        
+        .rarity-Rare {
+            border-color: #4169E1;
+            box-shadow: 0 0 15px rgba(65, 105, 225, 0.4);
+        }
+        
+        .rarity-Epic {
+            border-color: #9370DB;
+            box-shadow: 0 0 20px rgba(147, 112, 219, 0.5);
+        }
+        
+        .rarity-Legendary {
+            border-color: #FF8C00;
+            box-shadow: 0 0 25px rgba(255, 140, 0, 0.6);
+        }
+        
+        .rarity-Ultra {
+            border-color: #FF4500;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.7), inset 0 0 15px rgba(255, 69, 0, 0.3);
+            animation: ultra-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes ultra-glow {
+            from { box-shadow: 0 0 30px rgba(255, 69, 0, 0.7), inset 0 0 15px rgba(255, 69, 0, 0.3); }
+            to { box-shadow: 0 0 40px rgba(255, 69, 0, 0.9), inset 0 0 20px rgba(255, 69, 0, 0.5); }
+        }
+        
+        /* 徽章样式增强 */
+        .badge-Common {
+            background: linear-gradient(135deg, #888, #666);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge-Rare {
+            background: linear-gradient(135deg, #4169E1, #191970);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge-Epic {
+            background: linear-gradient(135deg, #9370DB, #483D8B);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge-Legendary {
+            background: linear-gradient(135deg, #FF8C00, #8B4513);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .badge-Ultra {
+            background: linear-gradient(135deg, #FF4500, #8B0000);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 车辆卡片增强 */
+        .car-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .car-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .car-card:hover::before {
+            left: 100%;
+        }
+        
+        /* 弹窗样式增强 */
+        .modal {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        /* 滚动条样式增强 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #ffaa00, #ffd700);
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col">
+    <!-- 顶部状态栏 -->
+    <header class="fixed top-0 left-0 right-0 glass-effect border-b border-[#ffd700] z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+            <!-- 金币 -->
+            <div class="flex items-center gap-2 bg-[#1a1a1a]/50 px-3 py-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center shadow-lg">
+                    <span class="text-lg">🪙</span>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">金币</div>
+                    <div class="text-[#ffd700] font-bold text-lg" id="gold-display">0</div>
+                </div>
+            </div>
+            
+            <!-- 普通票券 -->
+            <div class="flex items-center gap-2 bg-[#1a1a1a]/50 px-3 py-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg">
+                    <span class="text-lg">🎫</span>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">普通票券</div>
+                    <div class="text-blue-400 font-bold text-lg" id="normal-ticket-display">0</div>
+                </div>
+            </div>
+            
+            <!-- 高级货币 -->
+            <div class="flex items-center gap-2 bg-[#1a1a1a]/50 px-3 py-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center shadow-lg">
+                    <span class="text-lg">💎</span>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">高级货币</div>
+                    <div class="text-purple-400 font-bold text-lg" id="premium-display">0</div>
+                </div>
+            </div>
+            
+            <!-- 高级票券 -->
+            <div class="flex items-center gap-2 bg-[#1a1a1a]/50 px-3 py-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center shadow-lg">
+                    <span class="text-lg">🎟️</span>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">高级票券</div>
+                    <div class="text-red-400 font-bold text-lg" id="premium-ticket-display">0</div>
+                </div>
+            </div>
+            
+            <!-- 梦想票券 -->
+            <div class="flex items-center gap-2 bg-[#1a1a1a]/50 px-3 py-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-pink-600 flex items-center justify-center shadow-lg">
+                    <span class="text-lg">⭐</span>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-400">梦想票券</div>
+                    <div class="text-pink-400 font-bold text-lg" id="dream-ticket-display">0</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 pt-32 pb-32 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- 标题 -->
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-6xl font-bold gradient-text mb-4">
+                    🏎️ 极速收藏
+                </h1>
+                <p class="text-xl text-gray-300 mb-4">收集顶级跑车，成为赛道传奇</p>
+                <p class="text-sm text-gray-500 cursor-pointer hover:text-gray-300 transition-colors" id="version" onclick="toggleDeveloperMode()">v1.0.0</p>
+            </div>
+
+            <!-- 车辆列表 -->
+            <div id="garage-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- 车辆卡片将通过JS动态生成 -->
+            </div>
+
+            <!-- 空车库提示 -->
+            <div id="empty-garage" class="hidden text-center py-24">
+                <div class="text-8xl mb-6">🏎️</div>
+                <h3 class="text-3xl font-bold text-gray-400 mb-4">车库空空如也</h3>
+                <p class="text-gray-500 text-lg">快去抽卡获取你的第一辆跑车吧！</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部功能导航 -->
+    <nav class="fixed bottom-0 left-0 right-0 glass-effect border-t border-[#ffd700] z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-5 gap-3">
+            <button onclick="openGachaModal()" class="nav-btn flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#3a3a3a] transition-all">
+                <span class="text-2xl">🎁</span>
+                <span class="text-xs font-medium">抽卡</span>
+            </button>
+            <button onclick="openDreamGachaModal()" class="nav-btn flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#3a3a3a] transition-all">
+                <span class="text-2xl">⭐</span>
+                <span class="text-xs font-medium">梦想车展</span>
+            </button>
+            <button onclick="openShopModal()" class="nav-btn flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#3a3a3a] transition-all">
+                <span class="text-2xl">🛒</span>
+                <span class="text-xs font-medium">商店</span>
+            </button>
+            <button onclick="openBattleModal()" class="nav-btn flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#3a3a3a] transition-all">
+                <span class="text-2xl">🏁</span>
+                <span class="text-xs font-medium">对战</span>
+            </button>
+            <button onclick="openSellModal()" class="nav-btn flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#3a3a3a] transition-all">
+                <span class="text-2xl">💰</span>
+                <span class="text-xs font-medium">批量出售</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 抽卡弹窗 -->
+    <div id="gacha-modal" class="modal hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="glass-effect rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold gradient-text">🎁 抽卡中心</h2>
+                <button onclick="closeModal('gacha-modal')" class="text-gray-400 hover:text-white text-2xl transition-colors">&times;</button>
+            </div>
+            <div class="p-6">
+                <!-- 卡池选择 -->
+                <div class="flex gap-4 mb-6">
+                    <button onclick="selectGachaPool('normal')" id="pool-normal" class="flex-1 py-4 px-6 rounded-xl border-2 border-blue-500 bg-blue-500/20 hover:bg-blue-500/30 transition-all gacha-pool-btn active card-hover">
+                        <div class="text-xl mb-2">🎫</div>
+                        <div class="font-bold">普通抽卡</div>
+                        <div class="text-sm text-gray-400 mt-1">1000金币/次</div>
+                    </button>
+                    <button onclick="selectGachaPool('premium')" id="pool-premium" class="flex-1 py-4 px-6 rounded-xl border-2 border-purple-500 bg-purple-500/20 hover:bg-purple-500/30 transition-all gacha-pool-btn card-hover">
+                        <div class="text-xl mb-2">💎</div>
+                        <div class="font-bold">高级抽卡</div>
+                        <div class="text-sm text-gray-400 mt-1">1高级货币/次</div>
+                    </button>
+                </div>
+
+                <!-- 概率说明 -->
+                <div id="gacha-rates" class="bg-[#1a1a1a]/70 rounded-lg p-4 mb-6 backdrop-blur-sm">
+                    <h4 class="text-sm font-bold text-gray-400 mb-2">概率说明</h4>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-500">Common</span><span>85%</span></div>
+                        <div class="flex justify-between"><span class="text-blue-500">Rare</span><span>15%</span></div>
+                    </div>
+                </div>
+
+                <!-- 动画区域 -->
+                <div id="gacha-animation" class="hidden h-64 bg-[#1a1a1a]/70 rounded-xl flex items-center justify-center mb-6 relative overflow-hidden backdrop-blur-sm">
+                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
+                    <div class="text-6xl animate-bounce">🎁</div>
+                </div>
+
+                <!-- 结果展示 -->
+                <div id="gacha-results" class="hidden mb-6">
+                    <div id="gacha-results-grid" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                        <!-- 结果卡片 -->
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex gap-4">
+                    <button onclick="doGacha(1)" id="btn-single" class="flex-1 py-4 btn-primary text-black font-bold rounded-xl hover:opacity-90 transition-all">
+                        单抽
+                    </button>
+                    <button onclick="doGacha(10)" id="btn-ten" class="flex-1 py-4 bg-gradient-to-r from-[#ff6b6b] to-[#ee5a5a] text-white font-bold rounded-xl hover:opacity-90 transition-all">
+                        十连抽
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 梦想车展弹窗 -->
+    <div id="dream-gacha-modal" class="modal hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="glass-effect rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-pink-500">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-pink-400">⭐ 梦想车展</h2>
+                <button onclick="closeModal('dream-gacha-modal')" class="text-gray-400 hover:text-white text-2xl transition-colors">&times;</button>
+            </div>
+            <div class="p-6 flex flex-col md:flex-row gap-6 h-[70vh]">
+                <!-- 左侧：标签选择和操作 -->
+                <div class="w-full md:w-1/3 flex flex-col">
+                    <!-- 梦想车展介绍 -->
+                    <div class="bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-xl p-4 mb-4 border border-pink-500/50 backdrop-blur-sm">
+                        <h3 class="text-lg font-bold text-pink-400 mb-2">🏎️ 梦想车展</h3>
+                        <p class="text-sm text-gray-300">使用梦想券抽取标签，组合标签获得稀有车辆！</p>
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-sm text-gray-400">梦想券</span>
+                            <span class="font-bold text-pink-400" id="dream-ticket-display-modal">0</span>
+                        </div>
+                    </div>
+
+                    <!-- 标签选择 -->
+                    <div class="bg-[#1a1a1a]/70 rounded-xl p-4 mb-4 backdrop-blur-sm">
+                        <h4 class="text-sm font-bold text-gray-400 mb-3">选择标签</h4>
+                        <div class="space-y-2">
+                            <div class="tag-option flex items-center justify-between p-3 bg-[#2a2a2a]/80 rounded-lg border border-gray-700 hover:border-pink-500 cursor-pointer transition-all card-hover" onclick="selectTag('limited')">
+                                <div class="flex items-center">
+                                    <span class="text-red-400 mr-2">🔥</span>
+                                    <span>限定</span>
+                                </div>
+                                <span class="text-xs text-gray-500">稀有度极高</span>
+                            </div>
+                            <div class="tag-option flex items-center justify-between p-3 bg-[#2a2a2a]/80 rounded-lg border border-gray-700 hover:border-yellow-500 cursor-pointer transition-all card-hover" onclick="selectTag('collection')">
+                                <div class="flex items-center">
+                                    <span class="text-yellow-400 mr-2">👑</span>
+                                    <span>珍藏</span>
+                                </div>
+                                <span class="text-xs text-gray-500">经典车型</span>
+                            </div>
+                            <div class="tag-option flex items-center justify-between p-3 bg-[#2a2a2a]/80 rounded-lg border border-gray-700 hover:border-amber-600 cursor-pointer transition-all card-hover" onclick="selectTag('classic')">
+                                <div class="flex items-center">
+                                    <span class="text-amber-600 mr-2">🏛️</span>
+                                    <span>典藏</span>
+                                </div>
+                                <span class="text-xs text-gray-500">传世之作</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 已选标签 -->
+                    <div class="bg-[#1a1a1a]/70 rounded-xl p-4 mb-4 backdrop-blur-sm">
+                        <h4 class="text-sm font-bold text-gray-400 mb-2">已选标签</h4>
+                        <div id="selected-tags" class="flex flex-wrap gap-2">
+                            <span class="text-gray-500 text-sm">暂无选择</span>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="flex flex-col gap-3 mt-auto">
+                        <button onclick="drawTag()" id="draw-tag-btn" class="py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold rounded-xl hover:opacity-90 transition-all card-hover">
+                            抽取标签 (100梦想券)
+                        </button>
+                        <button onclick="abandonTags()" id="abandon-btn" class="py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-bold rounded-xl hover:opacity-90 transition-all card-hover">
+                            放弃标签 (返还700梦想券)
+                        </button>
+                        <button onclick="claimCar()" id="claim-car-btn" class="py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed card-hover" disabled>
+                            提车
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 右侧：车辆展示 -->
+                <div class="w-full md:w-2/3">
+                    <!-- 标签结果 -->
+                    <div class="bg-[#1a1a1a]/70 rounded-xl p-4 mb-4 backdrop-blur-sm">
+                        <h4 class="text-sm font-bold text-gray-400 mb-2">标签结果</h4>
+                        <div id="tag-result" class="text-center py-4 text-gray-500">
+                            抽取标签后显示结果
+                        </div>
+                    </div>
+
+                    <!-- 筛选车辆 -->
+                    <div class="bg-[#1a1a1a]/70 rounded-xl p-4 flex-1 overflow-y-auto backdrop-blur-sm">
+                        <h4 class="text-sm font-bold text-gray-400 mb-3">匹配车辆</h4>
+                        <div id="filtered-cars" class="space-y-3">
+                            <div class="text-center py-8 text-gray-500">
+                                选择标签后显示匹配车辆
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商店弹窗 -->
+    <div id="shop-modal" class="modal hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-[#ffd700]">🛒 商店</h2>
+                <button onclick="closeModal('shop-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="shop-items">
+                    <!-- 商品项将通过JS生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 对战弹窗 -->
+    <div id="battle-modal" class="modal hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-[#ffd700]">🏁 竞速对战</h2>
+                <button onclick="closeModal('battle-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- 己方选择 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">选择你的车辆</h3>
+                        <select id="battle-car-select" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white mb-4">
+                            <option value="">请选择车辆</option>
+                        </select>
+                        <div id="player-car-info" class="hidden">
+                            <!-- 车辆信息 -->
+                        </div>
+                    </div>
+
+                    <!-- 对手信息 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-red-400">对手车辆</h3>
+                        <div id="opponent-car-info" class="text-center text-gray-500">
+                            选择车辆后将自动匹配对手
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 战斗日志 -->
+                <div id="battle-log" class="bg-[#1a1a1a] rounded-xl p-4 h-48 overflow-y-auto mb-4 font-mono text-sm">
+                    <div class="text-gray-500 text-center">点击开始对战按钮开始比赛</div>
+                </div>
+
+                <!-- 战斗结果 -->
+                <div id="battle-result" class="hidden text-center mb-4">
+                    <!-- 结果展示 -->
+                </div>
+
+                <!-- 操作按钮 -->
+                <button onclick="startBattle()" id="btn-battle" class="w-full py-4 bg-gradient-to-r from-[#ffd700] to-[#ffaa00] text-black font-bold rounded-xl hover:opacity-90 transition-all">
+                    开始对战
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量出售弹窗 -->
+    <div id="sell-modal" class="modal hidden fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-[#ffd700]">💰 批量出售</h2>
+                <button onclick="closeModal('sell-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <!-- 筛选和操作 -->
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <button onclick="filterSellCars('all')" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all text-sm">全部</button>
+                    <button onclick="filterSellCars('Common')" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-all text-sm">普通</button>
+                    <button onclick="filterSellCars('Rare')" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-all text-sm">稀有</button>
+                    <button onclick="filterSellCars('Epic')" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-500 transition-all text-sm">史诗</button>
+                    <button onclick="filterSellCars('Legendary')" class="px-4 py-2 bg-orange-600 rounded-lg hover:bg-orange-500 transition-all text-sm">传奇</button>
+                    <button onclick="quickSellCommon()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-500 transition-all text-sm ml-auto">
+                        ⚡ 一键出售普通车
+                    </button>
+                </div>
+
+                <!-- 车辆列表 -->
+                <div id="sell-car-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-96 overflow-y-auto mb-4">
+                    <!-- 车辆项将通过JS生成 -->
+                </div>
+
+                <!-- 总价和操作 -->
+                <div class="bg-[#1a1a1a] rounded-xl p-4 flex justify-between items-center">
+                    <div>
+                        <span class="text-gray-400">已选择: </span>
+                        <span id="selected-count" class="font-bold text-[#ffd700]">0</span>
+                        <span class="text-gray-400 ml-4">预估收益: </span>
+                        <span id="total-sell-price" class="font-bold text-[#ffd700]">0</span>
+                        <span class="text-[#ffd700]"> 金币</span>
+                    </div>
+                    <button onclick="confirmSell()" id="btn-confirm-sell" class="px-8 py-3 bg-gradient-to-r from-[#ffd700] to-[#ffaa00] text-black font-bold rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        确认出售
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认出售弹窗 -->
+    <div id="confirm-sell-modal" class="modal hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-md w-full shadow-2xl border border-[#ffd700]">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-[#ffd700] mb-4">确认出售</h3>
+                <div id="confirm-sell-list" class="bg-[#1a1a1a] rounded-lg p-4 mb-4 max-h-48 overflow-y-auto">
+                    <!-- 出售列表 -->
+                </div>
+                <div class="text-center mb-6">
+                    <div class="text-gray-400">总收益</div>
+                    <div class="text-3xl font-bold text-[#ffd700]" id="confirm-total-price">0</div>
+                    <div class="text-[#ffd700]">金币</div>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="closeModal('confirm-sell-modal')" class="flex-1 py-3 bg-gray-600 rounded-xl hover:bg-gray-500 transition-all">
+                        取消
+                    </button>
+                    <button onclick="executeSell()" class="flex-1 py-3 bg-gradient-to-r from-[#ffd700] to-[#ffaa00] text-black font-bold rounded-xl hover:opacity-90 transition-all">
+                        确认出售
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 车辆详情弹窗 -->
+    <div id="car-detail-modal" class="modal hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-md w-full shadow-2xl border border-[#ffd700]">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div id="detail-rarity-badge"></div>
+                    <button onclick="closeModal('car-detail-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div id="detail-content">
+                    <!-- 车辆详情 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 开发者模式弹窗 -->
+    <div id="developer-modal" class="modal hidden fixed inset-0 bg-black/80 z-[80] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-[#ffd700]">🔧 开发者模式</h2>
+                <button onclick="closeModal('developer-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div class="space-y-6">
+                    <!-- 资源修改 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">资源修改</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">金币</label>
+                                <input type="number" id="dev-gold" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">高级货币</label>
+                                <input type="number" id="dev-premium" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">普通票券</label>
+                                <input type="number" id="dev-normal-tickets" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-1">高级票券</label>
+                                <input type="number" id="dev-premium-tickets" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-sm text-gray-400 mb-1">梦想票券</label>
+                                <input type="number" id="dev-dream-tickets" class="w-full p-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white">
+                            </div>
+                        </div>
+                        <button onclick="applyDevChanges()" class="mt-4 w-full py-3 bg-gradient-to-r from-[#ffd700] to-[#ffaa00] text-black font-bold rounded-xl hover:opacity-90 transition-all">
+                            应用修改
+                        </button>
+                    </div>
+
+                    <!-- 快速获取车辆 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">快速获取车辆</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="addRandomCar('Common')" class="py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-all">
+                                普通车
+                            </button>
+                            <button onclick="addRandomCar('Rare')" class="py-2 bg-blue-600 rounded-lg hover:bg-blue-500 transition-all">
+                                稀有车
+                            </button>
+                            <button onclick="addRandomCar('Epic')" class="py-2 bg-purple-600 rounded-lg hover:bg-purple-500 transition-all">
+                                史诗车
+                            </button>
+                            <button onclick="addRandomCar('Legendary')" class="py-2 bg-orange-600 rounded-lg hover:bg-orange-500 transition-all">
+                                传奇车
+                            </button>
+                            <button onclick="addRandomCar('Ultra')" class="py-2 bg-red-600 rounded-lg hover:bg-red-500 transition-all col-span-2">
+                                终极车
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 数据管理 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">数据管理</h3>
+                        <div class="space-y-3">
+                            <button onclick="exportData()" class="w-full py-3 bg-blue-600 rounded-xl hover:bg-blue-500 transition-all">
+                                导出数据
+                            </button>
+                            <button onclick="importData()" class="w-full py-3 bg-green-600 rounded-xl hover:bg-green-500 transition-all">
+                                导入数据
+                            </button>
+                            <button onclick="clearAllData()" class="w-full py-3 bg-red-600 rounded-xl hover:bg-red-500 transition-all">
+                                清除所有数据
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 挂机模式 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">挂机模式</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">状态</span>
+                                <span id="afk-status" class="text-red-400">已停止</span>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="startAfkMode()" id="afk-start-btn" class="flex-1 py-2 bg-green-600 rounded-lg hover:bg-green-500 transition-all">
+                                    开始挂机
+                                </button>
+                                <button onclick="stopAfkMode()" id="afk-stop-btn" class="flex-1 py-2 bg-red-600 rounded-lg hover:bg-red-500 transition-all" disabled>
+                                    停止挂机
+                                </button>
+                            </div>
+                            <div class="h-40 bg-[#2a2a2a] rounded-lg p-2 overflow-y-auto" id="afk-log">
+                                <div class="text-gray-500 text-sm text-center py-8">
+                                    挂机日志将显示在这里
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 版本信息 -->
+                    <div class="bg-[#1a1a1a] rounded-xl p-4">
+                        <h3 class="text-lg font-bold mb-4 text-[#ffd700]">版本信息</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">版本号</span>
+                                <span>v1.0.0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">开发者模式</span>
+                                <span id="dev-mode-status" class="text-green-400">已激活</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件管理弹窗 -->
+    <div id="file-manager-modal" class="modal hidden fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-4">
+        <div class="bg-[#2a2a2a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl border border-[#ffd700]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-[#ffd700]">📁 文件管理</h2>
+                <button onclick="closeModal('file-manager-modal')" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                <div id="file-list" class="space-y-3 mb-4">
+                    <!-- 文件列表将通过JS生成 -->
+                </div>
+                <div class="flex justify-between">
+                    <button onclick="refreshFileList()" class="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-500 transition-all">
+                        刷新列表
+                    </button>
+                    <button onclick="openDeveloperModal()" class="px-4 py-2 bg-[#ffd700] text-black font-bold rounded-lg hover:opacity-90 transition-all">
+                        开发者模式
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-[#2a2a2a] border border-[#ffd700] text-white px-6 py-3 rounded-xl shadow-2xl z-[80] hidden transition-all">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- AI日志悬浮窗 -->
+    <div id="ai-log-floating" class="fixed bottom-24 right-4 glass-effect border border-[#ffd700] rounded-xl shadow-2xl z-[90] w-80 max-h-96 overflow-hidden hidden">
+        <div class="p-3 border-b border-gray-700 flex justify-between items-center cursor-move bg-[#1a1a1a]/80">
+            <h3 class="text-sm font-bold gradient-text">🤖 AI日志</h3>
+            <div class="flex gap-2">
+                <button onclick="minimizeAiLog()" class="text-gray-400 hover:text-white text-sm">−</button>
+                <button onclick="closeAiLog()" class="text-gray-400 hover:text-white text-sm">×</button>
+            </div>
+        </div>
+        <div id="ai-log-content" class="p-3 h-72 overflow-y-auto text-sm">
+            <div class="text-gray-500 text-center">AI日志将显示在这里</div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

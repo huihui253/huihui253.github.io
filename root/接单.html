@@ -1,0 +1,3003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手机维修管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#3b82f6',
+                        light: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .hover-scale {
+                @apply hover:scale-105 transition-all duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-mobile text-2xl"></i>
+                <h1 class="text-xl font-bold">手机维修管理系统</h1>
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <button class="nav-btn active px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="repair">维修服务</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="upgrade">手机升级</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="inventory">库存管理</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="employees">员工管理</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="settings">设置</button>
+            </div>
+            <div class="md:hidden">
+                <button id="mobile-menu-button" class="text-white focus:outline-none">
+                    <i class="fa fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="md:hidden hidden bg-blue-800">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <button class="nav-btn active px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="repair">维修服务</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="upgrade">手机升级</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="inventory">库存管理</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="employees">员工管理</button>
+                <button class="nav-btn px-3 py-2 rounded-md hover:bg-blue-700 transition-all-300" data-target="settings">设置</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="container mx-auto px-4 py-6">
+        <!-- 维修服务 -->
+        <section id="repair" class="tab-content active">
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-wrench text-primary mr-2"></i>
+                    维修服务管理
+                </h2>
+                <div class="mb-4">
+                    <button id="add-repair-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i> 新增维修
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-3 px-4 text-left">ID</th>
+                                <th class="py-3 px-4 text-left">客户姓名</th>
+                                <th class="py-3 px-4 text-left">手机型号</th>
+                                <th class="py-3 px-4 text-left">故障描述</th>
+                                <th class="py-3 px-4 text-left">维修状态</th>
+                                <th class="py-3 px-4 text-left">维修费用</th>
+                                <th class="py-3 px-4 text-left">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="repair-table-body">
+                            <!-- 维修记录将通过JavaScript动态添加 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 手机升级 -->
+        <section id="upgrade" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-rocket text-primary mr-2"></i>
+                    手机升级管理
+                </h2>
+                <div class="mb-4">
+                    <button id="add-upgrade-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i> 新增升级
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-3 px-4 text-left">ID</th>
+                                <th class="py-3 px-4 text-left">客户姓名</th>
+                                <th class="py-3 px-4 text-left">原手机型号</th>
+                                <th class="py-3 px-4 text-left">新手机型号</th>
+                                <th class="py-3 px-4 text-left">升级状态</th>
+                                <th class="py-3 px-4 text-left">升级费用</th>
+                                <th class="py-3 px-4 text-left">负责员工</th>
+                                <th class="py-3 px-4 text-left">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="upgrade-table-body">
+                            <!-- 升级记录将通过JavaScript动态添加 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 库存管理 -->
+        <section id="inventory" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-cubes text-primary mr-2"></i>
+                    库存管理
+                </h2>
+                <div class="mb-4">
+                    <button id="add-inventory-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i> 新增库存
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-3 px-4 text-left">ID</th>
+                                <th class="py-3 px-4 text-left">手机型号</th>
+                                <th class="py-3 px-4 text-left">品牌</th>
+                                <th class="py-3 px-4 text-left">颜色</th>
+                                <th class="py-3 px-4 text-left">存储容量</th>
+                                <th class="py-3 px-4 text-left">库存数量</th>
+                                <th class="py-3 px-4 text-left">单价</th>
+                                <th class="py-3 px-4 text-left">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- 库存记录将通过JavaScript动态添加 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 员工管理 -->
+        <section id="employees" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-users text-primary mr-2"></i>
+                    员工管理
+                </h2>
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <button id="add-employee-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300 flex items-center">
+                        <i class="fa fa-plus mr-2"></i> 新增员工
+                    </button>
+                    <button id="refresh-employees-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition-all-300 flex items-center">
+                        <i class="fa fa-refresh mr-2"></i> 刷新员工
+                    </button>
+                    <button id="manual-control-btn" class="bg-secondary text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-all-300 flex items-center">
+                        <i class="fa fa-sliders mr-2"></i> 手动控制
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="py-3 px-4 text-left">ID</th>
+                                <th class="py-3 px-4 text-left">员工姓名</th>
+                                <th class="py-3 px-4 text-left">职位</th>
+                                <th class="py-3 px-4 text-left">基本工资</th>
+                                <th class="py-3 px-4 text-left">提成比例</th>
+                                <th class="py-3 px-4 text-left">当前工单</th>
+                                <th class="py-3 px-4 text-left">工作进度</th>
+                                <th class="py-3 px-4 text-left">效率</th>
+                                <th class="py-3 px-4 text-left">工作状态</th>
+                                <th class="py-3 px-4 text-left">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employee-table-body">
+                            <!-- 员工记录将通过JavaScript动态添加 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 手动控制面板 -->
+            <div id="manual-control-panel" class="bg-white rounded-lg shadow-card p-6 mb-6 hidden">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-sliders text-primary mr-2"></i>
+                    智能控制面板
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">智能任务分配</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">任务类型</label>
+                                <select id="task-type-select" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="repair">维修任务</option>
+                                    <option value="upgrade">升级任务</option>
+                                    <option value="inventory">库存管理</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">智能分配</label>
+                                <button id="smart-assign-task-btn" class="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 transition-all-300">
+                                    <i class="fa fa-magic mr-2"></i> 智能分配任务
+                                </button>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">手动分配</label>
+                                <select id="assign-employee-select" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="">-- 选择员工 --</option>
+                                    <!-- 员工选项将通过JavaScript动态添加 -->
+                                </select>
+                            </div>
+                            <div>
+                                <button id="assign-task-btn" class="w-full bg-secondary text-white py-2 rounded-md hover:bg-gray-600 transition-all-300">
+                                    手动分配任务
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">智能员工管理</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">工作负载优化</label>
+                                <button id="optimize-workload-btn" class="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 transition-all-300">
+                                    <i class="fa fa-balance-scale mr-2"></i> 优化工作负载
+                                </button>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">批量操作</label>
+                                <div class="flex space-x-2">
+                                    <button id="start-all-employees-btn" class="flex-1 bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-all-300">
+                                        全部开始工作
+                                    </button>
+                                    <button id="stop-all-employees-btn" class="flex-1 bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition-all-300">
+                                        全部休息
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 智能分析面板 -->
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold mb-4">智能业务分析</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-md">
+                            <h4 class="font-medium text-blue-800 mb-2">今日工单预测</h4>
+                            <p id="today-orders-prediction" class="text-2xl font-bold text-blue-600">--</p>
+                            <p class="text-sm text-blue-600">基于历史数据预测</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-md">
+                            <h4 class="font-medium text-green-800 mb-2">员工效率分析</h4>
+                            <p id="employee-efficiency-analysis" class="text-2xl font-bold text-green-600">--</p>
+                            <p class="text-sm text-green-600">平均工作效率</p>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-md">
+                            <h4 class="font-medium text-purple-800 mb-2"> revenue预测</h4>
+                            <p id="revenue-prediction" class="text-2xl font-bold text-purple-600">--</p>
+                            <p class="text-sm text-purple-600">今日预计收入</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button id="run-analysis-btn" class="bg-info text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-all-300">
+                            <i class="fa fa-line-chart mr-2"></i> 运行智能分析
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-robot text-primary mr-2"></i>
+                    AI自动接单设置
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">AI设置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">AI接单开关</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="ai-enabled" class="w-4 h-4 text-primary">
+                                    <span class="ml-2">启用AI自动接单</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">AI托管模式</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="ai-managed-mode" class="w-4 h-4 text-primary">
+                                    <span class="ml-2">启用AI托管员工</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">接单频率 (秒/单)</label>
+                                <input type="number" id="ai-order-frequency" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="10" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">AI处理能力 (单/小时)</label>
+                                <input type="number" id="ai-processing-capacity" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="360" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">全局倍速模式</label>
+                                <input type="number" id="ai-speed-multiplier" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="1" min="1" max="10000000">
+                                <span class="text-sm text-gray-500">设置全局加速倍数，最高1000万倍，会影响AI托管、员工修理速度、运输速度等所有系统速度</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">订单分配设置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">分配策略</label>
+                                <select id="allocation-strategy" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="round-robin">轮询分配</option>
+                                    <option value="load-balancing">负载均衡</option>
+                                    <option value="skill-based">技能匹配</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">员工最大工单数</label>
+                                <input type="number" id="max-orders-per-employee" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="5" min="1">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">自动分配开关</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="auto-allocation-enabled" class="w-4 h-4 text-primary" checked>
+                                    <span class="ml-2">启用自动分配</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button id="save-ai-settings-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300">
+                        保存AI设置
+                    </button>
+                    <button id="generate-ai-employees-btn" class="bg-secondary text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-all-300 ml-2">
+                        <i class="fa fa-magic mr-1"></i> 生成AI员工
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-money text-primary mr-2"></i>
+                    工资计算
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">计算参数</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">计算月份</label>
+                                <input type="month" id="salary-month" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">全勤奖</label>
+                                <input type="number" id="full-attendance-bonus" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">绩效系数</label>
+                                <input type="number" id="performance-factor" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">计算结果</h3>
+                        <div class="space-y-4" id="salary-results">
+                            <div class="p-4 bg-gray-50 rounded-md">
+                                <p class="text-gray-500">请选择月份并点击计算按钮</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button id="calculate-salary-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300">
+                        计算工资
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 设置 -->
+        <section id="settings" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-card p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 flex items-center">
+                    <i class="fa fa-cog text-primary mr-2"></i>
+                    系统设置
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">基本设置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">店铺名称</label>
+                                <input type="text" id="shop-name" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="手机维修店">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">联系电话</label>
+                                <input type="tel" id="shop-phone" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="13800138000">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">店铺地址</label>
+                                <input type="text" id="shop-address" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="北京市朝阳区">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-3">维修设置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">默认维修费用</label>
+                                <input type="number" id="default-repair-fee" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="100">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">默认升级费用</label>
+                                <input type="number" id="default-upgrade-fee" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="500">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">维修状态选项</label>
+                                <input type="text" id="repair-status-options" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="待处理,维修中,已完成,已取机">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex space-x-4">
+                    <button id="save-settings-btn" class="bg-primary text-white px-4 py-2 border rounded-md hover:bg-blue-600 transition-all-300">
+                        保存设置
+                    </button>
+                    <button id="reset-all-data-btn" class="bg-red-500 text-white px-4 py-2 border rounded-md hover:bg-red-600 transition-all-300">
+                        重置所有数据
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 模态框 -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg max-w-2xl w-full mx-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 id="modal-title" class="text-xl font-bold"></h3>
+                <button id="close-modal-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modal-body" class="p-6">
+                <!-- 模态框内容将通过JavaScript动态添加 -->
+            </div>
+            <div class="p-4 border-t flex justify-end space-x-4">
+                <button id="cancel-modal-btn" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-all-300">
+                    取消
+                </button>
+                <button id="save-modal-btn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all-300">
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed top-4 right-4 bg-white rounded-lg shadow-lg p-4 flex items-center space-x-3 transform translate-x-full transition-all duration-300 z-50">
+        <div id="notification-icon" class="text-primary">
+            <i class="fa fa-check-circle text-xl"></i>
+        </div>
+        <div id="notification-message" class="flex-1"></div>
+        <button id="close-notification-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+            <i class="fa fa-times"></i>
+        </button>
+    </div>
+
+    <!-- AI托管悬浮窗 -->
+    <div id="ai-floating-window" class="fixed bottom-6 right-6 z-50">
+        <div class="bg-primary text-white rounded-full shadow-lg p-4 cursor-pointer hover:bg-blue-600 transition-all duration-300 flex items-center justify-center" id="ai-floating-toggle" style="width: 60px; height: 60px;">
+            <i class="fa fa-robot text-2xl"></i>
+        </div>
+        <div id="ai-floating-panel" class="hidden absolute bottom-20 right-0 bg-white rounded-lg shadow-lg p-4 w-64">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">AI托管助手</h3>
+                <button id="close-ai-panel" class="text-gray-500 hover:text-gray-700">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-sm text-gray-600 mb-2">当前状态: <span id="ai-assistant-status" class="font-medium">未启动</span></p>
+                </div>
+                <div>
+                    <button id="start-ai-assistant" class="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-600 transition-all duration-300">
+                        启动AI托管
+                    </button>
+                </div>
+                <div>
+                    <button id="stop-ai-assistant" class="w-full bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition-all duration-300">
+                        停止AI托管
+                    </button>
+                </div>
+                <div class="text-xs text-gray-500">
+                    <p>AI托管会自动模拟人类操作，处理日常工作</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI思考过程悬浮窗 -->
+    <div id="ai-thinking-window" class="fixed bottom-20 right-6 bg-white rounded-lg shadow-lg p-4 w-72 z-40 transform translate-y-20 opacity-0 transition-all duration-300">
+        <div class="flex items-start space-x-3">
+            <div class="bg-yellow-100 rounded-full p-2">
+                <i class="fa fa-lightbulb-o text-yellow-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-medium text-gray-800 mb-2">AI思考过程</h4>
+                <div id="ai-thinking-content" class="text-sm text-gray-600">
+                    <!-- 思考内容将通过JavaScript动态添加 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储
+        let repairs = JSON.parse(localStorage.getItem('repairs')) || [];
+        let upgrades = JSON.parse(localStorage.getItem('upgrades')) || [];
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
+        let employees = JSON.parse(localStorage.getItem('employees')) || [];
+        let aiSettings = JSON.parse(localStorage.getItem('aiSettings')) || {
+            enabled: false,
+            managedMode: false,
+            orderFrequency: 10,
+            processingCapacity: 360,
+            speedMultiplier: 1,
+            allocationStrategy: 'round-robin',
+            maxOrdersPerEmployee: 5,
+            autoAllocationEnabled: true
+        };
+        let settings = JSON.parse(localStorage.getItem('settings')) || {
+            shopName: '手机维修店',
+            shopPhone: '13800138000',
+            shopAddress: '北京市朝阳区',
+            defaultRepairFee: 100,
+            defaultUpgradeFee: 500,
+            repairStatusOptions: '待处理,维修中,已完成,已取机'
+        };
+        let finance = JSON.parse(localStorage.getItem('finance')) || {
+            totalWealth: 100000, // 初始财富
+            dailyIncome: 0,
+            dailyExpense: 0,
+            monthlyIncome: 0,
+            monthlyExpense: 0,
+            lastResetDate: new Date().toISOString().split('T')[0]
+        };
+        
+        // AI自动接单计时器
+        let aiOrderTimer = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查并重置每日/每月财务数据
+            resetFinanceData();
+            
+            // 加载数据
+            loadRepairs();
+            loadUpgrades();
+            loadInventory();
+            loadEmployees();
+            loadSettings();
+            loadAiSettings();
+            loadFinanceData();
+
+            // 导航切换
+            const navBtns = document.querySelectorAll('.nav-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            navBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const target = this.dataset.target;
+                    
+                    // 更新导航按钮状态
+                    navBtns.forEach(b => b.classList.remove('active', 'bg-blue-700'));
+                    this.classList.add('active', 'bg-blue-700');
+                    
+                    // 更新标签内容
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                        content.classList.remove('active');
+                    });
+                    
+                    const activeContent = document.getElementById(target);
+                    activeContent.classList.remove('hidden');
+                    activeContent.classList.add('active');
+                });
+            });
+
+            // 移动端菜单
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 维修服务
+            const addRepairBtn = document.getElementById('add-repair-btn');
+            addRepairBtn.addEventListener('click', function() {
+                openRepairModal();
+            });
+
+            // 手机升级
+            const addUpgradeBtn = document.getElementById('add-upgrade-btn');
+            addUpgradeBtn.addEventListener('click', function() {
+                openUpgradeModal();
+            });
+
+            // 库存管理
+            const addInventoryBtn = document.getElementById('add-inventory-btn');
+            addInventoryBtn.addEventListener('click', function() {
+                openInventoryModal();
+            });
+
+            // 员工管理
+            const addEmployeeBtn = document.getElementById('add-employee-btn');
+            addEmployeeBtn.addEventListener('click', function() {
+                openEmployeeModal();
+            });
+
+            // AI设置
+            const saveAiSettingsBtn = document.getElementById('save-ai-settings-btn');
+            saveAiSettingsBtn.addEventListener('click', function() {
+                saveAiSettings();
+            });
+
+            // 生成AI员工
+            const generateAiEmployeesBtn = document.getElementById('generate-ai-employees-btn');
+            generateAiEmployeesBtn.addEventListener('click', function() {
+                generateAiEmployees();
+            });
+
+            // 刷新员工
+            const refreshEmployeesBtn = document.getElementById('refresh-employees-btn');
+            if (refreshEmployeesBtn) {
+                refreshEmployeesBtn.addEventListener('click', function() {
+                    loadEmployees();
+                    showNotification('员工列表已刷新', 'success');
+                });
+            }
+
+            // 手动控制
+            const manualControlBtn = document.getElementById('manual-control-btn');
+            if (manualControlBtn) {
+                manualControlBtn.addEventListener('click', function() {
+                    const manualControlPanel = document.getElementById('manual-control-panel');
+                    if (manualControlPanel) {
+                        manualControlPanel.classList.toggle('hidden');
+                        showNotification('手动控制面板已' + (manualControlPanel.classList.contains('hidden') ? '隐藏' : '显示'), 'success');
+                    }
+                });
+            }
+
+            // 分配任务
+            const assignTaskBtn = document.getElementById('assign-task-btn');
+            if (assignTaskBtn) {
+                assignTaskBtn.addEventListener('click', function() {
+                    assignTask();
+                });
+            }
+
+            // 智能分配任务
+            const smartAssignTaskBtn = document.getElementById('smart-assign-task-btn');
+            if (smartAssignTaskBtn) {
+                smartAssignTaskBtn.addEventListener('click', function() {
+                    smartAssignTask();
+                });
+            }
+
+            // 优化工作负载
+            const optimizeWorkloadBtn = document.getElementById('optimize-workload-btn');
+            if (optimizeWorkloadBtn) {
+                optimizeWorkloadBtn.addEventListener('click', function() {
+                    optimizeWorkload();
+                });
+            }
+
+            // 运行智能分析
+            const runAnalysisBtn = document.getElementById('run-analysis-btn');
+            if (runAnalysisBtn) {
+                runAnalysisBtn.addEventListener('click', function() {
+                    runSmartAnalysis();
+                });
+            }
+
+            // 全部开始工作
+            const startAllEmployeesBtn = document.getElementById('start-all-employees-btn');
+            if (startAllEmployeesBtn) {
+                startAllEmployeesBtn.addEventListener('click', function() {
+                    setAllEmployeesStatus(true);
+                });
+            }
+
+            // 全部休息
+            const stopAllEmployeesBtn = document.getElementById('stop-all-employees-btn');
+            if (stopAllEmployeesBtn) {
+                stopAllEmployeesBtn.addEventListener('click', function() {
+                    setAllEmployeesStatus(false);
+                });
+            }
+
+            // 工资计算
+            const calculateSalaryBtn = document.getElementById('calculate-salary-btn');
+            calculateSalaryBtn.addEventListener('click', function() {
+                calculateSalary();
+            });
+
+            // 设置
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            saveSettingsBtn.addEventListener('click', function() {
+                saveSettings();
+            });
+
+            // 重置所有数据
+            const resetAllDataBtn = document.getElementById('reset-all-data-btn');
+            if (resetAllDataBtn) {
+                resetAllDataBtn.addEventListener('click', function() {
+                    resetAllData();
+                });
+            }
+
+            // 模态框
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelModalBtn.addEventListener('click', closeModal);
+
+            // 通知
+            const closeNotificationBtn = document.getElementById('close-notification-btn');
+            closeNotificationBtn.addEventListener('click', closeNotification);
+        });
+
+        // 加载维修记录
+        function loadRepairs() {
+            const repairTableBody = document.getElementById('repair-table-body');
+            repairTableBody.innerHTML = '';
+
+            if (repairs.length === 0) {
+                repairTableBody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-gray-500">暂无维修记录</td></tr>';
+                return;
+            }
+
+            repairs.forEach(repair => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-3 px-4">${repair.id}</td>
+                    <td class="py-3 px-4">${repair.customerName}</td>
+                    <td class="py-3 px-4">${repair.phoneModel}</td>
+                    <td class="py-3 px-4">${repair.issueDescription}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded-full text-sm ${getStatusClass(repair.status)}">
+                            ${repair.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">¥${repair.fee}</td>
+                    <td class="py-3 px-4">
+                        <button class="edit-repair-btn text-primary hover:text-blue-700 mr-2" data-id="${repair.id}">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="delete-repair-btn text-danger hover:text-red-700" data-id="${repair.id}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                repairTableBody.appendChild(row);
+            });
+
+            // 添加编辑和删除事件
+            document.querySelectorAll('.edit-repair-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const repair = repairs.find(r => r.id === id);
+                    if (repair) {
+                        openRepairModal(repair);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-repair-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    deleteRepair(id);
+                });
+            });
+        }
+
+        // 加载升级记录
+        function loadUpgrades() {
+            const upgradeTableBody = document.getElementById('upgrade-table-body');
+            upgradeTableBody.innerHTML = '';
+
+            if (upgrades.length === 0) {
+                upgradeTableBody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-gray-500">暂无升级记录</td></tr>';
+                return;
+            }
+
+            upgrades.forEach(upgrade => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-3 px-4">${upgrade.id}</td>
+                    <td class="py-3 px-4">${upgrade.customerName}</td>
+                    <td class="py-3 px-4">${upgrade.oldPhoneModel}</td>
+                    <td class="py-3 px-4">${upgrade.newPhoneModel}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded-full text-sm ${getStatusClass(upgrade.status)}">
+                            ${upgrade.status}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">¥${upgrade.fee}</td>
+                    <td class="py-3 px-4">${upgrade.employeeName || '-'}</td>
+                    <td class="py-3 px-4">
+                        <button class="edit-upgrade-btn text-primary hover:text-blue-700 mr-2" data-id="${upgrade.id}">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="delete-upgrade-btn text-danger hover:text-red-700" data-id="${upgrade.id}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                upgradeTableBody.appendChild(row);
+            });
+
+            // 添加编辑和删除事件
+            document.querySelectorAll('.edit-upgrade-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const upgrade = upgrades.find(u => u.id === id);
+                    if (upgrade) {
+                        openUpgradeModal(upgrade);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-upgrade-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    deleteUpgrade(id);
+                });
+            });
+        }
+
+        // 加载库存
+        function loadInventory() {
+            const inventoryTableBody = document.getElementById('inventory-table-body');
+            inventoryTableBody.innerHTML = '';
+
+            if (inventory.length === 0) {
+                inventoryTableBody.innerHTML = '<tr><td colspan="8" class="py-4 text-center text-gray-500">暂无库存记录</td></tr>';
+                return;
+            }
+
+            inventory.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="py-3 px-4">${item.id}</td>
+                    <td class="py-3 px-4">${item.model}</td>
+                    <td class="py-3 px-4">${item.brand}</td>
+                    <td class="py-3 px-4">${item.color}</td>
+                    <td class="py-3 px-4">${item.storage}</td>
+                    <td class="py-3 px-4">${item.quantity}</td>
+                    <td class="py-3 px-4">¥${item.price}</td>
+                    <td class="py-3 px-4">
+                        <button class="edit-inventory-btn text-primary hover:text-blue-700 mr-2" data-id="${item.id}">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="delete-inventory-btn text-danger hover:text-red-700" data-id="${item.id}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                inventoryTableBody.appendChild(row);
+            });
+
+            // 添加编辑和删除事件
+            document.querySelectorAll('.edit-inventory-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const item = inventory.find(i => i.id === id);
+                    if (item) {
+                        openInventoryModal(item);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-inventory-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    deleteInventory(id);
+                });
+            });
+        }
+
+        // 加载设置
+        function loadSettings() {
+            document.getElementById('shop-name').value = settings.shopName;
+            document.getElementById('shop-phone').value = settings.shopPhone;
+            document.getElementById('shop-address').value = settings.shopAddress;
+            document.getElementById('default-repair-fee').value = settings.defaultRepairFee;
+            document.getElementById('default-upgrade-fee').value = settings.defaultUpgradeFee;
+            document.getElementById('repair-status-options').value = settings.repairStatusOptions;
+        }
+
+        // 保存设置
+        function saveSettings() {
+            settings = {
+                shopName: document.getElementById('shop-name').value,
+                shopPhone: document.getElementById('shop-phone').value,
+                shopAddress: document.getElementById('shop-address').value,
+                defaultRepairFee: parseInt(document.getElementById('default-repair-fee').value),
+                defaultUpgradeFee: parseInt(document.getElementById('default-upgrade-fee').value),
+                repairStatusOptions: document.getElementById('repair-status-options').value
+            };
+
+            localStorage.setItem('settings', JSON.stringify(settings));
+            showNotification('设置保存成功', 'success');
+        }
+
+        // 打开维修模态框
+        function openRepairModal(repair = null) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const saveModalBtn = document.getElementById('save-modal-btn');
+
+            modalTitle.textContent = repair ? '编辑维修记录' : '新增维修记录';
+
+            const statusOptions = ['待处理', '维修中', '已完成', '运输中', '已送到', '已完成'].map(status => 
+                `<option value="${status}" ${repair && repair.status === status ? 'selected' : ''}>${status}</option>`
+            ).join('');
+
+            modalBody.innerHTML = `
+                <form id="repair-form">
+                    <input type="hidden" id="repair-id" value="${repair ? repair.id : ''}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">客户姓名</label>
+                            <input type="text" id="repair-customer-name" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${repair ? repair.customerName : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">手机型号</label>
+                            <input type="text" id="repair-phone-model" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${repair ? repair.phoneModel : ''}" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 mb-2">故障描述</label>
+                            <textarea id="repair-issue-description" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" rows="3" required>${repair ? repair.issueDescription : ''}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">维修状态</label>
+                            <select id="repair-status" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                ${statusOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">维修费用</label>
+                            <input type="number" id="repair-fee" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${repair ? repair.fee : settings.defaultRepairFee}" required>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            saveModalBtn.onclick = function() {
+                const form = document.getElementById('repair-form');
+                if (form.checkValidity()) {
+                    const id = parseInt(document.getElementById('repair-id').value);
+                    const customerName = document.getElementById('repair-customer-name').value;
+                    const phoneModel = document.getElementById('repair-phone-model').value;
+                    const issueDescription = document.getElementById('repair-issue-description').value;
+                    const status = document.getElementById('repair-status').value;
+                    const fee = parseInt(document.getElementById('repair-fee').value);
+
+                    if (repair) {
+                        // 编辑
+                        const index = repairs.findIndex(r => r.id === id);
+                        repairs[index] = {
+                            id,
+                            customerName,
+                            phoneModel,
+                            issueDescription,
+                            status,
+                            fee
+                        };
+                    } else {
+                        // 新增
+                        const newId = repairs.length > 0 ? Math.max(...repairs.map(r => r.id)) + 1 : 1;
+                        repairs.push({
+                            id: newId,
+                            customerName,
+                            phoneModel,
+                            issueDescription,
+                            status,
+                            fee
+                        });
+                    }
+
+                    localStorage.setItem('repairs', JSON.stringify(repairs));
+                    loadRepairs();
+                    closeModal();
+                    showNotification(repair ? '维修记录更新成功' : '维修记录添加成功', 'success');
+                } else {
+                    form.reportValidity();
+                }
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        // 打开升级模态框
+        function openUpgradeModal(upgrade = null) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const saveModalBtn = document.getElementById('save-modal-btn');
+
+            modalTitle.textContent = upgrade ? '编辑升级记录' : '新增升级记录';
+
+            const statusOptions = settings.repairStatusOptions.split(',').map(status => 
+                `<option value="${status}" ${upgrade && upgrade.status === status ? 'selected' : ''}>${status}</option>`
+            ).join('');
+
+            modalBody.innerHTML = `
+                <form id="upgrade-form">
+                    <input type="hidden" id="upgrade-id" value="${upgrade ? upgrade.id : ''}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">客户姓名</label>
+                            <input type="text" id="upgrade-customer-name" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${upgrade ? upgrade.customerName : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">原手机型号</label>
+                            <input type="text" id="upgrade-old-phone-model" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${upgrade ? upgrade.oldPhoneModel : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">新手机型号</label>
+                            <input type="text" id="upgrade-new-phone-model" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${upgrade ? upgrade.newPhoneModel : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">升级状态</label>
+                            <select id="upgrade-status" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                ${statusOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">升级费用</label>
+                            <input type="number" id="upgrade-fee" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${upgrade ? upgrade.fee : settings.defaultUpgradeFee}" required>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            saveModalBtn.onclick = function() {
+                const form = document.getElementById('upgrade-form');
+                if (form.checkValidity()) {
+                    const id = parseInt(document.getElementById('upgrade-id').value);
+                    const customerName = document.getElementById('upgrade-customer-name').value;
+                    const oldPhoneModel = document.getElementById('upgrade-old-phone-model').value;
+                    const newPhoneModel = document.getElementById('upgrade-new-phone-model').value;
+                    const status = document.getElementById('upgrade-status').value;
+                    const fee = parseInt(document.getElementById('upgrade-fee').value);
+
+                    if (upgrade) {
+                        // 编辑
+                        const index = upgrades.findIndex(u => u.id === id);
+                        upgrades[index] = {
+                            id,
+                            customerName,
+                            oldPhoneModel,
+                            newPhoneModel,
+                            status,
+                            fee
+                        };
+                    } else {
+                        // 新增
+                        const newId = upgrades.length > 0 ? Math.max(...upgrades.map(u => u.id)) + 1 : 1;
+                        upgrades.push({
+                            id: newId,
+                            customerName,
+                            oldPhoneModel,
+                            newPhoneModel,
+                            status,
+                            fee
+                        });
+                    }
+
+                    localStorage.setItem('upgrades', JSON.stringify(upgrades));
+                    loadUpgrades();
+                    closeModal();
+                    showNotification(upgrade ? '升级记录更新成功' : '升级记录添加成功', 'success');
+                } else {
+                    form.reportValidity();
+                }
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        // 打开库存模态框
+        function openInventoryModal(item = null) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const saveModalBtn = document.getElementById('save-modal-btn');
+
+            modalTitle.textContent = item ? '编辑库存记录' : '新增库存记录';
+
+            modalBody.innerHTML = `
+                <form id="inventory-form">
+                    <input type="hidden" id="inventory-id" value="${item ? item.id : ''}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">手机型号</label>
+                            <input type="text" id="inventory-model" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.model : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">品牌</label>
+                            <input type="text" id="inventory-brand" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.brand : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">颜色</label>
+                            <input type="text" id="inventory-color" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.color : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">存储容量</label>
+                            <input type="text" id="inventory-storage" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.storage : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">库存数量</label>
+                            <input type="number" id="inventory-quantity" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.quantity : 1}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">单价</label>
+                            <input type="number" id="inventory-price" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${item ? item.price : 0}" required>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            saveModalBtn.onclick = function() {
+                const form = document.getElementById('inventory-form');
+                if (form.checkValidity()) {
+                    const id = parseInt(document.getElementById('inventory-id').value);
+                    const model = document.getElementById('inventory-model').value;
+                    const brand = document.getElementById('inventory-brand').value;
+                    const color = document.getElementById('inventory-color').value;
+                    const storage = document.getElementById('inventory-storage').value;
+                    const quantity = parseInt(document.getElementById('inventory-quantity').value);
+                    const price = parseInt(document.getElementById('inventory-price').value);
+
+                    if (item) {
+                        // 编辑
+                        const index = inventory.findIndex(i => i.id === id);
+                        inventory[index] = {
+                            id,
+                            model,
+                            brand,
+                            color,
+                            storage,
+                            quantity,
+                            price
+                        };
+                    } else {
+                        // 新增
+                        const newId = inventory.length > 0 ? Math.max(...inventory.map(i => i.id)) + 1 : 1;
+                        inventory.push({
+                            id: newId,
+                            model,
+                            brand,
+                            color,
+                            storage,
+                            quantity,
+                            price
+                        });
+                    }
+
+                    localStorage.setItem('inventory', JSON.stringify(inventory));
+                    loadInventory();
+                    closeModal();
+                    showNotification(item ? '库存记录更新成功' : '库存记录添加成功', 'success');
+                } else {
+                    form.reportValidity();
+                }
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('hidden');
+        }
+
+        // 删除维修记录
+        function deleteRepair(id) {
+            if (confirm('确定要删除这条维修记录吗？')) {
+                repairs = repairs.filter(r => r.id !== id);
+                localStorage.setItem('repairs', JSON.stringify(repairs));
+                loadRepairs();
+                showNotification('维修记录删除成功', 'success');
+            }
+        }
+
+        // 删除升级记录
+        function deleteUpgrade(id) {
+            if (confirm('确定要删除这条升级记录吗？')) {
+                upgrades = upgrades.filter(u => u.id !== id);
+                localStorage.setItem('upgrades', JSON.stringify(upgrades));
+                loadUpgrades();
+                showNotification('升级记录删除成功', 'success');
+            }
+        }
+
+        // 删除库存记录
+        function deleteInventory(id) {
+            if (confirm('确定要删除这条库存记录吗？')) {
+                inventory = inventory.filter(i => i.id !== id);
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                loadInventory();
+                showNotification('库存记录删除成功', 'success');
+            }
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+            const notificationIcon = document.getElementById('notification-icon');
+
+            notificationMessage.textContent = message;
+            
+            // 更新图标
+            notificationIcon.className = '';
+            if (type === 'success') {
+                notificationIcon.className = 'text-success';
+                notificationIcon.innerHTML = '<i class="fa fa-check-circle text-xl"></i>';
+            } else if (type === 'error') {
+                notificationIcon.className = 'text-danger';
+                notificationIcon.innerHTML = '<i class="fa fa-exclamation-circle text-xl"></i>';
+            } else {
+                notificationIcon.className = 'text-info';
+                notificationIcon.innerHTML = '<i class="fa fa-info-circle text-xl"></i>';
+            }
+
+            // 显示通知
+            notification.classList.remove('translate-x-full');
+            notification.classList.add('translate-x-0');
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                closeNotification();
+            }, 3000);
+        }
+
+        // 显示思考过程
+        function showThinking(message) {
+            const thinkingWindow = document.getElementById('ai-thinking-window');
+            const thinkingContent = document.getElementById('ai-thinking-content');
+
+            // 更新思考内容
+            thinkingContent.textContent = message;
+
+            // 显示思考窗口
+            thinkingWindow.classList.remove('translate-y-20', 'opacity-0');
+            thinkingWindow.classList.add('translate-y-0', 'opacity-100');
+
+            // 2秒后自动隐藏
+            setTimeout(() => {
+                thinkingWindow.classList.add('translate-y-20', 'opacity-0');
+                thinkingWindow.classList.remove('translate-y-0', 'opacity-100');
+            }, 2000);
+        }
+
+        // 关闭通知
+        function closeNotification() {
+            const notification = document.getElementById('notification');
+            notification.classList.add('translate-x-full');
+            notification.classList.remove('translate-x-0');
+        }
+
+        // 获取状态样式
+        function getStatusClass(status) {
+            switch (status) {
+                case '待处理':
+                    return 'bg-yellow-100 text-yellow-800';
+                case '维修中':
+                    return 'bg-blue-100 text-blue-800';
+                case '已完成':
+                    return 'bg-green-100 text-green-800';
+                case '已取机':
+                    return 'bg-gray-100 text-gray-800';
+                default:
+                    return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // 员工管理
+        function loadEmployees() {
+            const employeeTableBody = document.getElementById('employee-table-body');
+            employeeTableBody.innerHTML = '';
+
+            if (employees.length === 0) {
+                employeeTableBody.innerHTML = '<tr><td colspan="9" class="py-4 text-center text-gray-500">暂无员工记录</td></tr>';
+                return;
+            }
+
+            // 优化：只显示前100名员工，避免性能问题
+            const displayEmployees = employees.slice(0, 100);
+
+            displayEmployees.forEach(employee => {
+                const row = document.createElement('tr');
+                const currentOrders = getEmployeeOrderCount(employee.id);
+                const efficiency = Math.round(employee.efficiency * 100);
+                const workProgress = calculateEmployeeWorkProgress(employee.id);
+                const isWorking = employee.isWorking || false;
+                const workStatus = isWorking ? '<span class="text-green-600 font-medium">正在工作</span>' : '<span class="text-gray-500">休息</span>';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${employee.id}</td>
+                    <td class="py-3 px-4">${employee.name}</td>
+                    <td class="py-3 px-4">${employee.position}</td>
+                    <td class="py-3 px-4">¥${employee.baseSalary}</td>
+                    <td class="py-3 px-4">${employee.commissionRate}%</td>
+                    <td class="py-3 px-4">${currentOrders}</td>
+                    <td class="py-3 px-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-primary h-2.5 rounded-full" style="width: ${workProgress}%"></div>
+                        </div>
+                        <span class="text-xs text-gray-600 mt-1">${workProgress}%</span>
+                    </td>
+                    <td class="py-3 px-4">${efficiency}%</td>
+                    <td class="py-3 px-4">${workStatus}</td>
+                    <td class="py-3 px-4">
+                        <button class="edit-employee-btn text-primary hover:text-blue-700 mr-2" data-id="${employee.id}">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="toggle-work-status-btn ${isWorking ? 'text-red-500' : 'text-green-500'} hover:text-gray-700 mr-2" data-id="${employee.id}">
+                            <i class="fa ${isWorking ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
+                        <button class="delete-employee-btn text-danger hover:text-red-700" data-id="${employee.id}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                employeeTableBody.appendChild(row);
+            });
+
+            // 如果有更多员工，显示提示
+            if (employees.length > 100) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="9" class="py-4 text-center text-gray-500">
+                        显示前100名员工，共 ${employees.length} 名员工
+                    </td>
+                `;
+                employeeTableBody.appendChild(row);
+            }
+
+            // 更新员工选择下拉框
+            updateEmployeeSelect();
+
+            // 添加编辑和删除事件
+            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    const employee = employees.find(e => e.id === id);
+                    if (employee) {
+                        openEmployeeModal(employee);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-employee-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    deleteEmployee(id);
+                });
+            });
+
+            // 添加工作状态切换事件
+            document.querySelectorAll('.toggle-work-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.dataset.id);
+                    toggleEmployeeWorkStatus(id);
+                });
+            });
+        }
+
+        function updateEmployeeSelect() {
+            const employeeSelect = document.getElementById('assign-employee-select');
+            if (!employeeSelect) return;
+
+            // 清空现有选项
+            employeeSelect.innerHTML = '<option value="">-- 选择员工 --</option>';
+
+            // 添加员工选项
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = `${employee.name} (${employee.position})`;
+                employeeSelect.appendChild(option);
+            });
+        }
+
+        function toggleEmployeeWorkStatus(employeeId) {
+            const employee = employees.find(e => e.id === employeeId);
+            if (!employee) return;
+
+            // 切换工作状态
+            employee.isWorking = !employee.isWorking;
+            employee.lastWorkTime = new Date().toISOString();
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+
+            showNotification(`员工 ${employee.name} 已${employee.isWorking ? '开始工作' : '开始休息'}`, 'success');
+        }
+
+        function calculateEmployeeWorkProgress(employeeId) {
+            // 获取员工当前处理的维修工单
+            const employeeRepairs = repairs.filter(r => r.employeeId === employeeId && (r.status === '维修中' || r.status === '运输中' || r.status === '已送到'));
+            
+            // 获取员工当前处理的升级工单
+            const employeeUpgrades = upgrades.filter(u => u.employeeId === employeeId && (u.status === '维修中' || u.status === '运输中' || u.status === '已送到'));
+            
+            // 合并所有工单
+            const allOrders = [...employeeRepairs, ...employeeUpgrades];
+
+            if (allOrders.length === 0) {
+                return 0;
+            }
+
+            // 计算每个工单的进度
+            const totalProgress = allOrders.reduce((sum, order) => {
+                let progress = 0;
+
+                switch (order.status) {
+                    case '维修中':
+                        // 维修中的工单，根据开始时间计算进度
+                        if (order.startedAt) {
+                            const startTime = new Date(order.startedAt).getTime();
+                            const currentTime = new Date().getTime();
+                            const estimatedRepairTime = 30 * 60 * 1000; // 预计30分钟维修时间
+                            const elapsedTime = currentTime - startTime;
+                            progress = Math.min(100, Math.round((elapsedTime / estimatedRepairTime) * 100));
+                        }
+                        break;
+                    case '运输中':
+                        // 运输中的工单，固定70%进度
+                        progress = 70;
+                        break;
+                    case '已送到':
+                        // 已送到的工单，固定90%进度
+                        progress = 90;
+                        break;
+                }
+
+                return sum + progress;
+            }, 0);
+
+            // 计算平均进度
+            return Math.round(totalProgress / allOrders.length);
+        }
+
+        function openEmployeeModal(employee = null) {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const saveModalBtn = document.getElementById('save-modal-btn');
+
+            modalTitle.textContent = employee ? '编辑员工信息' : '新增员工信息';
+
+            modalBody.innerHTML = `
+                <form id="employee-form">
+                    <input type="hidden" id="employee-id" value="${employee ? employee.id : ''}">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">员工姓名</label>
+                            <input type="text" id="employee-name" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${employee ? employee.name : ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">职位</label>
+                            <select id="employee-position" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" required>
+                                <option value="技术员" ${employee && employee.position === '技术员' ? 'selected' : ''}>技术员</option>
+                                <option value="高级技术员" ${employee && employee.position === '高级技术员' ? 'selected' : ''}>高级技术员</option>
+                                <option value="店长" ${employee && employee.position === '店长' ? 'selected' : ''}>店长</option>
+                                <option value="前台" ${employee && employee.position === '前台' ? 'selected' : ''}>前台</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">基本工资</label>
+                            <input type="number" id="employee-base-salary" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${employee ? employee.baseSalary : 3000}" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">提成比例 (%)</label>
+                            <input type="number" id="employee-commission-rate" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" value="${employee ? employee.commissionRate : 5}" required>
+                        </div>
+                    </div>
+                </form>
+            `;
+
+            saveModalBtn.onclick = function() {
+                const form = document.getElementById('employee-form');
+                if (form.checkValidity()) {
+                    const id = parseInt(document.getElementById('employee-id').value);
+                    const name = document.getElementById('employee-name').value;
+                    const position = document.getElementById('employee-position').value;
+                    const baseSalary = parseInt(document.getElementById('employee-base-salary').value);
+                    const commissionRate = parseFloat(document.getElementById('employee-commission-rate').value);
+
+                    if (employee) {
+                        // 编辑
+                        const index = employees.findIndex(e => e.id === id);
+                        employees[index] = {
+                            id,
+                            name,
+                            position,
+                            baseSalary,
+                            commissionRate
+                        };
+                    } else {
+                        // 新增
+                        const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+                        employees.push({
+                            id: newId,
+                            name,
+                            position,
+                            baseSalary,
+                            commissionRate,
+                            efficiency: Math.random() * 0.5 + 0.5,  // 效率 0.5-1.0
+                            skills: getRandomSkills(position),
+                            isWorking: Math.random() > 0.3,  // 70%的概率默认正在工作
+                            lastWorkTime: new Date().toISOString()  // 上次工作时间
+                        });
+                    }
+
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    loadEmployees();
+                    closeModal();
+                    showNotification(employee ? '员工信息更新成功' : '员工信息添加成功', 'success');
+                } else {
+                    form.reportValidity();
+                }
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        function deleteEmployee(id) {
+            if (confirm('确定要删除这位员工吗？')) {
+                employees = employees.filter(e => e.id !== id);
+                localStorage.setItem('employees', JSON.stringify(employees));
+                loadEmployees();
+                showNotification('员工信息删除成功', 'success');
+            }
+        }
+
+        // AI自动接单
+        function loadAiSettings() {
+            document.getElementById('ai-enabled').checked = aiSettings.enabled;
+            document.getElementById('ai-managed-mode').checked = aiSettings.managedMode;
+            document.getElementById('ai-order-frequency').value = aiSettings.orderFrequency;
+            document.getElementById('ai-processing-capacity').value = aiSettings.processingCapacity;
+            document.getElementById('ai-speed-multiplier').value = aiSettings.speedMultiplier;
+            document.getElementById('allocation-strategy').value = aiSettings.allocationStrategy;
+            document.getElementById('max-orders-per-employee').value = aiSettings.maxOrdersPerEmployee;
+            document.getElementById('auto-allocation-enabled').checked = aiSettings.autoAllocationEnabled;
+        }
+
+        function saveAiSettings() {
+            aiSettings = {
+                enabled: document.getElementById('ai-enabled').checked,
+                managedMode: document.getElementById('ai-managed-mode').checked,
+                orderFrequency: parseInt(document.getElementById('ai-order-frequency').value),
+                processingCapacity: parseInt(document.getElementById('ai-processing-capacity').value),
+                speedMultiplier: parseInt(document.getElementById('ai-speed-multiplier').value),
+                allocationStrategy: document.getElementById('allocation-strategy').value,
+                maxOrdersPerEmployee: parseInt(document.getElementById('max-orders-per-employee').value),
+                autoAllocationEnabled: document.getElementById('auto-allocation-enabled').checked
+            };
+
+            localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+            
+            // 启动或停止AI自动接单
+            if (aiSettings.enabled) {
+                startAiOrdering();
+            } else {
+                stopAiOrdering();
+            }
+
+            // 如果启用了AI托管模式，自动生成AI员工
+            if (aiSettings.managedMode) {
+                generateAiEmployees();
+            }
+
+            showNotification('AI设置保存成功', 'success');
+        }
+
+        // 重置所有数据
+        function resetAllData() {
+            if (confirm('确定要重置所有数据吗？此操作不可恢复！')) {
+                // 重置所有数据
+                repairs = [];
+                upgrades = [];
+                inventory = [];
+                employees = [];
+                aiSettings = {
+                    enabled: false,
+                    managedMode: false,
+                    orderFrequency: 10,
+                    processingCapacity: 360,
+                    speedMultiplier: 1,
+                    allocationStrategy: 'round-robin',
+                    maxOrdersPerEmployee: 5,
+                    autoAllocationEnabled: true
+                };
+                finance = {
+                    totalWealth: 100000,
+                    dailyIncome: 0,
+                    dailyExpense: 0,
+                    monthlyIncome: 0,
+                    monthlyExpense: 0,
+                    lastResetDate: new Date().toISOString().split('T')[0],
+                    lastResetMonth: new Date().toISOString().substring(0, 7)
+                };
+
+                // 保存到本地存储
+                localStorage.setItem('repairs', JSON.stringify(repairs));
+                localStorage.setItem('upgrades', JSON.stringify(upgrades));
+                localStorage.setItem('inventory', JSON.stringify(inventory));
+                localStorage.setItem('employees', JSON.stringify(employees));
+                localStorage.setItem('aiSettings', JSON.stringify(aiSettings));
+                localStorage.setItem('finance', JSON.stringify(finance));
+
+                // 停止AI自动接单
+                stopAiOrdering();
+
+                // 重新加载数据
+                loadRepairs();
+                loadUpgrades();
+                loadInventory();
+                loadEmployees();
+                loadAiSettings();
+                loadFinanceData();
+
+                showNotification('所有数据已重置', 'success');
+            }
+        }
+
+        function startAiOrdering() {
+            if (aiOrderTimer) {
+                clearInterval(aiOrderTimer);
+            }
+
+            // 计算实际接单间隔，应用加速倍数
+            // 最小间隔为10毫秒，避免浏览器性能问题
+            const actualInterval = Math.max(10, (aiSettings.orderFrequency * 1000) / Math.max(1, aiSettings.speedMultiplier));
+
+            aiOrderTimer = setInterval(() => {
+                generateAiOrder();
+            }, actualInterval);
+
+            showNotification(`AI自动接单已启动，加速倍数: ${aiSettings.speedMultiplier}x`, 'success');
+        }
+
+        function stopAiOrdering() {
+            if (aiOrderTimer) {
+                clearInterval(aiOrderTimer);
+                aiOrderTimer = null;
+            }
+
+            showNotification('AI自动接单已停止', 'success');
+        }
+
+        function generateAiOrder() {
+            // 显示思考过程
+            showThinking('正在分析市场需求...');
+
+            // 随机生成维修订单或升级订单
+            const orderType = Math.random() > 0.5 ? 'repair' : 'upgrade';
+            const customerNames = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十'];
+            const phoneModels = ['iPhone 14', 'iPhone 15', 'Samsung Galaxy S24', 'Xiaomi 14', 'Huawei P60', 'OPPO Find X6', 'vivo X90 Pro'];
+            const issues = ['屏幕损坏', '电池老化', '摄像头故障', '充电接口损坏', '扬声器无声', '系统卡顿', '无法开机'];
+
+            const randomCustomer = customerNames[Math.floor(Math.random() * customerNames.length)];
+            const randomPhone = phoneModels[Math.floor(Math.random() * phoneModels.length)];
+            const randomNewPhone = phoneModels[Math.floor(Math.random() * phoneModels.length)];
+            const randomIssue = issues[Math.floor(Math.random() * issues.length)];
+
+            // 显示思考过程
+            showThinking(`生成${orderType === 'repair' ? '维修' : '升级'}订单...`);
+
+            if (orderType === 'repair') {
+                // 创建维修订单
+                const newId = repairs.length > 0 ? Math.max(...repairs.map(r => r.id)) + 1 : 1;
+                const newRepair = {
+                    id: newId,
+                    customerName: randomCustomer,
+                    phoneModel: randomPhone,
+                    issueDescription: randomIssue,
+                    status: '待处理',
+                    fee: settings.defaultRepairFee,
+                    employeeId: null,
+                    createdAt: new Date().toISOString()
+                };
+
+                repairs.push(newRepair);
+                localStorage.setItem('repairs', JSON.stringify(repairs));
+
+                // 显示思考过程
+                showThinking(`创建维修订单: ${randomCustomer} - ${randomPhone} - ${randomIssue}`);
+
+                // 自动分配订单
+                if (aiSettings.autoAllocationEnabled) {
+                    // 显示思考过程
+                    showThinking('正在自动分配订单...');
+                    allocateOrder(newId);
+                }
+
+                // 刷新维修列表
+                if (document.getElementById('repair').classList.contains('active')) {
+                    loadRepairs();
+                }
+
+                showNotification('AI自动接维修单成功', 'success');
+            } else {
+                // 创建升级订单
+                const newId = upgrades.length > 0 ? Math.max(...upgrades.map(u => u.id)) + 1 : 1;
+                const newUpgrade = {
+                    id: newId,
+                    customerName: randomCustomer,
+                    oldPhoneModel: randomPhone,
+                    newPhoneModel: randomNewPhone,
+                    status: '待处理',
+                    fee: settings.defaultUpgradeFee,
+                    employeeId: null,
+                    createdAt: new Date().toISOString()
+                };
+
+                upgrades.push(newUpgrade);
+                localStorage.setItem('upgrades', JSON.stringify(upgrades));
+
+                // 显示思考过程
+                showThinking(`创建升级订单: ${randomCustomer} - ${randomPhone} → ${randomNewPhone}`);
+
+                // 自动分配订单
+                if (aiSettings.autoAllocationEnabled) {
+                    // 显示思考过程
+                    showThinking('正在自动分配订单...');
+                    allocateUpgradeOrder(newId);
+                }
+
+                // 刷新升级列表
+                if (document.getElementById('upgrade').classList.contains('active')) {
+                    loadUpgrades();
+                }
+
+                showNotification('AI自动接升级单成功', 'success');
+            }
+        }
+
+        function allocateOrder(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            let selectedEmployee = null;
+
+            // 显示思考过程
+            showThinking('正在分析订单需求...');
+
+            // 筛选有足够容量的员工（不管是否正在工作）
+            const availableEmployees = employees.filter(e => {
+                const orderCount = getEmployeeOrderCount(e.id);
+                return orderCount < aiSettings.maxOrdersPerEmployee;
+            });
+
+            if (availableEmployees.length > 0) {
+                // 显示思考过程
+                showThinking('正在评估员工工作量...');
+
+                // 按工作量排序，选择工作量最少的员工
+                availableEmployees.sort((a, b) => {
+                    const workloadA = getEmployeeOrderCount(a.id);
+                    const workloadB = getEmployeeOrderCount(b.id);
+                    return workloadA - workloadB;
+                });
+
+                // 选择工作量最少的员工
+                selectedEmployee = availableEmployees[0];
+
+                // 显示思考过程
+                showThinking(`选择了工作量最少的员工: ${selectedEmployee.name}`);
+
+                // 如果员工不在工作，标记为正在工作
+                if (!selectedEmployee.isWorking) {
+                    // 显示思考过程
+                    showThinking(`员工 ${selectedEmployee.name} 不在工作，标记为正在工作...`);
+                    
+                    selectedEmployee.isWorking = true;
+                    selectedEmployee.lastWorkTime = new Date().toISOString();
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    loadEmployees();
+                }
+            }
+
+
+            if (selectedEmployee) {
+                repair.employeeId = selectedEmployee.id;
+                repair.status = '维修中';
+                repair.employeeName = selectedEmployee.name;
+                repair.startedAt = new Date().toISOString();
+                localStorage.setItem('repairs', JSON.stringify(repairs));
+                
+                // 刷新员工列表
+                if (document.getElementById('employees').classList.contains('active')) {
+                    loadEmployees();
+                }
+                
+                showNotification(`维修订单已分配给 ${selectedEmployee.name}`, 'success');
+                
+                // 模拟维修过程，一段时间后自动完成
+                const repairTime = 5000 / Math.max(1, aiSettings.speedMultiplier);
+                setTimeout(() => {
+                    completeRepairOrder(repair.id);
+                }, repairTime); // 应用加速倍数
+            } else {
+                // 如果没有可用员工，稍后重试
+                setTimeout(() => {
+                    allocateOrder(repairId);
+                }, 1000 / Math.max(1, aiSettings.speedMultiplier));
+            }
+        }
+
+        function allocateUpgradeOrder(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            if (!upgrade) return;
+
+            let selectedEmployee = null;
+
+            // 显示思考过程
+            showThinking('正在分析升级订单需求...');
+
+            // 筛选有足够容量的员工（不管是否正在工作）
+            const availableEmployees = employees.filter(e => {
+                const orderCount = getEmployeeOrderCount(e.id);
+                return orderCount < aiSettings.maxOrdersPerEmployee;
+            });
+
+            if (availableEmployees.length > 0) {
+                // 显示思考过程
+                showThinking('正在评估员工工作量...');
+
+                // 按工作量排序，选择工作量最少的员工
+                availableEmployees.sort((a, b) => {
+                    const workloadA = getEmployeeOrderCount(a.id);
+                    const workloadB = getEmployeeOrderCount(b.id);
+                    return workloadA - workloadB;
+                });
+
+                // 选择工作量最少的员工
+                selectedEmployee = availableEmployees[0];
+
+                // 显示思考过程
+                showThinking(`选择了工作量最少的员工: ${selectedEmployee.name}`);
+
+                // 如果员工不在工作，标记为正在工作
+                if (!selectedEmployee.isWorking) {
+                    // 显示思考过程
+                    showThinking(`员工 ${selectedEmployee.name} 不在工作，标记为正在工作...`);
+                    
+                    selectedEmployee.isWorking = true;
+                    selectedEmployee.lastWorkTime = new Date().toISOString();
+                    localStorage.setItem('employees', JSON.stringify(employees));
+                    loadEmployees();
+                }
+            }
+
+
+            if (selectedEmployee) {
+                upgrade.employeeId = selectedEmployee.id;
+                upgrade.status = '维修中';
+                upgrade.employeeName = selectedEmployee.name;
+                upgrade.startedAt = new Date().toISOString();
+                localStorage.setItem('upgrades', JSON.stringify(upgrades));
+                
+                // 刷新员工列表
+                if (document.getElementById('employees').classList.contains('active')) {
+                    loadEmployees();
+                }
+                
+                showNotification(`升级订单已分配给 ${selectedEmployee.name}`, 'success');
+                
+                // 模拟升级过程，一段时间后自动完成
+                const upgradeTime = 5000 / Math.max(1, aiSettings.speedMultiplier);
+                setTimeout(() => {
+                    completeUpgradeOrder(upgrade.id);
+                }, upgradeTime); // 应用加速倍数
+            } else {
+                // 如果没有可用员工，稍后重试
+                setTimeout(() => {
+                    allocateUpgradeOrder(upgradeId);
+                }, 1000 / Math.max(1, aiSettings.speedMultiplier));
+            }
+        }
+
+        function getEmployeeOrderCount(employeeId) {
+            // 计算维修订单数量
+            const repairCount = repairs.filter(r => r.employeeId === employeeId && (r.status === '待处理' || r.status === '维修中')).length;
+            // 计算升级订单数量
+            const upgradeCount = upgrades.filter(u => u.employeeId === employeeId && (u.status === '待处理' || u.status === '维修中')).length;
+            // 返回总订单数量
+            return repairCount + upgradeCount;
+        }
+
+        function completeRepairOrder(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            // 显示思考过程
+            showThinking(`维修订单 ${repair.id} 已完成，准备更新状态...`);
+
+            // 标记为已完成
+            repair.status = '已完成';
+            repair.completedAt = new Date().toISOString();
+            localStorage.setItem('repairs', JSON.stringify(repairs));
+
+            // 刷新维修列表
+            if (document.getElementById('repair').classList.contains('active')) {
+                loadRepairs();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`订单 ${repair.id} 已维修完成`, 'success');
+
+            // 显示思考过程
+            showThinking(`安排客户取机...`);
+
+            // 模拟客户取机，一段时间后自动标记为已取机
+            const deliveryTime = 3000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                finalizeRepairOrder(repair.id);
+            }, deliveryTime); // 应用加速倍数
+        }
+
+        function finalizeRepairOrder(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            // 显示思考过程
+            showThinking(`维修订单 ${repair.id} 准备发货...`);
+
+            // 标记为运输中
+            repair.status = '运输中';
+            repair.shippedAt = new Date().toISOString();
+            localStorage.setItem('repairs', JSON.stringify(repairs));
+
+            // 刷新维修列表
+            if (document.getElementById('repair').classList.contains('active')) {
+                loadRepairs();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`订单 ${repair.id} 已开始运输`, 'success');
+
+            // 显示思考过程
+            showThinking(`订单 ${repair.id} 正在运输中...`);
+
+            // 模拟运输时间，一段时间后标记为已送到
+            const shippingTime = 2000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                markAsDelivered(repair.id);
+            }, shippingTime); // 应用加速倍数
+        }
+
+        function markAsDelivered(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            // 显示思考过程
+            showThinking(`维修订单 ${repair.id} 已送达，准备更新状态...`);
+
+            // 标记为已送到
+            repair.status = '已送到';
+            repair.deliveredAt = new Date().toISOString();
+            localStorage.setItem('repairs', JSON.stringify(repairs));
+
+            // 刷新维修列表
+            if (document.getElementById('repair').classList.contains('active')) {
+                loadRepairs();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`订单 ${repair.id} 已送到，等待用户拆箱反馈`, 'success');
+
+            // 显示思考过程
+            showThinking(`等待用户拆箱反馈...`);
+
+            // 模拟用户拆箱反馈，一段时间后标记为已完成
+            const feedbackTime = 1000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                completeWithFeedback(repairId);
+            }, feedbackTime); // 应用加速倍数
+        }
+
+        function completeWithFeedback(repairId) {
+            const repair = repairs.find(r => r.id === repairId);
+            if (!repair) return;
+
+            // 显示思考过程
+            showThinking(`收到用户拆箱反馈，处理维修订单 ${repair.id}...`);
+
+            // 标记为已完成
+            repair.status = '已完成';
+            repair.feedbackReceivedAt = new Date().toISOString();
+            localStorage.setItem('repairs', JSON.stringify(repairs));
+
+            // 刷新维修列表
+            if (document.getElementById('repair').classList.contains('active')) {
+                loadRepairs();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            // 更新财务数据
+            updateFinanceData('income', repair.fee);
+
+            // 显示思考过程
+            showThinking(`维修订单 ${repair.id} 已完成，记录收入...`);
+
+            showNotification(`维修订单 ${repair.id} 已完成，用户拆箱反馈成功`, 'success');
+        }
+
+        function completeUpgradeOrder(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            if (!upgrade) return;
+
+            // 显示思考过程
+            showThinking(`升级订单 ${upgrade.id} 已完成，准备更新状态...`);
+
+            // 标记为已完成
+            upgrade.status = '已完成';
+            upgrade.completedAt = new Date().toISOString();
+            localStorage.setItem('upgrades', JSON.stringify(upgrades));
+
+            // 刷新升级列表
+            if (document.getElementById('upgrade').classList.contains('active')) {
+                loadUpgrades();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`升级订单 ${upgrade.id} 已完成`, 'success');
+
+            // 显示思考过程
+            showThinking(`安排客户取机...`);
+
+            // 模拟客户取机，一段时间后自动标记为已取机
+            const deliveryTime = 3000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                finalizeUpgradeOrder(upgrade.id);
+            }, deliveryTime); // 应用加速倍数
+        }
+
+        function finalizeUpgradeOrder(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            if (!upgrade) return;
+
+            // 显示思考过程
+            showThinking(`升级订单 ${upgrade.id} 准备发货...`);
+
+            // 标记为运输中
+            upgrade.status = '运输中';
+            upgrade.shippedAt = new Date().toISOString();
+            localStorage.setItem('upgrades', JSON.stringify(upgrades));
+
+            // 刷新升级列表
+            if (document.getElementById('upgrade').classList.contains('active')) {
+                loadUpgrades();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`升级订单 ${upgrade.id} 已开始运输`, 'success');
+
+            // 显示思考过程
+            showThinking(`订单 ${upgrade.id} 正在运输中...`);
+
+            // 模拟运输时间，一段时间后标记为已送到
+            const shippingTime = 2000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                markUpgradeAsDelivered(upgrade.id);
+            }, shippingTime); // 应用加速倍数
+        }
+
+        function markUpgradeAsDelivered(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            if (!upgrade) return;
+
+            // 显示思考过程
+            showThinking(`升级订单 ${upgrade.id} 已送达，准备更新状态...`);
+
+            // 标记为已送到
+            upgrade.status = '已送到';
+            upgrade.deliveredAt = new Date().toISOString();
+            localStorage.setItem('upgrades', JSON.stringify(upgrades));
+
+            // 刷新升级列表
+            if (document.getElementById('upgrade').classList.contains('active')) {
+                loadUpgrades();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            showNotification(`升级订单 ${upgrade.id} 已送到，等待用户拆箱反馈`, 'success');
+
+            // 显示思考过程
+            showThinking(`等待用户拆箱反馈...`);
+
+            // 模拟用户拆箱反馈，一段时间后标记为已完成
+            const feedbackTime = 1000 / Math.max(1, aiSettings.speedMultiplier);
+            setTimeout(() => {
+                completeUpgradeWithFeedback(upgrade.id);
+            }, feedbackTime); // 应用加速倍数
+        }
+
+        function completeUpgradeWithFeedback(upgradeId) {
+            const upgrade = upgrades.find(u => u.id === upgradeId);
+            if (!upgrade) return;
+
+            // 显示思考过程
+            showThinking(`收到用户拆箱反馈，处理升级订单 ${upgrade.id}...`);
+
+            // 标记为已完成
+            upgrade.status = '已完成';
+            upgrade.feedbackReceivedAt = new Date().toISOString();
+            localStorage.setItem('upgrades', JSON.stringify(upgrades));
+
+            // 刷新升级列表
+            if (document.getElementById('upgrade').classList.contains('active')) {
+                loadUpgrades();
+            }
+
+            // 刷新员工列表
+            if (document.getElementById('employees').classList.contains('active')) {
+                loadEmployees();
+            }
+
+            // 更新财务数据
+            updateFinanceData('income', upgrade.fee);
+
+            // 显示思考过程
+            showThinking(`升级订单 ${upgrade.id} 已完成，记录收入...`);
+
+            showNotification(`升级订单 ${upgrade.id} 已完成，用户拆箱反馈成功`, 'success');
+        }
+
+        function resetFinanceData() {
+            const today = new Date().toISOString().split('T')[0];
+            const currentMonth = today.substring(0, 7); // YYYY-MM
+            
+            // 检查是否需要重置每日数据
+            if (finance.lastResetDate !== today) {
+                finance.dailyIncome = 0;
+                finance.dailyExpense = 0;
+                finance.lastResetDate = today;
+            }
+            
+            // 检查是否需要重置每月数据
+            if (!finance.lastResetMonth || finance.lastResetMonth !== currentMonth) {
+                finance.monthlyIncome = 0;
+                finance.monthlyExpense = 0;
+                finance.lastResetMonth = currentMonth;
+            }
+            
+            localStorage.setItem('finance', JSON.stringify(finance));
+        }
+
+        function updateFinanceData(type, amount) {
+            if (type === 'income') {
+                finance.totalWealth += amount;
+                finance.dailyIncome += amount;
+                finance.monthlyIncome += amount;
+            } else if (type === 'expense') {
+                finance.totalWealth -= amount;
+                finance.dailyExpense += amount;
+                finance.monthlyExpense += amount;
+            }
+            
+            localStorage.setItem('finance', JSON.stringify(finance));
+            loadFinanceData();
+        }
+
+        function loadFinanceData() {
+            // 如果财务面板不存在，创建它
+            if (!document.getElementById('finance-panel')) {
+                const mainContent = document.querySelector('main');
+                const financePanel = document.createElement('div');
+                financePanel.id = 'finance-panel';
+                financePanel.className = 'bg-white rounded-lg shadow-card p-6 mb-6';
+                financePanel.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <i class="fa fa-money text-primary mr-2"></i>
+                        财务状况
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-md">
+                            <h4 class="font-medium text-blue-800 mb-2">总财富</h4>
+                            <p id="total-wealth" class="text-2xl font-bold text-blue-600">¥0</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-md">
+                            <h4 class="font-medium text-green-800 mb-2">今日收入</h4>
+                            <p id="daily-income" class="text-2xl font-bold text-green-600">¥0</p>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-md">
+                            <h4 class="font-medium text-red-800 mb-2">今日支出</h4>
+                            <p id="daily-expense" class="text-2xl font-bold text-red-600">¥0</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-purple-50 p-4 rounded-md">
+                            <h4 class="font-medium text-purple-800 mb-2">本月收入</h4>
+                            <p id="monthly-income" class="text-2xl font-bold text-purple-600">¥0</p>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-md">
+                            <h4 class="font-medium text-orange-800 mb-2">本月支出</h4>
+                            <p id="monthly-expense" class="text-2xl font-bold text-orange-600">¥0</p>
+                        </div>
+                    </div>
+                `;
+                mainContent.insertBefore(financePanel, mainContent.firstChild);
+            }
+            
+            // 更新财务数据显示
+            if (document.getElementById('total-wealth')) {
+                document.getElementById('total-wealth').textContent = `¥${finance.totalWealth.toLocaleString()}`;
+            }
+            if (document.getElementById('daily-income')) {
+                document.getElementById('daily-income').textContent = `¥${finance.dailyIncome.toLocaleString()}`;
+            }
+            if (document.getElementById('daily-expense')) {
+                document.getElementById('daily-expense').textContent = `¥${finance.dailyExpense.toLocaleString()}`;
+            }
+            if (document.getElementById('monthly-income')) {
+                document.getElementById('monthly-income').textContent = `¥${finance.monthlyIncome.toLocaleString()}`;
+            }
+            if (document.getElementById('monthly-expense')) {
+                document.getElementById('monthly-expense').textContent = `¥${finance.monthlyExpense.toLocaleString()}`;
+            }
+        }
+
+        function getRandomSkills(position) {
+            const allSkills = ['屏幕维修', '电池更换', '摄像头维修', '系统调试', '数据恢复', '主板维修', '充电接口维修', '扬声器维修'];
+            const skillCount = position === '技术员' ? 3 : 
+                               position === '高级技术员' ? 6 : 
+                               position === '店长' ? 4 : 2;
+            
+            // 随机选择技能
+            const selectedSkills = [];
+            while (selectedSkills.length < skillCount) {
+                const randomSkill = allSkills[Math.floor(Math.random() * allSkills.length)];
+                if (!selectedSkills.includes(randomSkill)) {
+                    selectedSkills.push(randomSkill);
+                }
+            }
+            return selectedSkills;
+        }
+
+        function getEmployeeRevenue(employeeId, month) {
+            const monthStart = new Date(month + '-01');
+            const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+
+            // 计算维修订单收入
+            const repairRevenue = repairs
+                .filter(r => r.employeeId === employeeId && r.status === '已完成')
+                .reduce((total, repair) => total + repair.fee, 0);
+
+            // 计算升级订单收入
+            const upgradeRevenue = upgrades
+                .filter(u => u.employeeId === employeeId && u.status === '已完成')
+                .reduce((total, upgrade) => total + upgrade.fee, 0);
+
+            // 返回总收入
+            return repairRevenue + upgradeRevenue;
+        }
+
+        // 工资计算
+        function calculateSalary() {
+            // 显示思考过程
+            showThinking('准备计算员工工资...');
+
+            const month = document.getElementById('salary-month').value;
+            const fullAttendanceBonus = parseInt(document.getElementById('full-attendance-bonus').value);
+            const performanceFactor = parseFloat(document.getElementById('performance-factor').value);
+
+            if (!month) {
+                showNotification('请选择计算月份', 'error');
+                return;
+            }
+
+            // 显示思考过程
+            showThinking('分析当前速度倍数，计算工资调整因子...');
+
+            const salaryResults = document.getElementById('salary-results');
+            let resultsHtml = '';
+            
+            // 计算速度因子，速度越快，工资越高
+            // 速度因子 = 1 + (速度倍数 - 1) * 0.1，最大为10
+            const speedFactor = Math.min(10, 1 + (aiSettings.speedMultiplier - 1) * 0.1);
+
+            // 显示思考过程
+            showThinking(`速度因子计算完成: ${speedFactor.toFixed(1)}x，开始计算每位员工工资...`);
+
+            employees.forEach(employee => {
+                // 显示思考过程
+                showThinking(`计算员工 ${employee.name} 的工资...`);
+
+                const baseSalary = employee.baseSalary;
+                const revenue = getEmployeeRevenue(employee.id, month);
+                const commission = revenue * (employee.commissionRate / 100);
+                
+                // 应用速度因子到基本工资和全勤奖
+                const speedAdjustedBaseSalary = baseSalary * speedFactor;
+                const speedAdjustedBonus = fullAttendanceBonus * performanceFactor * speedFactor;
+                
+                const totalSalary = speedAdjustedBaseSalary + commission + speedAdjustedBonus;
+
+                // 更新财务数据，记录工资支出
+                updateFinanceData('expense', totalSalary);
+
+                resultsHtml += `
+                    <div class="p-4 bg-gray-50 rounded-md">
+                        <h4 class="font-semibold">${employee.name} (${employee.position})</h4>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <p class="text-sm text-gray-500">基本工资 (速度因子: ${speedFactor.toFixed(1)}x)</p>
+                                <p class="font-medium">¥${speedAdjustedBaseSalary.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">提成收入</p>
+                                <p class="font-medium">¥${commission.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">全勤奖</p>
+                                <p class="font-medium">¥${speedAdjustedBonus.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500">总收入</p>
+                                <p class="font-medium text-primary">¥${totalSalary.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (resultsHtml === '') {
+                resultsHtml = '<div class="p-4 bg-gray-50 rounded-md"><p class="text-gray-500">暂无员工数据</p></div>';
+            }
+
+            // 显示思考过程
+            showThinking('工资计算完成，准备显示结果...');
+
+            salaryResults.innerHTML = resultsHtml;
+            showNotification('工资计算完成', 'success');
+        }
+
+        // AI托管模式 - 生成AI员工
+        function generateAiEmployees() {
+            // 计算需要生成的员工数量（至少200个）
+            const minEmployees = 200;
+            const currentCount = employees.length;
+            const needToCreate = Math.max(0, minEmployees - currentCount);
+
+            if (needToCreate === 0) {
+                showNotification(`已有 ${currentCount} 名员工，数量足够`, 'success');
+                return;
+            }
+
+            // 生成足够的AI员工（至少达到200个）
+            const positions = ['技术员', '高级技术员', '店长', '前台'];
+            const positionCount = {
+                '技术员': Math.floor(needToCreate * 0.6),  // 60% 技术员
+                '高级技术员': Math.floor(needToCreate * 0.25),  // 25% 高级技术员
+                '店长': Math.floor(needToCreate * 0.1),  // 10% 店长
+                '前台': Math.floor(needToCreate * 0.05)  // 5% 前台
+            };
+
+            let createdCount = 0;
+
+            // 生成不同职位的员工
+            Object.entries(positionCount).forEach(([position, count]) => {
+                for (let i = 0; i < count; i++) {
+                    const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+                    const baseSalary = position === '技术员' ? 3000 : 
+                                     position === '高级技术员' ? 5000 : 
+                                     position === '店长' ? 8000 : 2500;
+                    const commissionRate = position === '技术员' ? 5 : 
+                                          position === '高级技术员' ? 8 : 
+                                          position === '店长' ? 10 : 3;
+
+                    employees.push({
+                            id: newId,
+                            name: `AI${position}${String(createdCount + currentCount + 1).padStart(4, '0')}`,
+                            position: position,
+                            baseSalary: baseSalary,
+                            commissionRate: commissionRate,
+                            efficiency: Math.random() * 0.5 + 0.5,  // 效率 0.5-1.0
+                            skills: getRandomSkills(position),
+                            isWorking: Math.random() > 0.3,  // 70%的概率默认正在工作
+                            lastWorkTime: new Date().toISOString()  // 上次工作时间
+                        });
+
+                    createdCount++;
+
+                    // 每创建50个员工保存一次，避免性能问题
+                    if (createdCount % 50 === 0) {
+                        localStorage.setItem('employees', JSON.stringify(employees));
+                    }
+                }
+            });
+
+            // 确保至少创建了需要的数量
+            while (employees.length < minEmployees) {
+                const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+                const position = '技术员';  // 不足的部分用技术员填充
+                employees.push({
+                    id: newId,
+                    name: `AI${position}${String(employees.length + 1).padStart(4, '0')}`,
+                    position: position,
+                    baseSalary: 3000,
+                    commissionRate: 5,
+                    efficiency: Math.random() * 0.5 + 0.5,
+                    skills: getRandomSkills(position),
+                    isWorking: Math.random() > 0.3,  // 70%的概率默认正在工作
+                    lastWorkTime: new Date().toISOString()  // 上次工作时间
+                });
+            }
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+            
+            showNotification(`成功生成 ${createdCount} 名AI员工，现在共有 ${employees.length} 名员工`, 'success');
+        }
+
+        function getRandomSkills(position) {
+            const allSkills = ['屏幕维修', '电池更换', '摄像头维修', '系统调试', '数据恢复', '主板维修', '充电接口维修', '扬声器维修'];
+            const skillCount = position === '技术员' ? 3 : 
+                               position === '高级技术员' ? 6 : 
+                               position === '店长' ? 4 : 2;
+            
+            // 随机选择技能
+            const selectedSkills = [];
+            while (selectedSkills.length < skillCount) {
+                const randomSkill = allSkills[Math.floor(Math.random() * allSkills.length)];
+                if (!selectedSkills.includes(randomSkill)) {
+                    selectedSkills.push(randomSkill);
+                }
+            }
+            
+            return selectedSkills;
+        }
+
+        // AI托管助手
+        let aiAssistantInterval = null;
+        let aiAssistantRunning = false;
+
+        function initAiFloatingWindow() {
+            const aiFloatingToggle = document.getElementById('ai-floating-toggle');
+            const aiFloatingPanel = document.getElementById('ai-floating-panel');
+            const closeAiPanel = document.getElementById('close-ai-panel');
+            const startAiAssistant = document.getElementById('start-ai-assistant');
+            const stopAiAssistant = document.getElementById('stop-ai-assistant');
+
+            // 显示/隐藏悬浮窗面板
+            aiFloatingToggle.addEventListener('click', function() {
+                aiFloatingPanel.classList.toggle('hidden');
+            });
+
+            // 关闭悬浮窗面板
+            closeAiPanel.addEventListener('click', function() {
+                aiFloatingPanel.classList.add('hidden');
+            });
+
+            // 启动AI托管助手
+            startAiAssistant.addEventListener('click', function() {
+                startAiAssistantFunc();
+            });
+
+            // 停止AI托管助手
+            stopAiAssistant.addEventListener('click', function() {
+                stopAiAssistantFunc();
+            });
+        }
+
+        function startAiAssistantFunc() {
+            if (aiAssistantRunning) return;
+
+            // 确保有足够的员工（至少200个）
+            if (employees.length < 200) {
+                showNotification('正在生成足够的员工...', 'info');
+                generateAiEmployees();
+            }
+
+            aiAssistantRunning = true;
+            document.getElementById('ai-assistant-status').textContent = '运行中';
+            document.getElementById('ai-assistant-status').className = 'font-medium text-green-600';
+            showNotification('AI托管助手已启动，当前员工数量: ' + employees.length, 'success');
+
+            // 开始模拟人类操作
+            aiAssistantInterval = setInterval(() => {
+                simulateHumanActions();
+            }, 5000 / aiSettings.speedMultiplier); // 应用加速倍数
+        }
+
+        function stopAiAssistantFunc() {
+            if (!aiAssistantRunning) return;
+
+            aiAssistantRunning = false;
+            document.getElementById('ai-assistant-status').textContent = '未启动';
+            document.getElementById('ai-assistant-status').className = 'font-medium';
+            
+            if (aiAssistantInterval) {
+                clearInterval(aiAssistantInterval);
+                aiAssistantInterval = null;
+            }
+
+            showNotification('AI托管助手已停止', 'success');
+        }
+
+        function simulateHumanActions() {
+            // 随机选择要执行的操作
+            const actions = [
+                simulateCheckRepairs,
+                simulateCheckEmployees,
+                simulateCheckInventory,
+                simulateUpdateSettings,
+                simulateManageEmployeeWorkload
+            ];
+
+            const randomAction = actions[Math.floor(Math.random() * actions.length)];
+            randomAction();
+        }
+
+        function simulateManageEmployeeWorkload() {
+            // 模拟管理员工工作负载
+            const employeesTab = document.querySelector('.nav-btn[data-target="employees"]');
+            if (employeesTab && !employeesTab.classList.contains('active')) {
+                employeesTab.click();
+                showNotification('AI助手: 管理员工工作负载', 'info');
+            }
+
+            // 检查并管理员工工作状态
+            manageEmployeeWorkStatus();
+        }
+
+        function manageEmployeeWorkStatus() {
+            // 随机选择一些员工标记为正在工作
+            const workingEmployees = employees.filter(e => e.isWorking);
+            const availableEmployees = employees.filter(e => !e.isWorking);
+
+            // 确保有足够的员工在工作（至少200个）
+            const targetWorkingCount = Math.min(200, employees.length);
+            const needToStartWorking = Math.max(0, targetWorkingCount - workingEmployees.length);
+
+            if (needToStartWorking > 0 && availableEmployees.length > 0) {
+                // 随机选择员工开始工作
+                const employeesToStart = availableEmployees.slice(0, needToStartWorking);
+                employeesToStart.forEach(employee => {
+                    employee.isWorking = true;
+                    employee.lastWorkTime = new Date().toISOString();
+                });
+
+                localStorage.setItem('employees', JSON.stringify(employees));
+                showNotification(`已安排 ${employeesToStart.length} 名员工开始工作`, 'success');
+            }
+
+            // 随机让一些员工休息
+            if (workingEmployees.length > targetWorkingCount) {
+                const employeesToRest = workingEmployees.slice(0, workingEmployees.length - targetWorkingCount);
+                employeesToRest.forEach(employee => {
+                    employee.isWorking = false;
+                    employee.lastWorkTime = new Date().toISOString();
+                });
+
+                localStorage.setItem('employees', JSON.stringify(employees));
+                showNotification(`已安排 ${employeesToRest.length} 名员工休息`, 'success');
+            }
+        }
+
+        function assignTask() {
+            const employeeId = parseInt(document.getElementById('assign-employee-select').value);
+            const taskType = document.getElementById('task-type-select').value;
+
+            if (!employeeId || !taskType) {
+                showNotification('请选择员工和任务类型', 'error');
+                return;
+            }
+
+            const employee = employees.find(e => e.id === employeeId);
+            if (!employee) {
+                showNotification('员工不存在', 'error');
+                return;
+            }
+
+            // 标记员工为正在工作
+            employee.isWorking = true;
+            employee.lastWorkTime = new Date().toISOString();
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+
+            // 根据任务类型生成相应的任务
+            let taskName = '';
+            switch (taskType) {
+                case 'repair':
+                    taskName = '维修任务';
+                    // 生成维修订单
+                    generateAiOrder();
+                    break;
+                case 'upgrade':
+                    taskName = '升级任务';
+                    // 这里可以添加生成升级任务的逻辑
+                    break;
+                case 'inventory':
+                    taskName = '库存管理任务';
+                    // 这里可以添加库存管理任务的逻辑
+                    break;
+            }
+
+            showNotification(`已为员工 ${employee.name} 分配 ${taskName}`, 'success');
+        }
+
+        function setAllEmployeesStatus(isWorking) {
+            employees.forEach(employee => {
+                employee.isWorking = isWorking;
+                employee.lastWorkTime = new Date().toISOString();
+            });
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+
+            showNotification(`所有员工已${isWorking ? '开始工作' : '开始休息'}`, 'success');
+        }
+
+        function smartAssignTask() {
+            const taskType = document.getElementById('task-type-select').value;
+
+            if (!taskType) {
+                showNotification('请选择任务类型', 'error');
+                return;
+            }
+
+            // 根据任务类型和员工技能智能选择最适合的员工
+            let suitableEmployees = [];
+
+            switch (taskType) {
+                case 'repair':
+                    // 选择有维修技能的员工
+                    suitableEmployees = employees.filter(e => {
+                        return e.skills && e.skills.some(skill => 
+                            ['屏幕维修', '电池更换', '摄像头维修', '系统调试', '数据恢复', '主板维修', '充电接口维修', '扬声器维修'].includes(skill)
+                        );
+                    });
+                    break;
+                case 'upgrade':
+                    // 选择有高级技能的员工
+                    suitableEmployees = employees.filter(e => {
+                        return e.position === '高级技术员' || e.position === '店长';
+                    });
+                    break;
+                case 'inventory':
+                    // 选择有前台或店长职位的员工
+                    suitableEmployees = employees.filter(e => {
+                        return e.position === '前台' || e.position === '店长';
+                    });
+                    break;
+            }
+
+            // 按工作负载和效率排序
+            suitableEmployees.sort((a, b) => {
+                const workloadA = getEmployeeOrderCount(a.id);
+                const workloadB = getEmployeeOrderCount(b.id);
+                const efficiencyA = a.efficiency || 0;
+                const efficiencyB = b.efficiency || 0;
+
+                // 优先选择工作负载低且效率高的员工
+                if (workloadA !== workloadB) {
+                    return workloadA - workloadB;
+                }
+                return efficiencyB - efficiencyA;
+            });
+
+            if (suitableEmployees.length === 0) {
+                showNotification('没有适合的员工执行此任务', 'error');
+                return;
+            }
+
+            // 选择最适合的员工
+            const selectedEmployee = suitableEmployees[0];
+
+            // 标记员工为正在工作
+            selectedEmployee.isWorking = true;
+            selectedEmployee.lastWorkTime = new Date().toISOString();
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+
+            // 根据任务类型生成相应的任务
+            let taskName = '';
+            switch (taskType) {
+                case 'repair':
+                    taskName = '维修任务';
+                    // 生成维修订单
+                    generateAiOrder();
+                    break;
+                case 'upgrade':
+                    taskName = '升级任务';
+                    // 这里可以添加生成升级任务的逻辑
+                    break;
+                case 'inventory':
+                    taskName = '库存管理任务';
+                    // 这里可以添加库存管理任务的逻辑
+                    break;
+            }
+
+            showNotification(`已智能分配 ${taskName} 给最适合的员工 ${selectedEmployee.name}`, 'success');
+        }
+
+        function optimizeWorkload() {
+            // 分析当前工作负载
+            const workingEmployees = employees.filter(e => e.isWorking);
+            const availableEmployees = employees.filter(e => !e.isWorking);
+            const totalWorkload = workingEmployees.length;
+            const totalEmployees = employees.length;
+
+            // 计算最佳工作负载比例（70%）
+            const optimalWorkingCount = Math.floor(totalEmployees * 0.7);
+            const needToStartWorking = Math.max(0, optimalWorkingCount - workingEmployees.length);
+            const needToStopWorking = Math.max(0, workingEmployees.length - optimalWorkingCount);
+
+            showNotification(`正在分析工作负载... 当前工作员工: ${workingEmployees.length}, 最佳工作员工: ${optimalWorkingCount}`, 'info');
+
+            // 开始工作的员工
+            if (needToStartWorking > 0 && availableEmployees.length > 0) {
+                // 按效率排序，优先选择效率高的员工
+                availableEmployees.sort((a, b) => (b.efficiency || 0) - (a.efficiency || 0));
+                const employeesToStart = availableEmployees.slice(0, needToStartWorking);
+                
+                employeesToStart.forEach(employee => {
+                    employee.isWorking = true;
+                    employee.lastWorkTime = new Date().toISOString();
+                });
+
+                showNotification(`已安排 ${employeesToStart.length} 名员工开始工作`, 'success');
+            }
+
+            // 停止工作的员工
+            if (needToStopWorking > 0) {
+                // 按工作负载排序，优先选择工作负载低的员工
+                workingEmployees.sort((a, b) => {
+                    const workloadA = getEmployeeOrderCount(a.id);
+                    const workloadB = getEmployeeOrderCount(b.id);
+                    return workloadA - workloadB;
+                });
+                
+                const employeesToStop = workingEmployees.slice(0, needToStopWorking);
+                
+                employeesToStop.forEach(employee => {
+                    employee.isWorking = false;
+                    employee.lastWorkTime = new Date().toISOString();
+                });
+
+                showNotification(`已安排 ${employeesToStop.length} 名员工开始休息`, 'success');
+            }
+
+            localStorage.setItem('employees', JSON.stringify(employees));
+            loadEmployees();
+
+            showNotification('工作负载优化完成，当前工作员工: ' + employees.filter(e => e.isWorking).length, 'success');
+        }
+
+        function runSmartAnalysis() {
+            showNotification('正在运行智能分析...', 'info');
+
+            // 分析历史数据
+            const totalRepairs = repairs.length;
+            const completedRepairs = repairs.filter(r => r.status === '已取机').length;
+            const totalRevenue = repairs.reduce((sum, repair) => sum + (repair.fee || 0), 0);
+            const averageRepairTime = calculateAverageRepairTime();
+            const employeeEfficiency = calculateAverageEmployeeEfficiency();
+
+            // 预测今日工单数量
+            const todayOrdersPrediction = predictTodayOrders();
+            const revenuePrediction = todayOrdersPrediction * (totalRevenue / totalRepairs || 0);
+
+            // 更新分析结果
+            document.getElementById('today-orders-prediction').textContent = Math.round(todayOrdersPrediction);
+            document.getElementById('employee-efficiency-analysis').textContent = Math.round(employeeEfficiency * 100) + '%';
+            document.getElementById('revenue-prediction').textContent = '¥' + Math.round(revenuePrediction);
+
+            // 生成智能建议
+            generateSmartSuggestions(todayOrdersPrediction, employeeEfficiency);
+
+            showNotification('智能分析完成', 'success');
+        }
+
+        function calculateAverageRepairTime() {
+            // 计算平均维修时间
+            const completedRepairs = repairs.filter(r => r.status === '已取机' && r.createdAt && r.pickedUpAt);
+            if (completedRepairs.length === 0) return 0;
+
+            const totalTime = completedRepairs.reduce((sum, repair) => {
+                const startTime = new Date(repair.createdAt).getTime();
+                const endTime = new Date(repair.pickedUpAt).getTime();
+                return sum + (endTime - startTime);
+            }, 0);
+
+            return totalTime / completedRepairs.length;
+        }
+
+        function calculateAverageEmployeeEfficiency() {
+            // 计算平均员工效率
+            if (employees.length === 0) return 0;
+
+            const totalEfficiency = employees.reduce((sum, employee) => sum + (employee.efficiency || 0), 0);
+            return totalEfficiency / employees.length;
+        }
+
+        function predictTodayOrders() {
+            // 基于历史数据预测今日工单数量
+            const averageOrdersPerDay = repairs.length / 30; // 假设30天的数据
+            const currentHour = new Date().getHours();
+            
+            // 考虑时间因素，上午和下午是高峰期
+            let timeFactor = 1;
+            if (currentHour >= 9 && currentHour <= 12) {
+                timeFactor = 1.5;
+            } else if (currentHour >= 14 && currentHour <= 18) {
+                timeFactor = 1.8;
+            } else if (currentHour >= 19 && currentHour <= 21) {
+                timeFactor = 1.2;
+            } else {
+                timeFactor = 0.5;
+            }
+
+            // 考虑加速倍数
+            const speedFactor = aiSettings.speedMultiplier || 1;
+
+            return averageOrdersPerDay * timeFactor * speedFactor;
+        }
+
+        function generateSmartSuggestions(todayOrdersPrediction, employeeEfficiency) {
+            // 生成智能建议
+            const suggestions = [];
+
+            if (todayOrdersPrediction > 50) {
+                suggestions.push('今日工单预测较多，建议增加工作员工数量');
+            }
+
+            if (employeeEfficiency < 0.7) {
+                suggestions.push('员工平均效率较低，建议优化工作流程');
+            }
+
+            if (employees.filter(e => e.isWorking).length < 150) {
+                suggestions.push('工作员工数量不足，建议增加工作员工');
+            }
+
+            if (suggestions.length > 0) {
+                // 显示建议
+                let suggestionMessage = '智能建议:\n';
+                suggestions.forEach(suggestion => {
+                    suggestionMessage += '- ' + suggestion + '\n';
+                });
+
+                showNotification(suggestionMessage, 'info');
+            }
+        }
+
+        function simulateCheckRepairs() {
+            // 模拟查看维修订单
+            const repairTab = document.querySelector('.nav-btn[data-target="repair"]');
+            if (repairTab && !repairTab.classList.contains('active')) {
+                repairTab.click();
+                showNotification('AI助手: 查看维修订单', 'info');
+            }
+
+            // 模拟处理待处理的订单
+            const pendingRepairs = repairs.filter(r => r.status === '待处理');
+            if (pendingRepairs.length > 0) {
+                const randomRepair = pendingRepairs[Math.floor(Math.random() * pendingRepairs.length)];
+                allocateOrder(randomRepair.id);
+            }
+        }
+
+        function simulateCheckEmployees() {
+            // 模拟查看员工列表
+            const employeesTab = document.querySelector('.nav-btn[data-target="employees"]');
+            if (employeesTab && !employeesTab.classList.contains('active')) {
+                employeesTab.click();
+                showNotification('AI助手: 查看员工列表', 'info');
+            }
+
+            // 模拟生成AI员工（如果没有员工）
+            if (employees.length === 0) {
+                generateAiEmployees();
+            }
+        }
+
+        function simulateCheckInventory() {
+            // 模拟查看库存
+            const inventoryTab = document.querySelector('.nav-btn[data-target="inventory"]');
+            if (inventoryTab && !inventoryTab.classList.contains('active')) {
+                inventoryTab.click();
+                showNotification('AI助手: 查看库存', 'info');
+            }
+        }
+
+        function simulateUpdateSettings() {
+            // 模拟查看设置
+            const settingsTab = document.querySelector('.nav-btn[data-target="settings"]');
+            if (settingsTab && !settingsTab.classList.contains('active')) {
+                settingsTab.click();
+                showNotification('AI助手: 查看设置', 'info');
+            }
+        }
+
+        // 初始化AI悬浮窗
+        document.addEventListener('DOMContentLoaded', function() {
+            initAiFloatingWindow();
+        });
+    </script>
+</body>
+</html>

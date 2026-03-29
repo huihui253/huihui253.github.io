@@ -1,0 +1,607 @@
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Microsoft Sans Serif", sans-serif;
+}
+
+body {
+    overflow: hidden;
+    height: 100vh;
+    background-color: #005EBB;
+}
+
+/* 桌面样式 */
+.desktop {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://p3-flow-imagex-download-sign.byteimg.com/tos-cn-i-a9rns2rl98/5b5384f7377a42e980b7c27949cf24ba.png~tplv-a9rns2rl98-24:720:720.png?rcl=202511131523077EEA80ABBF05276C057B&rk3s=8e244e95&rrcfp=8a172a1a&x-expires=1763623388&x-signature=6KwyvyMVsvcbY4kSohPlOvn%2BCB4%3D');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* 桌面图标样式 */
+.desktop-icon {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    padding: 5px;
+    cursor: pointer;
+    color: white;
+    text-align: center;
+    text-shadow: 1px 1px 2px #000;
+    transition: background-color 0.2s;
+}
+
+.desktop-icon:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.desktop-icon.selected {
+    background-color: rgba(0, 100, 255, 0.5);
+    border-radius: 3px;
+}
+
+.desktop-icon img {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 5px;
+    display: block;
+}
+
+.desktop-icon span {
+    font-size: 12px;
+    word-wrap: break-word;
+}
+
+/* 任务栏样式 */
+.taskbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border-top: 1px solid #FFFFFF;
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    z-index: 1000;
+}
+
+/* 开始按钮样式 */
+.start-button {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #4588F0, #1E50B3);
+    border: 1px solid #003399;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 4px;
+}
+
+.start-button:hover {
+    background: linear-gradient(to bottom, #5A95F5, #2D65D6);
+}
+
+.start-button img {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
+/* 任务栏项目区域 */
+.taskbar-items {
+    flex: 1;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    height: 24px;
+}
+
+.taskbar-items::-webkit-scrollbar {
+    height: 4px;
+}
+
+.taskbar-items::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 2px;
+}
+
+/* 任务栏项目样式 */
+.taskbar-item {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border: 1px solid #808080;
+    border-radius: 3px;
+    color: #000000;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.taskbar-item.active {
+    background: linear-gradient(to bottom, #1E50B3, #4588F0);
+    color: white;
+    border: 1px solid #003399;
+}
+
+.taskbar-item img {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+/* 系统托盘样式 */
+.system-tray {
+    display: flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 5px;
+    background: linear-gradient(to bottom, #C0C0C0, #A0A0A0);
+    border-left: 1px solid #808080;
+}
+
+.clock {
+    color: #000000;
+    font-size: 12px;
+    padding: 0 5px;
+}
+
+/* 开始菜单样式 */
+.start-menu {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 300px;
+    height: 400px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border: 2px solid #003399;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.start-menu-header {
+    height: 60px;
+    background: linear-gradient(to bottom, #4588F0, #1E50B3);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.start-menu-header img {
+    width: 48px;
+    height: 48px;
+}
+
+.start-menu-items {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.start-menu-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    margin-bottom: 2px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.start-menu-item:hover {
+    background: linear-gradient(to right, #5A95F5, #2D65D6);
+    color: white;
+}
+
+.start-menu-separator {
+    height: 1px;
+    background-color: #808080;
+    margin: 5px 0;
+}
+
+/* 窗口容器 */
+.windows-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 30px);
+    pointer-events: none;
+}
+
+.windows-container.active {
+    pointer-events: auto;
+}
+
+/* 窗口样式 */
+.window {
+    position: absolute;
+    border: 1px solid #003399;
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    background-color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+    pointer-events: auto;
+}
+
+.window.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 30px) !important;
+    border-radius: 0;
+}
+
+.window.minimized {
+    display: none;
+}
+
+/* 窗口标题栏样式 */
+.window-titlebar {
+    height: 24px;
+    background: linear-gradient(to right, #4588F0, #1E50B3);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+    cursor: move;
+}
+
+.window-titlebar.active {
+    background: linear-gradient(to right, #1E50B3, #0A3178);
+}
+
+.window-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.window-controls {
+    display: flex;
+    gap: 2px;
+}
+
+.window-control-button {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #003399;
+    border-radius: 3px;
+    background-color: #C0C0C0;
+    color: #000000;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.window-control-button:hover {
+    background-color: #E0E0E0;
+}
+
+.window-control-button.close:hover {
+    background-color: #FF3B30;
+    color: white;
+}
+
+/* 窗口内容区域 */
+.window-content {
+    flex: 1;
+    overflow: auto;
+    padding: 10px;
+    background-color: #FFFFFF;
+}
+
+/* 文档窗口样式 */
+.document-window .window-content {
+    padding: 0;
+}
+
+.document-editor {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-family: "Microsoft Sans Serif", sans-serif;
+    font-size: 14px;
+    resize: none;
+}
+
+/* 文件管理器窗口样式 */
+.file-manager .window-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.file-manager-toolbar {
+    height: 30px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border-bottom: 1px solid #808080;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.file-manager-path {
+    height: 24px;
+    background-color: #FFFFFF;
+    border: 1px solid #808080;
+    border-radius: 3px;
+    padding: 0 5px;
+    font-size: 12px;
+    flex: 1;
+    margin: 0 10px;
+}
+
+.file-manager-content {
+    flex: 1;
+    display: flex;
+}
+
+.file-manager-sidebar {
+    width: 200px;
+    background-color: #F0F0F0;
+    border-right: 1px solid #808080;
+    padding: 10px;
+}
+
+.file-manager-folders {
+    flex: 1;
+    padding: 10px;
+    overflow: auto;
+}
+
+.file-item {
+    display: inline-block;
+    width: 100px;
+    height: 100px;
+    padding: 5px;
+    margin: 5px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.file-item:hover {
+    background-color: rgba(0, 100, 255, 0.2);
+    border-radius: 3px;
+}
+
+.file-item img {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 5px;
+    display: block;
+}
+
+.file-item span {
+    font-size: 12px;
+    word-wrap: break-word;
+}
+
+/* 右键菜单样式 */
+.context-menu {
+    position: absolute;
+    width: 180px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border: 1px solid #808080;
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 1002;
+}
+
+.context-menu-item {
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.context-menu-item:hover {
+    background: linear-gradient(to right, #5A95F5, #2D65D6);
+    color: white;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background-color: #808080;
+    margin: 2px 0;
+}
+
+/* 关闭计算机对话框样式 */
+.shutdown-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1003;
+}
+
+.shutdown-dialog-content {
+    width: 400px;
+    height: 200px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border: 2px solid #003399;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.shutdown-options {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.shutdown-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.shutdown-option.selected {
+    opacity: 1;
+}
+
+.shutdown-option img {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 10px;
+}
+
+.shutdown-option span {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.shutdown-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.shutdown-buttons button {
+    padding: 5px 15px;
+    background: linear-gradient(to bottom, #E0E0E0, #C0C0C0);
+    border: 1px solid #808080;
+    border-radius: 3px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.shutdown-buttons button:hover {
+    background: linear-gradient(to bottom, #F0F0F0, #D0D0D0);
+}
+
+/* 工具提示样式 */
+.tooltip {
+    position: absolute;
+    background-color: #FFFFE0;
+    border: 1px solid #808080;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 12px;
+    z-index: 1004;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.slide-up {
+    animation: slideUp 0.2s ease-in-out;
+}
+
+/* 隐藏类 */
+.hidden {
+    display: none;
+}
+
+/* 窗口调整大小手柄 */
+.window-resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: transparent;
+}
+
+.window-resize-handle.nw {
+    top: 0;
+    left: 0;
+    cursor: nwse-resize;
+}
+
+.window-resize-handle.ne {
+    top: 0;
+    right: 0;
+    cursor: nesw-resize;
+}
+
+.window-resize-handle.sw {
+    bottom: 0;
+    left: 0;
+    cursor: nesw-resize;
+}
+
+.window-resize-handle.se {
+    bottom: 0;
+    right: 0;
+    cursor: nwse-resize;
+}
+
+.window-resize-handle.n {
+    top: 0;
+    left: 10px;
+    right: 10px;
+    height: 5px;
+    cursor: ns-resize;
+}
+
+.window-resize-handle.s {
+    bottom: 0;
+    left: 10px;
+    right: 10px;
+    height: 5px;
+    cursor: ns-resize;
+}
+
+.window-resize-handle.e {
+    right: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 5px;
+    cursor: ew-resize;
+}
+
+.window-resize-handle.w {
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 5px;
+    cursor: ew-resize;
+}

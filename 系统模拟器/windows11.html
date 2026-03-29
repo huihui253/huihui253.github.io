@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 11 Simulator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'windows-blue': '#0078D7',
+                        'windows-dark': '#1E1E1E',
+                        'windows-light': '#F2F2F2',
+                        'windows-gray': '#E5E5E5',
+                        'windows-dark-gray': '#333333',
+                        'accent-blue': '#0063B1',
+                        'accent-green': '#107C10',
+                        'accent-red': '#E81123',
+                        'accent-yellow': '#FFB900',
+                        'accent-purple': '#5C2D91',
+                        'accent-pink': '#D83B01',
+                        'accent-teal': '#00B7C3',
+                        'accent-orange': '#FF8C00',
+                    },
+                    fontFamily: {
+                        sans: ['Segoe UI', 'system-ui', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'window': '0 4px 20px rgba(0, 0, 0, 0.15)',
+                        'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
+                    },
+                    backdropBlur: {
+                        'glass': '10px',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-effect {
+                @apply bg-white/60 backdrop-blur-glass border border-white/20 shadow-glass;
+            }
+            
+            .glass-effect-dark {
+                @apply bg-windows-dark/60 backdrop-blur-glass border border-white/10 shadow-glass;
+            }
+            
+            .mica-effect {
+                @apply bg-gradient-to-r from-white/70 to-white/50 backdrop-blur-glass border border-white/20 shadow-glass;
+            }
+            
+            .mica-effect-dark {
+                @apply bg-gradient-to-r from-windows-dark/70 to-windows-dark/50 backdrop-blur-glass border border-white/10 shadow-glass;
+            }
+            
+            .window-header {
+                @apply flex items-center justify-between px-4 py-2 bg-white dark:bg-windows-dark-gray border-b border-gray-200 dark:border-gray-700 rounded-t-lg cursor-move;
+            }
+            
+            .window-content {
+                @apply p-4 bg-white dark:bg-windows-dark rounded-b-lg overflow-auto;
+            }
+            
+            .window-button {
+                @apply w-3 h-3 rounded-full mx-1 transition-all duration-200;
+            }
+            
+            .window-minimize {
+                @apply bg-yellow-400 hover:bg-yellow-500;
+            }
+            
+            .window-maximize {
+                @apply bg-green-400 hover:bg-green-500;
+            }
+            
+            .window-close {
+                @apply bg-red-400 hover:bg-red-500;
+            }
+            
+            .taskbar-icon {
+                @apply w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-white/20 cursor-pointer;
+            }
+            
+            .taskbar-icon-active {
+                @apply bg-white/20;
+            }
+            
+            .start-menu-item {
+                @apply flex items-center p-2 rounded-lg hover:bg-white/20 transition-all duration-200 cursor-pointer;
+            }
+            
+            .start-menu-item-active {
+                @apply bg-white/20;
+            }
+            
+            .notification-item {
+                @apply p-3 border-b border-white/10 hover:bg-white/10 transition-all duration-200;
+            }
+            
+            .context-menu {
+                @apply absolute glass-effect dark:glass-effect-dark rounded-lg shadow-lg py-1 z-50;
+            }
+            
+            .context-menu-item {
+                @apply px-4 py-2 hover:bg-white/20 dark:hover:bg-white/10 transition-all duration-200 cursor-pointer;
+            }
+            
+            .desktop-icon {
+                @apply flex flex-col items-center justify-center p-2 cursor-pointer transition-all duration-200 hover:bg-white/10 rounded-lg;
+            }
+            
+            .desktop-icon-label {
+                @apply text-xs text-white mt-1 text-center max-w-[100px] truncate;
+            }
+            
+            .window-resizer {
+                @apply absolute w-4 h-4 bg-transparent;
+            }
+            
+            .window-resizer-tl {
+                @apply top-0 left-0 cursor-nwse-resize;
+            }
+            
+            .window-resizer-tr {
+                @apply top-0 right-0 cursor-nesw-resize;
+            }
+            
+            .window-resizer-bl {
+                @apply bottom-0 left-0 cursor-nesw-resize;
+            }
+            
+            .window-resizer-br {
+                @apply bottom-0 right-0 cursor-nwse-resize;
+            }
+            
+            .window-resizer-t {
+                @apply top-0 left-4 right-4 h-1 cursor-ns-resize;
+            }
+            
+            .window-resizer-r {
+                @apply top-4 bottom-4 right-0 w-1 cursor-ew-resize;
+            }
+            
+            .window-resizer-b {
+                @apply bottom-0 left-4 right-4 h-1 cursor-ns-resize;
+            }
+            
+            .window-resizer-l {
+                @apply top-4 bottom-4 left-0 w-1 cursor-ew-resize;
+            }
+        }
+    </style>
+</head>
+<body class="overflow-hidden h-screen w-screen bg-cover bg-center" id="desktop-background">
+    <!-- Desktop Icons -->
+    <div id="desktop-icons" class="fixed top-0 left-0 w-full h-full pointer-events-none">
+        <div class="desktop-icon absolute top-8 left-8 pointer-events-auto" data-app="file-explorer">
+            <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/55a591d387704809b35a3c7dd1777341~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260226194641DE2E81AB60DE19824A41&rrcfp=f06b921b&x-expires=1774698433&x-signature=VeExVE0Vns55wSehBdTkW62Srm0%3D" alt="File Explorer" class="w-10 h-10">
+            <span class="desktop-icon-label">File Explorer</span>
+        </div>
+        
+        <div class="desktop-icon absolute top-8 left-32 pointer-events-auto" data-app="settings">
+            <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/55a591d387704809b35a3c7dd1777341~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260226194641DE2E81AB60DE19824A41&rrcfp=f06b921b&x-expires=1774698433&x-signature=VeExVE0Vns55wSehBdTkW62Srm0%3D" alt="Settings" class="w-10 h-10" style="object-position: 33.33% 0;">
+            <span class="desktop-icon-label">Settings</span>
+        </div>
+        
+        <div class="desktop-icon absolute top-8 left-56 pointer-events-auto" data-app="edge">
+            <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/55a591d387704809b35a3c7dd1777341~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260226194641DE2E81AB60DE19824A41&rrcfp=f06b921b&x-expires=1774698433&x-signature=VeExVE0Vns55wSehBdTkW62Srm0%3D" alt="Microsoft Edge" class="w-10 h-10" style="object-position: 66.66% 0;">
+            <span class="desktop-icon-label">Microsoft Edge</span>
+        </div>
+        
+        <div class="desktop-icon absolute top-8 left-80 pointer-events-auto" data-app="notepad">
+            <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/55a591d387704809b35a3c7dd1777341~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=20260226194641DE2E81AB60DE19824A41&rrcfp=f06b921b&x-expires=1774698433&x-signature=VeExVE0Vns55wSehBdTkW62Srm0%3D" alt="Notepad" class="w-10 h-10" style="object-position: 100% 0;">
+            <span class="desktop-icon-label">Notepad</span>
+        </div>
+        
+        <div class="desktop-icon absolute top-32 left-8 pointer-events-auto" data-app="recycle-bin">
+            <i class="fa fa-trash text-white text-2xl"></i>
+            <span class="desktop-icon-label">Recycle Bin</span>
+        </div>
+    </div>
+    
+    <!-- Taskbar -->
+    <div id="taskbar" class="fixed bottom-0 left-0 right-0 h-14 mica-effect-dark flex items-center justify-center z-40 rounded-t-xl mx-4 my-2">
+        <div class="flex items-center justify-center space-x-2 px-2">
+            <!-- Start Button -->
+            <div id="start-button" class="taskbar-icon">
+                <img src="https://p26-doubao-search-sign.byteimg.com/labis/image/aea56b5917d9d81b51b525db2030596a~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1787658415&x-signature=9Cdq9svAUOx%2F%2FdpeSJ470BPKzqw%3D" alt="Windows Start" class="w-6 h-6">
+            </div>
+            
+            <!-- Search Button -->
+            <div id="search-button" class="taskbar-icon">
+                <i class="fa fa-search text-white"></i>
+            </div>
+            
+            <!-- Task View Button -->
+            <div id="task-view-button" class="taskbar-icon">
+                <i class="fa fa-th-large text-white"></i>
+            </div>
+            
+            <!-- Widgets Button -->
+            <div id="widgets-button" class="taskbar-icon">
+                <i class="fa fa-newspaper-o text-white"></i>
+            </div>
+            
+            <!-- Pinned Apps -->
+            <div class="taskbar-icon" data-app="file-explorer">
+                <i class="fa fa-folder text-white"></i>
+            </div>
+            
+            <div class="taskbar-icon" data-app="edge">
+                <i class="fa fa-globe text-white"></i>
+            </div>
+            
+            <div class="taskbar-icon" data-app="notepad">
+                <i class="fa fa-file-text text-white"></i>
+            </div>
+            
+            <div class="taskbar-icon" data-app="settings">
+                <i class="fa fa-cog text-white"></i>
+            </div>
+        </div>
+        
+        <!-- Taskbar Spacer -->
+        <div class="flex-grow"></div>
+        
+        <!-- System Icons -->
+        <div class="flex items-center space-x-1 px-2">
+            <div id="microsoft-teams-button" class="taskbar-icon">
+                <i class="fa fa-comments text-white"></i>
+            </div>
+            
+            <div class="h-8 w-px bg-white/20 mx-1"></div>
+            
+            <div id="notification-button" class="taskbar-icon relative">
+                <i class="fa fa-bell text-white"></i>
+                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            </div>
+            
+            <div class="h-8 w-px bg-white/20 mx-1"></div>
+            
+            <div id="network-button" class="taskbar-icon">
+                <i class="fa fa-wifi text-white"></i>
+            </div>
+            
+            <div id="sound-button" class="taskbar-icon">
+                <i class="fa fa-volume-up text-white"></i>
+            </div>
+            
+            <div id="battery-button" class="taskbar-icon">
+                <i class="fa fa-battery-three-quarters text-white"></i>
+            </div>
+            
+            <div id="date-time" class="text-white text-sm px-3 py-2 flex flex-col items-end">
+                <div id="time" class="font-medium">12:00</div>
+                <div id="date" class="text-xs">26/02/2026</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Start Menu -->
+    <div id="start-menu" class="fixed bottom-14 left-0 w-[500px] h-[600px] glass-effect-dark rounded-t-lg shadow-lg z-50 hidden">
+        <div class="flex h-full">
+            <!-- Left Side - Pinned Apps -->
+            <div class="w-1/3 p-4 border-r border-white/10">
+                <div class="text-white text-sm font-medium mb-2">Pinned</div>
+                
+                <div class="space-y-1">
+                    <div class="start-menu-item" data-app="file-explorer">
+                        <i class="fa fa-folder text-white w-6"></i>
+                        <span class="text-white ml-2">File Explorer</span>
+                    </div>
+                    
+                    <div class="start-menu-item" data-app="edge">
+                        <i class="fa fa-globe text-white w-6"></i>
+                        <span class="text-white ml-2">Microsoft Edge</span>
+                    </div>
+                    
+                    <div class="start-menu-item" data-app="notepad">
+                        <i class="fa fa-file-text text-white w-6"></i>
+                        <span class="text-white ml-2">Notepad</span>
+                    </div>
+                    
+                    <div class="start-menu-item" data-app="settings">
+                        <i class="fa fa-cog text-white w-6"></i>
+                        <span class="text-white ml-2">Settings</span>
+                    </div>
+                    
+                    <div class="start-menu-item">
+                        <i class="fa fa-music text-white w-6"></i>
+                        <span class="text-white ml-2">Groove Music</span>
+                    </div>
+                    
+                    <div class="start-menu-item">
+                        <i class="fa fa-film text-white w-6"></i>
+                        <span class="text-white ml-2">Movies & TV</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side - Recommended & Power -->
+            <div class="w-2/3 p-4">
+                <div class="text-white text-sm font-medium mb-2">Recommended</div>
+                
+                <div class="space-y-1 mb-6">
+                    <div class="start-menu-item">
+                        <i class="fa fa-file-text-o text-white w-6"></i>
+                        <span class="text-white ml-2">Document1.txt</span>
+                    </div>
+                    
+                    <div class="start-menu-item">
+                        <i class="fa fa-file-image-o text-white w-6"></i>
+                        <span class="text-white ml-2">Image1.jpg</span>
+                    </div>
+                    
+                    <div class="start-menu-item">
+                        <i class="fa fa-file-pdf-o text-white w-6"></i>
+                        <span class="text-white ml-2">Report.pdf</span>
+                    </div>
+                </div>
+                
+                <div class="border-t border-white/10 pt-4 mt-auto">
+                    <div class="flex justify-between items-center">
+                        <div class="start-menu-item">
+                            <i class="fa fa-user text-white w-6"></i>
+                            <span class="text-white ml-2">User</span>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <div class="start-menu-item">
+                                <i class="fa fa-sign-out text-white w-6"></i>
+                                <span class="text-white ml-2">Sign out</span>
+                            </div>
+                            
+                            <div class="start-menu-item">
+                                <i class="fa fa-power-off text-white w-6"></i>
+                                <span class="text-white ml-2">Shut down</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Widgets Panel -->
+    <div id="widgets-panel" class="fixed top-0 left-0 h-full w-[400px] glass-effect-dark rounded-r-lg shadow-lg z-50 hidden transform -translate-x-full transition-transform duration-300">
+        <div class="p-4 border-b border-white/10 flex justify-between items-center">
+            <div class="text-white text-lg font-medium">Widgets</div>
+            <button id="close-widgets" class="text-white/70 hover:text-white">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="overflow-y-auto h-[calc(100%-60px)] p-4">
+            <!-- Weather Widget -->
+            <div class="bg-white/10 rounded-xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-white font-medium">Weather</div>
+                    <div class="text-white/70 text-sm">Today</div>
+                </div>
+                <div class="flex items-center">
+                    <div class="text-4xl text-white mr-4">22°</div>
+                    <div>
+                        <div class="text-white/70 text-sm">Partly cloudy</div>
+                        <div class="text-white/50 text-xs">High: 24° / Low: 18°</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- News Widget -->
+            <div class="bg-white/10 rounded-xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-white font-medium">Top Stories</div>
+                    <div class="text-white/70 text-sm">More</div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="text-white text-sm">Microsoft Announces New Windows 11 Features</div>
+                    <div class="text-white/70 text-xs">2 hours ago</div>
+                    
+                    <div class="border-t border-white/10 my-2"></div>
+                    
+                    <div class="text-white text-sm">New Study Shows Benefits of Remote Work</div>
+                    <div class="text-white/70 text-xs">5 hours ago</div>
+                    
+                    <div class="border-t border-white/10 my-2"></div>
+                    
+                    <div class="text-white text-sm">Global Tech Conference Coming to San Francisco</div>
+                    <div class="text-white/70 text-xs">1 day ago</div>
+                </div>
+            </div>
+            
+            <!-- Calendar Widget -->
+            <div class="bg-white/10 rounded-xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-white font-medium">Calendar</div>
+                    <div class="text-white/70 text-sm">February 2026</div>
+                </div>
+                
+                <div class="grid grid-cols-7 gap-1 text-center">
+                    <div class="text-white/50 text-xs">S</div>
+                    <div class="text-white/50 text-xs">M</div>
+                    <div class="text-white/50 text-xs">T</div>
+                    <div class="text-white/50 text-xs">W</div>
+                    <div class="text-white/50 text-xs">T</div>
+                    <div class="text-white/50 text-xs">F</div>
+                    <div class="text-white/50 text-xs">S</div>
+                    
+                    <div class="text-white/30 text-xs py-1">25</div>
+                    <div class="text-white/30 text-xs py-1">26</div>
+                    <div class="text-white/30 text-xs py-1">27</div>
+                    <div class="text-white/30 text-xs py-1">28</div>
+                    <div class="text-white/30 text-xs py-1">29</div>
+                    <div class="text-white/30 text-xs py-1">30</div>
+                    <div class="text-white/30 text-xs py-1">31</div>
+                    
+                    <div class="text-white/30 text-xs py-1">1</div>
+                    <div class="text-white/30 text-xs py-1">2</div>
+                    <div class="text-white/30 text-xs py-1">3</div>
+                    <div class="text-white/30 text-xs py-1">4</div>
+                    <div class="text-white/30 text-xs py-1">5</div>
+                    <div class="text-white/30 text-xs py-1">6</div>
+                    <div class="text-white/30 text-xs py-1">7</div>
+                    
+                    <div class="text-white/30 text-xs py-1">8</div>
+                    <div class="text-white/30 text-xs py-1">9</div>
+                    <div class="text-white/30 text-xs py-1">10</div>
+                    <div class="text-white/30 text-xs py-1">11</div>
+                    <div class="text-white/30 text-xs py-1">12</div>
+                    <div class="text-white/30 text-xs py-1">13</div>
+                    <div class="text-white/30 text-xs py-1">14</div>
+                    
+                    <div class="text-white/30 text-xs py-1">15</div>
+                    <div class="text-white/30 text-xs py-1">16</div>
+                    <div class="text-white/30 text-xs py-1">17</div>
+                    <div class="text-white/30 text-xs py-1">18</div>
+                    <div class="text-white/30 text-xs py-1">19</div>
+                    <div class="text-white/30 text-xs py-1">20</div>
+                    <div class="text-white/30 text-xs py-1">21</div>
+                    
+                    <div class="text-white/30 text-xs py-1">22</div>
+                    <div class="text-white/30 text-xs py-1">23</div>
+                    <div class="text-white/30 text-xs py-1">24</div>
+                    <div class="text-white/30 text-xs py-1">25</div>
+                    <div class="bg-windows-blue text-white rounded-full text-xs py-1">26</div>
+                    <div class="text-white/30 text-xs py-1">27</div>
+                    <div class="text-white/30 text-xs py-1">28</div>
+                </div>
+            </div>
+            
+            <!-- To Do Widget -->
+            <div class="bg-white/10 rounded-xl p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-white font-medium">To Do</div>
+                    <div class="text-white/70 text-sm">Add Task</div>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2">
+                        <div class="text-white text-sm">Complete project report</div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2" checked>
+                        <div class="text-white/50 text-sm line-through">Schedule team meeting</div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2">
+                        <div class="text-white text-sm">Review budget proposal</div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2">
+                        <div class="text-white text-sm">Prepare presentation slides</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Center -->
+    <div id="notification-center" class="fixed bottom-14 right-0 w-[350px] h-[500px] glass-effect-dark rounded-t-lg shadow-lg z-50 hidden">
+        <div class="p-4 border-b border-white/10">
+            <div class="text-white text-lg font-medium">Notifications</div>
+        </div>
+        
+        <div class="overflow-y-auto h-[calc(100%-60px)]">
+            <div class="notification-item">
+                <div class="flex items-start">
+                    <i class="fa fa-bell text-yellow-400 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-white font-medium">Windows Update</div>
+                        <div class="text-white/70 text-sm">New updates are available</div>
+                        <div class="text-white/50 text-xs mt-1">10 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="flex items-start">
+                    <i class="fa fa-envelope text-blue-400 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-white font-medium">New Email</div>
+                        <div class="text-white/70 text-sm">You have 3 new messages</div>
+                        <div class="text-white/50 text-xs mt-1">30 minutes ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="flex items-start">
+                    <i class="fa fa-info-circle text-green-400 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-white font-medium">System</div>
+                        <div class="text-white/70 text-sm">Your device is running well</div>
+                        <div class="text-white/50 text-xs mt-1">1 hour ago</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="notification-item">
+                <div class="flex items-start">
+                    <i class="fa fa-warning text-red-400 text-xl mr-3 mt-1"></i>
+                    <div>
+                        <div class="text-white font-medium">Battery</div>
+                        <div class="text-white/70 text-sm">Consider plugging in your device</div>
+                        <div class="text-white/50 text-xs mt-1">2 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Context Menu (Hidden by default) -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="context-menu-item">
+            <i class="fa fa-desktop mr-2"></i> View
+        </div>
+        <div class="context-menu-item">
+            <i class="fa fa-refresh mr-2"></i> Refresh
+        </div>
+        <div class="context-menu-item">
+            <i class="fa fa-plus mr-2"></i> New
+        </div>
+        <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+        <div class="context-menu-item">
+            <i class="fa fa-picture-o mr-2"></i> Personalize
+        </div>
+    </div>
+    
+    <!-- Windows (Hidden by default) -->
+    <!-- File Explorer Window -->
+    <div id="file-explorer-window" class="fixed top-1/4 left-1/4 w-[800px] h-[600px] shadow-window rounded-lg overflow-hidden z-30 hidden">
+        <div class="window-header">
+            <div class="flex items-center">
+                <i class="fa fa-folder text-windows-blue mr-2"></i>
+                <span class="font-medium">File Explorer</span>
+            </div>
+            <div class="flex items-center">
+                <div class="window-button window-minimize" data-action="minimize"></div>
+                <div class="window-button window-maximize" data-action="maximize"></div>
+                <div class="window-button window-close" data-action="close"></div>
+            </div>
+        </div>
+        <div class="window-content h-[calc(100%-40px)]">
+            <div class="flex h-full">
+                <!-- Navigation Pane -->
+                <div class="w-1/4 border-r border-gray-200 pr-4">
+                    <div class="mb-4">
+                        <div class="font-medium mb-2">Quick access</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-star text-yellow-500 mr-2"></i>
+                                <span>Favorites</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-clock-o text-blue-500 mr-2"></i>
+                                <span>Recent files</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-folder-open text-green-500 mr-2"></i>
+                                <span>Recent folders</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="font-medium mb-2">This PC</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-hard-drive text-gray-700 mr-2"></i>
+                                <span>Local Disk (C:)</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-hard-drive text-gray-700 mr-2"></i>
+                                <span>Local Disk (D:)</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-picture-o text-purple-500 mr-2"></i>
+                                <span>Pictures</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-music text-red-500 mr-2"></i>
+                                <span>Music</span>
+                            </div>
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-film text-blue-500 mr-2"></i>
+                                <span>Videos</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="w-3/4 pl-4">
+                    <div class="mb-4">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <button class="px-3 py-1 bg-windows-blue text-white rounded">Home</button>
+                            <button class="px-3 py-1 hover:bg-gray-100 rounded">Share</button>
+                            <button class="px-3 py-1 hover:bg-gray-100 rounded">View</button>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <div class="flex-1 h-10 border border-gray-300 rounded flex items-center px-2">
+                                <i class="fa fa-search text-gray-400 mr-2"></i>
+                                <input type="text" placeholder="Search" class="w-full focus:outline-none">
+                            </div>
+                            <button class="h-10 w-10 flex items-center justify-center hover:bg-gray-100 rounded">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-4">
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-blue-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-folder text-blue-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">Documents</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-green-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-picture-o text-green-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">Pictures</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-red-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-music text-red-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">Music</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-purple-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-film text-purple-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">Videos</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-yellow-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-file-text-o text-yellow-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">File1.txt</span>
+                            </div>
+                            
+                            <div class="flex flex-col items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                                <div class="w-16 h-16 bg-blue-100 rounded flex items-center justify-center mb-2">
+                                    <i class="fa fa-file-pdf-o text-blue-500 text-2xl"></i>
+                                </div>
+                                <span class="text-sm text-center">Document.pdf</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Window Resizers -->
+        <div class="window-resizer window-resizer-tl"></div>
+        <div class="window-resizer window-resizer-tr"></div>
+        <div class="window-resizer window-resizer-bl"></div>
+        <div class="window-resizer window-resizer-br"></div>
+        <div class="window-resizer window-resizer-t"></div>
+        <div class="window-resizer window-resizer-r"></div>
+        <div class="window-resizer window-resizer-b"></div>
+        <div class="window-resizer window-resizer-l"></div>
+    </div>
+    
+    <!-- Microsoft Edge Window -->
+    <div id="edge-window" class="fixed top-1/4 left-1/4 w-[900px] h-[700px] shadow-window rounded-lg overflow-hidden z-30 hidden">
+        <div class="window-header">
+            <div class="flex items-center">
+                <i class="fa fa-globe text-blue-500 mr-2"></i>
+                <span class="font-medium">Microsoft Edge</span>
+            </div>
+            <div class="flex items-center">
+                <div class="window-button window-minimize" data-action="minimize"></div>
+                <div class="window-button window-maximize" data-action="maximize"></div>
+                <div class="window-button window-close" data-action="close"></div>
+            </div>
+        </div>
+        <div class="window-content h-[calc(100%-40px)]">
+            <!-- Edge Browser UI -->
+            <div class="border-b border-gray-200 pb-2 mb-4">
+                <div class="flex items-center space-x-2 mb-2">
+                    <button class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded">
+                        <i class="fa fa-arrow-left"></i>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded">
+                        <i class="fa fa-arrow-right"></i>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded">
+                        <i class="fa fa-refresh"></i>
+                    </button>
+                    <button class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded">
+                        <i class="fa fa-home"></i>
+                    </button>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <div class="flex-1 h-10 border border-gray-300 rounded-full flex items-center px-4 bg-gray-100">
+                        <i class="fa fa-search text-gray-500 mr-2"></i>
+                        <input type="text" placeholder="Search or type URL" class="bg-transparent w-full focus:outline-none">
+                    </div>
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full">
+                        <i class="fa fa-microphone"></i>
+                    </button>
+                    <button class="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-full">
+                        <i class="fa fa-camera"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Edge Browser Content -->
+            <div class="h-[calc(100%-80px)] bg-gray-100 rounded-lg overflow-hidden flex">
+                <div class="w-1/4 border-r border-gray-200 bg-white p-4">
+                    <div class="font-medium mb-4">Favorites</div>
+                    <div class="space-y-2">
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-6 h-6 bg-blue-500 rounded flex items-center justify-center mr-2">
+                                <i class="fa fa-home text-white text-xs"></i>
+                            </div>
+                            <span>Home</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-6 h-6 bg-green-500 rounded flex items-center justify-center mr-2">
+                                <i class="fa fa-shopping-cart text-white text-xs"></i>
+                            </div>
+                            <span>Shopping</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-6 h-6 bg-red-500 rounded flex items-center justify-center mr-2">
+                                <i class="fa fa-video-camera text-white text-xs"></i>
+                            </div>
+                            <span>Entertainment</span>
+                        </div>
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-6 h-6 bg-purple-500 rounded flex items-center justify-center mr-2">
+                                <i class="fa fa-graduation-cap text-white text-xs"></i>
+                            </div>
+                            <span>Education</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-3/4 p-4">
+                    <div class="bg-white rounded-lg shadow-sm p-6 h-full">
+                        <div class="text-center mb-8">
+                            <img src="https://p26-doubao-search-sign.byteimg.com/labis/786e41dfbb3ddd13be81dfdfc9c2dcd9~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1787658415&x-signature=Z5G4c09boHzaqvobXaWUMatra2A%3D" alt="Microsoft Edge" class="w-24 h-24 mx-auto mb-4">
+                            <h1 class="text-2xl font-bold">Welcome to Microsoft Edge</h1>
+                            <p class="text-gray-600 mt-2">The faster, safer browser for Windows 11</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 mb-8">
+                            <div class="bg-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-blue-600 font-medium mb-2">Microsoft 365</div>
+                                <p class="text-sm text-gray-600">Premium Office apps, extra cloud storage, advanced security, and more—all in one convenient subscription.</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-green-600 font-medium mb-2">Microsoft Teams</div>
+                                <p class="text-sm text-gray-600">Meet, chat, call, and collaborate in just one place.</p>
+                            </div>
+                            <div class="bg-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="text-purple-600 font-medium mb-2">Microsoft Store</div>
+                                <p class="text-sm text-gray-600">Find apps, games, movies, and more for your Windows device.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button class="px-6 py-2 bg-windows-blue text-white rounded-full hover:bg-blue-600 transition-colors">
+                                Get Started
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Window Resizers -->
+        <div class="window-resizer window-resizer-tl"></div>
+        <div class="window-resizer window-resizer-tr"></div>
+        <div class="window-resizer window-resizer-bl"></div>
+        <div class="window-resizer window-resizer-br"></div>
+        <div class="window-resizer window-resizer-t"></div>
+        <div class="window-resizer window-resizer-r"></div>
+        <div class="window-resizer window-resizer-b"></div>
+        <div class="window-resizer window-resizer-l"></div>
+    </div>
+    
+    <!-- Notepad Window -->
+    <div id="notepad-window" class="fixed top-1/4 left-1/4 w-[700px] h-[500px] shadow-window rounded-lg overflow-hidden z-30 hidden">
+        <div class="window-header">
+            <div class="flex items-center">
+                <i class="fa fa-file-text text-gray-700 mr-2"></i>
+                <span class="font-medium">Notepad</span>
+            </div>
+            <div class="flex items-center">
+                <div class="window-button window-minimize" data-action="minimize"></div>
+                <div class="window-button window-maximize" data-action="maximize"></div>
+                <div class="window-button window-close" data-action="close"></div>
+            </div>
+        </div>
+        <div class="window-content h-[calc(100%-40px)]">
+            <!-- Notepad Toolbar -->
+            <div class="border-b border-gray-200 pb-2 mb-4">
+                <div class="flex items-center space-x-4">
+                    <button class="px-3 py-1 hover:bg-gray-100 rounded">
+                        <i class="fa fa-file-o mr-1"></i> File
+                    </button>
+                    <button class="px-3 py-1 hover:bg-gray-100 rounded">
+                        <i class="fa fa-edit mr-1"></i> Edit
+                    </button>
+                    <button class="px-3 py-1 hover:bg-gray-100 rounded">
+                        <i class="fa fa-format mr-1"></i> Format
+                    </button>
+                    <button class="px-3 py-1 hover:bg-gray-100 rounded">
+                        <i class="fa fa-view mr-1"></i> View
+                    </button>
+                    <button class="px-3 py-1 hover:bg-gray-100 rounded">
+                        <i class="fa fa-help mr-1"></i> Help
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Notepad Content -->
+            <div class="h-[calc(100%-80px)]">
+                <textarea class="w-full h-full p-4 font-mono text-lg focus:outline-none" placeholder="Welcome to Notepad
+
+This is a simple text editor included with Windows 11.
+
+You can use it to create and edit plain text documents.
+
+Features:
+- Basic text editing
+- Word wrap
+- Font selection
+- Find and replace
+- Zoom in/out
+
+Start typing to begin editing this document."></textarea>
+            </div>
+        </div>
+        
+        <!-- Window Resizers -->
+        <div class="window-resizer window-resizer-tl"></div>
+        <div class="window-resizer window-resizer-tr"></div>
+        <div class="window-resizer window-resizer-bl"></div>
+        <div class="window-resizer window-resizer-br"></div>
+        <div class="window-resizer window-resizer-t"></div>
+        <div class="window-resizer window-resizer-r"></div>
+        <div class="window-resizer window-resizer-b"></div>
+        <div class="window-resizer window-resizer-l"></div>
+    </div>
+    
+    <!-- Settings Window -->
+    <div id="settings-window" class="fixed top-1/4 left-1/4 w-[800px] h-[600px] shadow-window rounded-lg overflow-hidden z-30 hidden">
+        <div class="window-header">
+            <div class="flex items-center">
+                <i class="fa fa-cog text-gray-700 mr-2"></i>
+                <span class="font-medium">Settings</span>
+            </div>
+            <div class="flex items-center">
+                <div class="window-button window-minimize" data-action="minimize"></div>
+                <div class="window-button window-maximize" data-action="maximize"></div>
+                <div class="window-button window-close" data-action="close"></div>
+            </div>
+        </div>
+        <div class="window-content h-[calc(100%-40px)]">
+            <div class="flex h-full">
+                <!-- Settings Navigation -->
+                <div class="w-1/4 border-r border-gray-200 pr-4">
+                    <div class="mb-4">
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-home text-blue-500"></i>
+                            </div>
+                            <span>Home</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-user text-purple-500"></i>
+                            </div>
+                            <span>Personalization</span>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-shield text-green-500"></i>
+                            </div>
+                            <span>Privacy & Security</span>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-desktop text-red-500"></i>
+                            </div>
+                            <span>System</span>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-wifi text-yellow-500"></i>
+                            </div>
+                            <span>Network & Internet</span>
+                        </div>
+                        
+                        <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                <i class="fa fa-bell text-blue-500"></i>
+                            </div>
+                            <span>Notifications</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Content -->
+                <div class="w-3/4 pl-4">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold">Windows Settings</h1>
+                        <p class="text-gray-600">Customize your Windows experience</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-desktop text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">System</h3>
+                            <p class="text-gray-600">Display, sound, notifications, power</p>
+                        </div>
+                        
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-paint-brush text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Personalization</h3>
+                            <p class="text-gray-600">Background, colors, themes, fonts</p>
+                        </div>
+                        
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-shield text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Privacy & Security</h3>
+                            <p class="text-gray-600">Windows permissions, firewall, updates</p>
+                        </div>
+                        
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-wifi text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Network & Internet</h3>
+                            <p class="text-gray-600">Wi-Fi, Ethernet, VPN, mobile hotspot</p>
+                        </div>
+                        
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-user text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Accounts</h3>
+                            <p class="text-gray-600">Your info, email, sync settings</p>
+                        </div>
+                        
+                        <div class="bg-gray-100 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center mb-4">
+                                <i class="fa fa-cog text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-lg font-medium mb-2">Apps</h3>
+                            <p class="text-gray-600">Apps & features, default apps, browser</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Window Resizers -->
+        <div class="window-resizer window-resizer-tl"></div>
+        <div class="window-resizer window-resizer-tr"></div>
+        <div class="window-resizer window-resizer-bl"></div>
+        <div class="window-resizer window-resizer-br"></div>
+        <div class="window-resizer window-resizer-t"></div>
+        <div class="window-resizer window-resizer-r"></div>
+        <div class="window-resizer window-resizer-b"></div>
+        <div class="window-resizer window-resizer-l"></div>
+    </div>
+    
+    <!-- Recycle Bin Window -->
+    <div id="recycle-bin-window" class="fixed top-1/4 left-1/4 w-[800px] h-[600px] shadow-window rounded-lg overflow-hidden z-30 hidden">
+        <div class="window-header">
+            <div class="flex items-center">
+                <i class="fa fa-trash text-gray-700 mr-2"></i>
+                <span class="font-medium">Recycle Bin</span>
+            </div>
+            <div class="flex items-center">
+                <div class="window-button window-minimize" data-action="minimize"></div>
+                <div class="window-button window-maximize" data-action="maximize"></div>
+                <div class="window-button window-close" data-action="close"></div>
+            </div>
+        </div>
+        <div class="window-content h-[calc(100%-40px)]">
+            <div class="flex h-full">
+                <!-- Navigation Pane -->
+                <div class="w-1/4 border-r border-gray-200 pr-4">
+                    <div class="mb-4">
+                        <div class="font-medium mb-2">Folders</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                                <i class="fa fa-recycle text-gray-700 mr-2"></i>
+                                <span>Recycle Bin</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Area -->
+                <div class="w-3/4 pl-4">
+                    <div class="mb-4">
+                        <div class="flex items-center space-x-2 mb-4">
+                            <button class="px-3 py-1 bg-windows-blue text-white rounded">Home</button>
+                            <button class="px-3 py-1 hover:bg-gray-100 rounded">Manage</button>
+                            <button class="px-3 py-1 hover:bg-gray-100 rounded">View</button>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 pt-4 h-[calc(100%-80px)] flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fa fa-recycle text-gray-400 text-5xl mb-4"></i>
+                            <h3 class="text-xl font-medium text-gray-700 mb-2">Recycle Bin is empty</h3>
+                            <p class="text-gray-500">Files you delete are moved here. You can restore or permanently delete them.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Window Resizers -->
+        <div class="window-resizer window-resizer-tl"></div>
+        <div class="window-resizer window-resizer-tr"></div>
+        <div class="window-resizer window-resizer-bl"></div>
+        <div class="window-resizer window-resizer-br"></div>
+        <div class="window-resizer window-resizer-t"></div>
+        <div class="window-resizer window-resizer-r"></div>
+        <div class="window-resizer window-resizer-b"></div>
+        <div class="window-resizer window-resizer-l"></div>
+    </div>
+    
+    <script>
+        // Initialize the Windows 11 Simulator
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set desktop background
+            const wallpapers = [
+                'https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/f3418fa04b194dd8bbe95921cd0d108f~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1787658415&x-signature=xZJfBzGIkyGqR1ObbzAMt7G0Cxk%3D',
+                'https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/39cc379cc5464762b9ef4173acded2ef~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1787658415&x-signature=sqlW6Y4swaFnl8lRHCoxiihRe3M%3D',
+                'https://p26-doubao-search-sign.byteimg.com/tos-cn-i-qvj2lq49k0/8b0c9d7065b3486d9f0bf5439e0f5baa~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1787658415&x-signature=at5EbccJarO5ySjGKP5nfzlOlE4%3D'
+            ];
+            
+            const desktopBackground = document.getElementById('desktop-background');
+            desktopBackground.style.backgroundImage = `url(${wallpapers[0]})`;
+            
+            // Update date and time
+            function updateDateTime() {
+                const now = new Date();
+                const timeElement = document.getElementById('time');
+                const dateElement = document.getElementById('date');
+                
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const day = now.getDate().toString().padStart(2, '0');
+                const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                const year = now.getFullYear();
+                
+                timeElement.textContent = `${hours}:${minutes}`;
+                dateElement.textContent = `${day}/${month}/${year}`;
+            }
+            
+            updateDateTime();
+            setInterval(updateDateTime, 60000);
+            
+            // Start Menu Toggle
+            const startButton = document.getElementById('start-button');
+            const startMenu = document.getElementById('start-menu');
+            
+            startButton.addEventListener('click', function() {
+                if (startMenu.classList.contains('hidden')) {
+                    // Hide notification center if open
+                    document.getElementById('notification-center').classList.add('hidden');
+                    
+                    // Show start menu with animation
+                    startMenu.classList.remove('hidden');
+                    gsap.from(startMenu, {
+                        y: 50,
+                        opacity: 0,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                } else {
+                    // Hide start menu with animation
+                    gsap.to(startMenu, {
+                        y: 50,
+                        opacity: 0,
+                        duration: 0.2,
+                        ease: "power2.in",
+                        onComplete: function() {
+                            startMenu.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            
+            // Notification Center Toggle
+            const notificationButton = document.getElementById('notification-button');
+            const notificationCenter = document.getElementById('notification-center');
+            
+            notificationButton.addEventListener('click', function() {
+                if (notificationCenter.classList.contains('hidden')) {
+                    // Hide start menu if open
+                    startMenu.classList.add('hidden');
+                    
+                    // Show notification center with animation
+                    notificationCenter.classList.remove('hidden');
+                    gsap.from(notificationCenter, {
+                        y: 50,
+                        opacity: 0,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                } else {
+                    // Hide notification center with animation
+                    gsap.to(notificationCenter, {
+                        y: 50,
+                        opacity: 0,
+                        duration: 0.2,
+                        ease: "power2.in",
+                        onComplete: function() {
+                            notificationCenter.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            
+            // Desktop Context Menu
+            const desktop = document.getElementById('desktop-background');
+            const contextMenu = document.getElementById('context-menu');
+            
+            desktop.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                
+                // Hide start menu and notification center
+                startMenu.classList.add('hidden');
+                notificationCenter.classList.add('hidden');
+                
+                // Show context menu at click position
+                contextMenu.style.top = `${e.clientY}px`;
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.classList.remove('hidden');
+            });
+            
+            // Hide context menu when clicking elsewhere
+            document.addEventListener('click', function(e) {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.classList.add('hidden');
+                }
+                
+                // Hide start menu and notification center when clicking elsewhere
+                if (!startButton.contains(e.target) && !startMenu.contains(e.target)) {
+                    startMenu.classList.add('hidden');
+                }
+                
+                if (!notificationButton.contains(e.target) && !notificationCenter.contains(e.target)) {
+                    notificationCenter.classList.add('hidden');
+                }
+            });
+            
+            // Window Management
+            const windows = {
+                'file-explorer': document.getElementById('file-explorer-window'),
+                'edge': document.getElementById('edge-window'),
+                'notepad': document.getElementById('notepad-window'),
+                'settings': document.getElementById('settings-window'),
+                'recycle-bin': document.getElementById('recycle-bin-window')
+            };
+            
+            // Open windows from desktop icons
+            document.querySelectorAll('.desktop-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const app = this.getAttribute('data-app');
+                    openWindow(app);
+                });
+            });
+            
+            // Open windows from taskbar icons
+            document.querySelectorAll('.taskbar-icon[data-app]').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const app = this.getAttribute('data-app');
+                    openWindow(app);
+                });
+            });
+            
+            // Open windows from start menu items
+            document.querySelectorAll('.start-menu-item[data-app]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const app = this.getAttribute('data-app');
+                    openWindow(app);
+                    startMenu.classList.add('hidden');
+                });
+            });
+            
+            // Window controls (minimize, maximize, close)
+            document.querySelectorAll('[data-action]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    const windowElement = this.closest('[id$="-window"]');
+                    
+                    if (action === 'minimize') {
+                        minimizeWindow(windowElement);
+                    } else if (action === 'maximize') {
+                        maximizeWindow(windowElement);
+                    } else if (action === 'close') {
+                        closeWindow(windowElement);
+                    }
+                });
+            });
+            
+            // Function to open a window
+            function openWindow(app) {
+                const windowElement = windows[app];
+                
+                if (windowElement.classList.contains('hidden')) {
+                    // Show window with animation
+                    windowElement.classList.remove('hidden');
+                    gsap.from(windowElement, {
+                        scale: 0.9,
+                        opacity: 0,
+                        duration: 0.3,
+                        ease: "back.out(1.2)"
+                    });
+                    
+                    // Update active taskbar icon
+                    updateActiveTaskbarIcon(app);
+                    
+                    // Bring window to front
+                    bringWindowToFront(windowElement);
+                } else {
+                    // If window is already open, bring it to front
+                    bringWindowToFront(windowElement);
+                }
+            }
+            
+            // Function to minimize a window
+            function minimizeWindow(windowElement) {
+                gsap.to(windowElement, {
+                    y: window.innerHeight,
+                    opacity: 0,
+                    duration: 0.3,
+                    ease: "power2.in",
+                    onComplete: function() {
+                        windowElement.classList.add('hidden');
+                        windowElement.style.transform = '';
+                        windowElement.style.opacity = '';
+                        windowElement.style.top = '';
+                        windowElement.style.left = '';
+                    }
+                });
+            }
+            
+            // Function to maximize/restore a window
+            function maximizeWindow(windowElement) {
+                if (windowElement.classList.contains('maximized')) {
+                    // Restore window
+                    windowElement.classList.remove('maximized');
+                    windowElement.style.width = windowElement.getAttribute('data-original-width');
+                    windowElement.style.height = windowElement.getAttribute('data-original-height');
+                    windowElement.style.top = windowElement.getAttribute('data-original-top');
+                    windowElement.style.left = windowElement.getAttribute('data-original-left');
+                } else {
+                    // Maximize window
+                    windowElement.setAttribute('data-original-width', windowElement.style.width);
+                    windowElement.setAttribute('data-original-height', windowElement.style.height);
+                    windowElement.setAttribute('data-original-top', windowElement.style.top);
+                    windowElement.setAttribute('data-original-left', windowElement.style.left);
+                    
+                    windowElement.classList.add('maximized');
+                    windowElement.style.width = '100vw';
+                    windowElement.style.height = 'calc(100vh - 56px)'; // 56px is the taskbar height
+                    windowElement.style.top = '0';
+                    windowElement.style.left = '0';
+                }
+            }
+            
+            // Function to close a window
+            function closeWindow(windowElement) {
+                gsap.to(windowElement, {
+                    scale: 0.9,
+                    opacity: 0,
+                    duration: 0.2,
+                    ease: "power2.in",
+                    onComplete: function() {
+                        windowElement.classList.add('hidden');
+                        windowElement.style.transform = '';
+                        windowElement.style.opacity = '';
+                        
+                        // Remove maximized state if applied
+                        if (windowElement.classList.contains('maximized')) {
+                            windowElement.classList.remove('maximized');
+                            windowElement.style.width = '';
+                            windowElement.style.height = '';
+                            windowElement.style.top = '';
+                            windowElement.style.left = '';
+                        }
+                        
+                        // Update active taskbar icon
+                        updateActiveTaskbarIcon(null);
+                    }
+                });
+            }
+            
+            // Function to bring a window to front
+            function bringWindowToFront(windowElement) {
+                // Get all open windows
+                const openWindows = Object.values(windows).filter(window => !window.classList.contains('hidden'));
+                
+                // Set lowest z-index for all windows
+                openWindows.forEach(window => {
+                    window.style.zIndex = '30';
+                });
+                
+                // Set highest z-index for the selected window
+                windowElement.style.zIndex = '31';
+            }
+            
+            // Function to update active taskbar icon
+            function updateActiveTaskbarIcon(app) {
+                // Remove active class from all taskbar icons
+                document.querySelectorAll('.taskbar-icon').forEach(icon => {
+                    icon.classList.remove('taskbar-icon-active');
+                });
+                
+                // Add active class to the selected app's taskbar icon
+                if (app) {
+                    const activeIcon = document.querySelector(`.taskbar-icon[data-app="${app}"]`);
+                    if (activeIcon) {
+                        activeIcon.classList.add('taskbar-icon-active');
+                    }
+                }
+            }
+            
+            // Window dragging functionality
+            document.querySelectorAll('.window-header').forEach(header => {
+                let isDragging = false;
+                let offsetX, offsetY;
+                let windowElement = header.parentElement;
+                
+                header.addEventListener('mousedown', function(e) {
+                    // Prevent dragging from affecting window controls
+                    if (e.target.closest('[data-action]')) {
+                        return;
+                    }
+                    
+                    isDragging = true;
+                    offsetX = e.clientX - windowElement.getBoundingClientRect().left;
+                    offsetY = e.clientY - windowElement.getBoundingClientRect().top;
+                    
+                    // Bring window to front when starting to drag
+                    bringWindowToFront(windowElement);
+                    
+                    // Add dragging class
+                    windowElement.classList.add('dragging');
+                    
+                    // Change cursor
+                    document.body.style.cursor = 'grabbing';
+                });
+                
+                document.addEventListener('mousemove', function(e) {
+                    if (!isDragging) return;
+                    
+                    // Calculate new position
+                    let newX = e.clientX - offsetX;
+                    let newY = e.clientY - offsetY;
+                    
+                    // Constrain to viewport
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - windowElement.offsetWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - windowElement.offsetHeight - 56)); // 56px is the taskbar height
+                    
+                    // Update window position
+                    windowElement.style.left = `${newX}px`;
+                    windowElement.style.top = `${newY}px`;
+                });
+                
+                document.addEventListener('mouseup', function() {
+                    if (isDragging) {
+                        isDragging = false;
+                        
+                        // Remove dragging class
+                        windowElement.classList.remove('dragging');
+                        
+                        // Reset cursor
+                        document.body.style.cursor = '';
+                    }
+                });
+            });
+            
+            // Window resizing functionality
+            document.querySelectorAll('[id$="-window"]').forEach(windowElement => {
+                const resizers = windowElement.querySelectorAll('.window-resizer');
+                
+                resizers.forEach(resizer => {
+                    let isResizing = false;
+                    let startX, startY, startWidth, startHeight;
+                    
+                    resizer.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        isResizing = true;
+                        
+                        // Get initial values
+                        startX = e.clientX;
+                        startY = e.clientY;
+                        startWidth = windowElement.offsetWidth;
+                        startHeight = windowElement.offsetHeight;
+                        
+                        // Add resizing class
+                        windowElement.classList.add('resizing');
+                        
+                        // Bring window to front when starting to resize
+                        bringWindowToFront(windowElement);
+                    });
+                    
+                    document.addEventListener('mousemove', function(e) {
+                        if (!isResizing) return;
+                        
+                        // Calculate new dimensions
+                        let newWidth = startWidth;
+                        let newHeight = startHeight;
+                        let newLeft = windowElement.offsetLeft;
+                        let newTop = windowElement.offsetTop;
+                        
+                        // Determine which resizer is being used
+                        if (resizer.classList.contains('window-resizer-br')) {
+                            newWidth = startWidth + (e.clientX - startX);
+                            newHeight = startHeight + (e.clientY - startY);
+                        } else if (resizer.classList.contains('window-resizer-tr')) {
+                            newWidth = startWidth + (e.clientX - startX);
+                            newHeight = startHeight - (e.clientY - startY);
+                            newTop = windowElement.offsetTop + (e.clientY - startY);
+                        } else if (resizer.classList.contains('window-resizer-bl')) {
+                            newWidth = startWidth - (e.clientX - startX);
+                            newHeight = startHeight + (e.clientY - startY);
+                            newLeft = windowElement.offsetLeft + (e.clientX - startX);
+                        } else if (resizer.classList.contains('window-resizer-tl')) {
+                            newWidth = startWidth - (e.clientX - startX);
+                            newHeight = startHeight - (e.clientY - startY);
+                            newLeft = windowElement.offsetLeft + (e.clientX - startX);
+                            newTop = windowElement.offsetTop + (e.clientY - startY);
+                        } else if (resizer.classList.contains('window-resizer-r')) {
+                            newWidth = startWidth + (e.clientX - startX);
+                        } else if (resizer.classList.contains('window-resizer-b')) {
+                            newHeight = startHeight + (e.clientY - startY);
+                        } else if (resizer.classList.contains('window-resizer-l')) {
+                            newWidth = startWidth - (e.clientX - startX);
+                            newLeft = windowElement.offsetLeft + (e.clientX - startX);
+                        } else if (resizer.classList.contains('window-resizer-t')) {
+                            newHeight = startHeight - (e.clientY - startY);
+                            newTop = windowElement.offsetTop + (e.clientY - startY);
+                        }
+                        
+                        // Set minimum dimensions
+                        newWidth = Math.max(300, newWidth);
+                        newHeight = Math.max(200, newHeight);
+                        
+                        // Update window dimensions and position
+                        windowElement.style.width = `${newWidth}px`;
+                        windowElement.style.height = `${newHeight}px`;
+                        windowElement.style.left = `${newLeft}px`;
+                        windowElement.style.top = `${newTop}px`;
+                    });
+                    
+                    document.addEventListener('mouseup', function() {
+                        if (isResizing) {
+                            isResizing = false;
+                            
+                            // Remove resizing class
+                            windowElement.classList.remove('resizing');
+                            
+                            // Remove maximized class if resizing
+                            windowElement.classList.remove('maximized');
+                        }
+                    });
+                });
+            });
+            
+            // Toggle dark mode
+            const personalizeOption = document.querySelector('.context-menu-item:nth-child(4)');
+            personalizeOption.addEventListener('click', function() {
+                // Toggle dark mode class on body
+                document.body.classList.toggle('dark');
+                
+                // Toggle glass effect classes on taskbar
+                const taskbar = document.getElementById('taskbar');
+                taskbar.classList.toggle('glass-effect-dark');
+                taskbar.classList.toggle('glass-effect');
+                
+                // Toggle glass effect classes on start menu
+                startMenu.classList.toggle('glass-effect-dark');
+                startMenu.classList.toggle('glass-effect');
+                
+                // Toggle glass effect classes on notification center
+                notificationCenter.classList.toggle('glass-effect-dark');
+                notificationCenter.classList.toggle('glass-effect');
+                
+                // Toggle glass effect classes on context menu
+                contextMenu.classList.toggle('glass-effect-dark');
+                contextMenu.classList.toggle('glass-effect');
+                
+                // Toggle dark mode for windows
+                document.querySelectorAll('[id$="-window"]').forEach(window => {
+                    const header = window.querySelector('.window-header');
+                    const content = window.querySelector('.window-content');
+                    
+                    header.classList.toggle('bg-white');
+                    header.classList.toggle('bg-windows-dark-gray');
+                    header.classList.toggle('border-gray-200');
+                    header.classList.toggle('border-gray-700');
+                    
+                    content.classList.toggle('bg-white');
+                    content.classList.toggle('bg-windows-dark');
+                });
+                
+                // Change desktop icon labels color
+                document.querySelectorAll('.desktop-icon-label').forEach(label => {
+                    label.classList.toggle('text-white');
+                    label.classList.toggle('text-black');
+                });
+                
+                // Change context menu item colors
+                document.querySelectorAll('.context-menu-item').forEach(item => {
+                    item.classList.toggle('hover:bg-white/20');
+                    item.classList.toggle('hover:bg-white/10');
+                });
+                
+                // Hide context menu
+                contextMenu.classList.add('hidden');
+            });
+            
+            // Change desktop background
+            let currentWallpaperIndex = 0;
+            const personalizeButton = document.querySelector('.start-menu-item:last-child');
+            personalizeButton.addEventListener('click', function() {
+                currentWallpaperIndex = (currentWallpaperIndex + 1) % wallpapers.length;
+                desktopBackground.style.backgroundImage = `url(${wallpapers[currentWallpaperIndex]})`;
+                
+                // Add transition effect
+                desktopBackground.style.transition = 'background-image 1s ease-in-out';
+                
+                // Hide start menu
+                startMenu.classList.add('hidden');
+            });
+        });
+    </script>
+</body>
+</html>

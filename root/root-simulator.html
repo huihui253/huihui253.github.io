@@ -1,0 +1,4178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Root 模拟器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        /* 电脑界面 */
+        .computer {
+            width: 100%;
+            height: 60%;
+            background: #f0f0f0;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .computer-header {
+            height: 40px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+        }
+
+        .computer-dots {
+            display: flex;
+            gap: 8px;
+            margin-right: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-red {
+            background: #ff5f56;
+        }
+
+        .dot-yellow {
+            background: #ffbd2e;
+        }
+
+        .dot-green {
+            background: #27ca3f;
+        }
+
+        .computer-title {
+            font-size: 14px;
+        }
+
+        /* 电脑桌面 */
+        .computer-desktop {
+            height: calc(100% - 40px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            display: none;
+            position: relative;
+        }
+
+        /* 悬浮窗口 */
+        .floating-window {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .floating-window-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #0e639c;
+        }
+
+        .floating-window-content {
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* U盘图标 */
+        .usb-drive {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .usb-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .usb-label {
+            color: white;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .desktop-icons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 30px;
+            max-width: 600px;
+        }
+
+        .desktop-icon {
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .desktop-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .icon-image {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .icon-label {
+            color: white;
+            font-size: 14px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* AI 对话框 */
+        .ai-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+        }
+
+        .ai-dialog-header {
+            padding: 20px;
+            background: #0e639c;
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .ai-dialog-body {
+            padding: 30px;
+        }
+
+        .ai-dialog-footer {
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 0 0 10px 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .ai-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        /* 投屏功能 */
+        .screen-mirroring {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            height: 533px;
+            background: #000;
+            border-radius: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: none;
+        }
+
+        .screen-mirroring-header {
+            padding: 10px;
+            background: #333;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .screen-mirroring-content {
+            height: calc(100% - 40px);
+            overflow: hidden;
+        }
+
+        /* 电脑主界面 */
+        .computer-body {
+            height: calc(100% - 40px);
+            background: #1e1e1e;
+            display: flex;
+        }
+
+        .computer-sidebar {
+            width: 200px;
+            background: #252526;
+            padding: 15px;
+            color: #d4d4d4;
+        }
+
+        .sidebar-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background: #3c3c3c;
+        }
+
+        .sidebar-item.active {
+            background: #0e639c;
+        }
+
+        .computer-main {
+            flex: 1;
+            padding: 20px;
+            color: #d4d4d4;
+            overflow-y: auto;
+        }
+
+        .terminal {
+            background: #0d1117;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 300px;
+        }
+
+        .terminal-line {
+            margin-bottom: 8px;
+        }
+
+        .terminal-prompt {
+            color: #4ec9b0;
+        }
+
+        .terminal-input {
+            color: #d4d4d4;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+            font-size: inherit;
+        }
+
+        .terminal-output {
+            color: #9cdcfe;
+        }
+
+        .terminal-error {
+            color: #f48771;
+        }
+
+        /* 手机界面 */
+        .phone {
+            width: 320px;
+            height: 640px;
+            background: #1e1e1e;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+
+        .phone-header {
+            height: 60px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .phone-body {
+            height: calc(100% - 120px);
+            background: #000;
+            position: relative;
+        }
+
+        .phone-footer {
+            height: 60px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-home-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #555;
+            cursor: pointer;
+        }
+
+        /* 手机设置界面 */
+        .phone-settings {
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .settings-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #333;
+            color: white;
+            font-size: 16px;
+        }
+
+        .settings-subitem {
+            padding: 10px 20px;
+            border-bottom: 1px solid #333;
+            color: white;
+            font-size: 14px;
+        }
+
+        .settings-toggle {
+            float: right;
+            width: 50px;
+            height: 26px;
+            background: #333;
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .settings-toggle.active {
+            background: #4ec9b0;
+        }
+
+        .settings-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .settings-toggle.active::after {
+            transform: translateX(24px);
+        }
+
+        /* 引导加载程序界面 */
+        .bootloader {
+            padding: 40px 20px;
+            color: white;
+            text-align: center;
+        }
+
+        .bootloader-logo {
+            font-size: 48px;
+            margin-bottom: 30px;
+        }
+
+        .bootloader-text {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .bootloader-warning {
+            color: #f48771;
+            margin-top: 40px;
+        }
+
+        /* 点击动画 */
+        .click-animation {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(78, 201, 176, 0.5);
+            transform: scale(0);
+            animation: click 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes click {
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* 连接线 */
+        .cable {
+            width: 4px;
+            background: #666;
+            position: absolute;
+            left: 50%;
+            top: 100%;
+            height: 80px;
+            transform: translateX(-50%);
+            z-index: -1;
+            display: none;
+        }
+
+        .cable::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -15px;
+            width: 34px;
+            height: 20px;
+            background: #888;
+            border-radius: 5px;
+        }
+
+        /* 按钮 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background: #0e639c;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1177bb;
+        }
+
+        .btn-secondary {
+            background: #3c3c3c;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .btn-success {
+            background: #0e7c7b;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #119d9c;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 12px;
+        }
+
+        /* 动画效果 */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(78, 201, 176, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(78, 201, 176, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(78, 201, 176, 0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes typing {
+            from {
+                width: 0;
+            }
+            to {
+                width: 100%;
+            }
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                border-color: transparent;
+            }
+            50% {
+                border-color: #d4d4d4;
+            }
+        }
+
+        .typing {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 3s steps(40, end);
+        }
+
+        .cursor {
+            border-right: 2px solid #d4d4d4;
+            animation: blink 1s step-end infinite;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        /* AI 特效 */
+        .ai-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .ai-glow {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(78, 201, 176, 0.4) 0%, rgba(78, 201, 176, 0) 70%);
+            animation: pulse 3s infinite;
+        }
+
+        /* 隐藏环境信息 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 环境信息隐藏层 */
+        .env-hider {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        /* 10分钟速刷模式 */
+        .speed-mode {
+            position: relative;
+        }
+
+        /* 工具安装界面 */
+        .tool-installation {
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .tool-progress {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .tool-progress-fill {
+            height: 100%;
+            background: #4ec9b0;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* 希沃白板界面 */
+        .seewo-whiteboard {
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        /* 提取镜像界面 */
+        .extract-image {
+            padding: 20px;
+            background: #1e1e1e;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .container {
+                height: auto;
+                overflow-y: auto;
+            }
+
+            .computer {
+                height: 50vh;
+            }
+
+            .phone {
+                margin-top: 20px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(78, 201, 176, 0.3);
+            border-radius: 50%;
+            border-top-color: #4ec9b0;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #3c3c3c;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ec9b0, #667eea);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 电脑界面 -->
+        <div class="computer">
+            <div class="computer-header">
+                <div class="computer-dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+                <div class="computer-title">Root 工具 - Device Manager</div>
+            </div>
+            <!-- 电脑桌面 -->
+            <div class="computer-desktop" id="computer-desktop">
+                <div class="desktop-icons">
+                    <div class="desktop-icon" id="icon-ai">
+                        <div class="icon-image">🤖</div>
+                        <div class="icon-label">AI Assistant</div>
+                    </div>
+                    <div class="desktop-icon">
+                        <div class="icon-image">�</div>
+                        <div class="icon-label">文件</div>
+                    </div>
+                    <div class="desktop-icon">
+                        <div class="icon-image">⚙️</div>
+                        <div class="icon-label">设置</div>
+                    </div>
+                    <div class="desktop-icon">
+                        <div class="icon-image">🌐</div>
+                        <div class="icon-label">浏览器</div>
+                    </div>
+                    <div class="desktop-icon" id="icon-brick-fix">
+                        <div class="icon-image">🔧</div>
+                        <div class="icon-label">变砖修复工具</div>
+                    </div>
+                </div>
+                <!-- U盘图标 -->
+                <div class="usb-drive" id="usb-drive">
+                    <div class="usb-icon">�</div>
+                    <div class="usb-label">U盘 (E:)</div>
+                </div>
+            </div>
+            <!-- 投屏功能 -->
+            <div class="screen-mirroring" id="screen-mirroring">
+                <div class="screen-mirroring-header">
+                    手机投屏 - Pixel 7 Pro
+                </div>
+                <div class="screen-mirroring-content" id="mirroring-content">
+                    <!-- 手机屏幕内容将通过JavaScript复制到这里 -->
+                </div>
+            </div>
+            <div class="computer-body">
+                <div class="computer-sidebar">
+                    <div class="sidebar-item active" data-section="home">设备管理</div>
+                    <div class="sidebar-item" data-section="manual">手动 Root</div>
+                    <div class="sidebar-item" data-section="ai">AI 自动 Root</div>
+                    <div class="sidebar-item" data-section="tools">工具集</div>
+                    <div class="sidebar-item" data-section="brick-fix">变砖修复</div>
+                </div>
+                <div class="computer-main">
+                    <!-- 设备管理 section -->
+                    <div id="home-section">
+                        <h2>设备管理</h2>
+                        <p>连接您的设备以开始操作</p>
+                        <button class="btn btn-primary" id="connect-btn">连接设备</button>
+                        <div id="device-info" class="hidden">
+                            <h3>设备信息</h3>
+                            <p><strong>设备名称:</strong> <span id="device-name">Pixel 7 Pro</span></p>
+                            <p><strong>型号:</strong> <span id="device-model">GVU6C</span></p>
+                            <p><strong>Android 版本:</strong> <span id="android-version">14</span></p>
+                            <p><strong>状态:</strong> <span id="device-status">已连接</span></p>
+                            <div class="progress-bar hidden" id="connection-progress">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 手动 Root section -->
+                    <div id="manual-section" class="hidden">
+                        <h2>手动 Root</h2>
+                        <p>按照以下步骤手动 Root 您的设备</p>
+                        <ol>
+                            <li>启用开发者选项</li>
+                            <li>启用 USB 调试</li>
+                            <li>解锁引导加载程序</li>
+                            <li>刷入 Magisk</li>
+                        </ol>
+                        <div class="terminal">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">root@computer:~$</span>
+                                <input type="text" class="terminal-input" id="manual-input" placeholder="输入命令...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI 自动 Root section -->
+                    <div id="ai-section" class="hidden">
+                        <h2>AI 自动 Root</h2>
+                        <p>AI 将自动为您的设备执行 Root 操作</p>
+                        <div style="margin-bottom: 20px;">
+                            <button class="btn btn-success" id="ai-root-btn">开始 AI Root</button>
+                            <button class="btn btn-secondary" id="speed-root-btn">10分钟速刷 Root</button>
+                        </div>
+                        <div class="ai-effect hidden" id="ai-effect">
+                            <div class="ai-glow"></div>
+                        </div>
+                        <div class="terminal">
+                            <div id="ai-terminal-output"></div>
+                        </div>
+                        <!-- 工具安装界面 -->
+                        <div id="tool-installation" class="tool-installation hidden">
+                            <h3 style="color: #4ec9b0; margin-bottom: 15px;">工具安装</h3>
+                            <div id="tool-progress-container" class="tool-progress">
+                                <div class="tool-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <p style="color: #d4d4d4; font-size: 14px; margin-top: 10px;">正在安装必要工具...</p>
+                        </div>
+                        <!-- 希沃白板界面 -->
+                        <div id="seewo-whiteboard" class="seewo-whiteboard hidden">
+                            <h3 style="margin-bottom: 15px;">希沃白板 - Root 工具</h3>
+                            <p>正在准备 Root 环境...</p>
+                            <p>正在检测设备连接...</p>
+                            <p>正在配置刷入参数...</p>
+                        </div>
+                        <!-- 提取镜像界面 -->
+                        <div id="extract-image" class="extract-image hidden">
+                            <h3 style="color: #4ec9b0; margin-bottom: 15px;">提取和修补镜像</h3>
+                            <div id="extract-progress-container" class="tool-progress">
+                                <div class="tool-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <p style="color: #d4d4d4; font-size: 14px; margin-top: 10px;">正在提取 boot 镜像...</p>
+                        </div>
+                    </div>
+
+                    <!-- 工具集 section -->
+                    <div id="tools-section" class="hidden">
+                        <h2>工具集</h2>
+                        <p>常用 Root 工具</p>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary">ADB 工具</button>
+                            <button class="btn btn-secondary">Fastboot 工具</button>
+                            <button class="btn btn-secondary">Magisk 管理器</button>
+                            <button class="btn btn-secondary">TWRP 恢复</button>
+                        </div>
+                        
+                        <h3 style="margin-top: 30px; color: #4ec9b0;">系统工具</h3>
+                        <p>系统刷写和安装功能</p>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="flash-system-btn">刷写系统</button>
+                            <button class="btn btn-secondary" id="install-system-btn">安装系统</button>
+                            <button class="btn btn-secondary" id="backup-system-btn">备份系统</button>
+                        </div>
+                        
+                        <h3 style="margin-top: 30px; color: #f48771;">变砖修复</h3>
+                        <p>设备变砖修复功能</p>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" id="open-brick-fix-btn">打开修复工具</button>
+                            <button class="btn btn-secondary" id="install-brick-fix-btn">安装修复工具</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 变砖修复工具界面 -->
+                    <div id="brick-fix-section" class="hidden">
+                        <h2>变砖修复工具</h2>
+                        <p>专业的设备变砖修复工具</p>
+                        
+                        <div class="tool-installation">
+                            <h3 style="color: #4ec9b0; margin-bottom: 20px;">设备状态</h3>
+                            <div id="brick-fix-status" style="background: #3c3c3c; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                                <p style="color: #999;">未检测到设备</p>
+                            </div>
+                            
+                            <h3 style="color: #4ec9b0; margin-bottom: 20px;">修复选项</h3>
+                            <div style="display: flex; gap: 15px; margin-bottom: 30px;">
+                                <button class="btn btn-primary" id="start-fix-btn">开始修复</button>
+                                <button class="btn btn-secondary" id="detect-device-btn">检测设备</button>
+                                <button class="btn btn-secondary" id="download-firmware-btn">下载固件</button>
+                            </div>
+                            
+                            <h3 style="color: #4ec9b0; margin-bottom: 15px;">修复进度</h3>
+                            <div class="tool-progress">
+                                <div class="tool-progress-fill" style="width: 0%"></div>
+                            </div>
+                            <div id="fix-progress-text" style="color: #999; margin-top: 10px; font-size: 14px;">
+                                准备就绪
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 连接线 -->
+        <div class="cable" id="cable"></div>
+
+        <!-- 手机界面 -->
+        <div class="phone">
+            <div class="phone-header">
+                <div class="status-bar">
+                    <div>12:34</div>
+                    <div>📶 4G</div>
+                    <div>🔋 85%</div>
+                </div>
+            </div>
+            <div class="phone-body" id="phone-body">
+                <div id="phone-lock-screen">
+                    <h2 style="color: white; text-align: center; margin-top: 100px;">Pixel 7 Pro</h2>
+                    <p style="color: #999; text-align: center; margin-top: 10px;">滑动解锁</p>
+                    <div class="unlock-slider" style="width: 80%; height: 5px; background: #555; border-radius: 2.5px; margin: 50px auto; position: relative;">
+                        <div class="unlock-thumb" style="width: 20px; height: 20px; background: #4ec9b0; border-radius: 50%; position: absolute; top: 50%; left: 0; transform: translateY(-50%); cursor: pointer;"></div>
+                    </div>
+                </div>
+                <div id="phone-home-screen" class="hidden">
+                    <div style="padding: 20px;">
+                        <h3 style="color: white; margin-bottom: 20px;">主屏幕</h3>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                            <div class="home-icon" data-app="phone" style="text-align: center; color: white; cursor: pointer;">📱</div>
+                            <div class="home-icon" data-app="camera" style="text-align: center; color: white; cursor: pointer;">📷</div>
+                            <div class="home-icon" data-app="browser" style="text-align: center; color: white; cursor: pointer;">🌐</div>
+                            <div class="home-icon" data-app="settings" style="text-align: center; color: white; cursor: pointer;">⚙️</div>
+                            <div class="home-icon" data-app="files" style="text-align: center; color: white; cursor: pointer;">📁</div>
+                            <div class="home-icon" data-app="music" style="text-align: center; color: white; cursor: pointer;">🎵</div>
+                            <div class="home-icon" data-app="games" style="text-align: center; color: white; cursor: pointer;">🎮</div>
+                            <div class="home-icon" data-app="notes" style="text-align: center; color: white; cursor: pointer;">📝</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="phone-root-screen" class="hidden">
+                    <div style="padding: 20px;">
+                        <h3 style="color: #4ec9b0; margin-bottom: 20px;">Root 成功！</h3>
+                        <p style="color: white; margin-bottom: 10px;">设备已成功 Root</p>
+                        <p style="color: #999; margin-bottom: 20px;">Superuser 权限已获取</p>
+                        <div style="background: #3c3c3c; padding: 15px; border-radius: 6px;">
+                            <p style="color: #4ec9b0;">Magisk 管理器已安装</p>
+                            <p style="color: white;">您现在可以使用 Root 权限了</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 手机设置界面 -->
+                <div id="phone-settings-screen" class="hidden">
+                    <div class="phone-settings">
+                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                            <div class="settings-back" style="color: white; font-size: 20px; margin-right: 10px; cursor: pointer;">⬅</div>
+                            <h3 style="color: white; margin: 0;">设置</h3>
+                        </div>
+                        <div class="settings-item" data-target="network">网络和互联网</div>
+                        <div class="settings-item" data-target="bluetooth">连接设备</div>
+                        <div class="settings-item" data-target="apps">应用</div>
+                        <div class="settings-item" data-target="notifications">通知</div>
+                        <div class="settings-item" data-target="battery">电池</div>
+                        <div class="settings-item" data-target="storage">存储</div>
+                        <div class="settings-item" data-target="sound">声音和振动</div>
+                        <div class="settings-item" data-target="display">显示</div>
+                        <div class="settings-item" data-target="wallpaper">壁纸和样式</div>
+                        <div class="settings-item" data-target="security">安全</div>
+                        <div class="settings-item" data-target="privacy">隐私</div>
+                        <div class="settings-item" id="settings-about">关于手机</div>
+                    </div>
+                </div>
+                <!-- 关于手机界面 -->
+                <div id="phone-about-screen" class="hidden">
+                    <div class="phone-settings">
+                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                            <div class="settings-back" style="color: white; font-size: 20px; margin-right: 10px; cursor: pointer;">⬅</div>
+                            <h3 style="color: white; margin: 0;">关于手机</h3>
+                        </div>
+                        <div class="settings-item">设备名称: <span id="device-name-display">Pixel 7 Pro</span></div>
+                        <div class="settings-item">型号: <span id="device-model-display">GVU6C</span></div>
+                        <div class="settings-item">Android 版本: 14</div>
+                        <div class="settings-item" id="settings-build-number">版本号: TP1A.220624.014</div>
+                        <div class="settings-item">内核版本: 5.10.107-android13-2-g4a840c4c</div>
+                        <div class="settings-item">安全补丁级别: 2023-07-05</div>
+                    </div>
+                </div>
+                <!-- 开发者选项界面 -->
+                <div id="phone-developer-screen" class="hidden">
+                    <div class="phone-settings">
+                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                            <div class="settings-back" style="color: white; font-size: 20px; margin-right: 10px; cursor: pointer;">⬅</div>
+                            <h3 style="color: white; margin: 0;">系统</h3>
+                        </div>
+                        <div class="settings-item" id="settings-developer-options">开发者选项</div>
+                    </div>
+                </div>
+                <!-- 开发者选项详情界面 -->
+                <div id="phone-developer-details-screen" class="hidden">
+                    <div class="phone-settings">
+                        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                            <div class="settings-back" style="color: white; font-size: 20px; margin-right: 10px; cursor: pointer;">⬅</div>
+                            <h3 style="color: white; margin: 0;">开发者选项</h3>
+                        </div>
+                        <div class="settings-item">
+                            开发者选项
+                            <div class="settings-toggle" id="toggle-developer"></div>
+                        </div>
+                        <div class="settings-item">
+                            USB 调试
+                            <div class="settings-toggle" id="toggle-usb-debug"></div>
+                        </div>
+                        <div class="settings-item">
+                            OEM 解锁
+                            <div class="settings-toggle" id="toggle-oem-unlock"></div>
+                        </div>
+                        <div class="settings-item">USB 配置</div>
+                        <div class="settings-item">网络调试</div>
+                        <div class="settings-item">指针位置</div>
+                        <div class="settings-item">显示触摸操作</div>
+                        <div class="settings-item">显示布局边界</div>
+                        <div class="settings-item">动画缩放</div>
+                        <div class="settings-item">后台进程限制</div>
+                        <div class="settings-item">USB 调试（安全设置）</div>
+                        <div class="settings-item">选择运行时</div>
+                    </div>
+                </div>
+                <!-- 引导加载程序界面 -->
+                <div id="phone-bootloader-screen" class="hidden">
+                    <div class="bootloader">
+                        <div class="bootloader-logo">📱</div>
+                        <div class="bootloader-text">FASTBOOT MODE</div>
+                        <div class="bootloader-text">Pixel 7 Pro (GVU6C)</div>
+                        <div class="bootloader-text">Product revision: G1</div>
+                        <div class="bootloader-text">Serial number: ABCDEF1234567890</div>
+                        <div class="bootloader-text">Secure boot: PRODUCTION</div>
+                        <div class="bootloader-text">Lock state: LOCKED</div>
+                        <div class="bootloader-warning">
+                            <p>按音量键选择选项</p>
+                            <p>按电源键确认</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 解锁引导加载程序界面 -->
+                <div id="phone-unlock-screen" class="hidden">
+                    <div class="bootloader">
+                        <div class="bootloader-logo">⚠️</div>
+                        <div class="bootloader-text">解锁引导加载程序？</div>
+                        <div class="bootloader-text">这将删除所有用户数据</div>
+                        <div class="bootloader-text">并使设备容易受到攻击</div>
+                        <div class="bootloader-text">按音量上键确认</div>
+                        <div class="bootloader-text">按音量下键取消</div>
+                    </div>
+                </div>
+            </div>
+            <div class="phone-footer">
+                <div class="phone-home-button" id="phone-home-button"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 对话框 -->
+    <div class="ai-dialog" id="ai-dialog">
+        <div class="ai-dialog-header">
+            <h3>AI Assistant</h3>
+        </div>
+        <div class="ai-dialog-body">
+            <p>请输入命令，例如：开始 root</p>
+            <input type="text" class="ai-input" id="ai-input" placeholder="输入命令...">
+        </div>
+        <div class="ai-dialog-footer">
+            <button class="btn btn-primary" id="ai-send-btn">发送</button>
+            <button class="btn btn-secondary" id="ai-close-btn">关闭</button>
+        </div>
+    </div>
+
+    <!-- 悬浮窗口 -->
+    <div class="floating-window" id="floating-window">
+        <div class="floating-window-header" id="floating-window-header">AI Assistant</div>
+        <div class="floating-window-content" id="floating-window-content">正在处理...</div>
+    </div>
+
+    <script>
+        // 全局变量
+        let isConnected = false;
+        let currentSection = 'home';
+        let typingInterval;
+        let currentBrand = 'Google'; // 默认品牌
+        let currentModel = 'Pixel 7 Pro'; // 默认型号
+        let isDeveloperOptionsEnabled = false;
+        let isOemUnlockEnabled = false;
+
+        // DOM 元素
+        const cable = document.getElementById('cable');
+        const connectBtn = document.getElementById('connect-btn');
+        const deviceInfo = document.getElementById('device-info');
+        const connectionProgress = document.getElementById('connection-progress');
+        const progressFill = connectionProgress.querySelector('.progress-fill');
+        const phoneLockScreen = document.getElementById('phone-lock-screen');
+        const phoneHomeScreen = document.getElementById('phone-home-screen');
+        const phoneRootScreen = document.getElementById('phone-root-screen');
+        const phoneSettingsScreen = document.getElementById('phone-settings-screen');
+        const phoneAboutScreen = document.getElementById('phone-about-screen');
+        const phoneDeveloperScreen = document.getElementById('phone-developer-screen');
+        const phoneDeveloperDetailsScreen = document.getElementById('phone-developer-details-screen');
+        const phoneBootloaderScreen = document.getElementById('phone-bootloader-screen');
+        const phoneUnlockScreen = document.getElementById('phone-unlock-screen');
+        const phoneHomeButton = document.getElementById('phone-home-button');
+        const settingsAbout = document.getElementById('settings-about');
+        const settingsBuildNumber = document.getElementById('settings-build-number');
+        const settingsDeveloperOptions = document.getElementById('settings-developer-options');
+        const toggleDeveloper = document.getElementById('toggle-developer');
+        const toggleUsbDebug = document.getElementById('toggle-usb-debug');
+        const toggleOemUnlock = document.getElementById('toggle-oem-unlock');
+        const aiRootBtn = document.getElementById('ai-root-btn');
+        const speedRootBtn = document.getElementById('speed-root-btn');
+        const aiEffect = document.getElementById('ai-effect');
+        const aiTerminalOutput = document.getElementById('ai-terminal-output');
+        const toolInstallation = document.getElementById('tool-installation');
+        const toolProgressFill = toolInstallation ? toolInstallation.querySelector('.tool-progress-fill') : null;
+        const seewoWhiteboard = document.getElementById('seewo-whiteboard');
+        const extractImage = document.getElementById('extract-image');
+        const extractProgressFill = extractImage ? extractImage.querySelector('.tool-progress-fill') : null;
+        const manualInput = document.getElementById('manual-input');
+        const phoneBody = document.getElementById('phone-body');
+        
+        // 新添加的DOM元素
+        const computerDesktop = document.getElementById('computer-desktop');
+        const computerBody = document.querySelector('.computer-body');
+        const iconAi = document.getElementById('icon-ai');
+        const usbDrive = document.getElementById('usb-drive');
+        const aiDialog = document.getElementById('ai-dialog');
+        const aiInput = document.getElementById('ai-input');
+        const aiSendBtn = document.getElementById('ai-send-btn');
+        const aiCloseBtn = document.getElementById('ai-close-btn');
+        const screenMirroring = document.getElementById('screen-mirroring');
+        const mirroringContent = document.getElementById('mirroring-content');
+        const floatingWindow = document.getElementById('floating-window');
+        const floatingWindowHeader = document.getElementById('floating-window-header');
+        const floatingWindowContent = document.getElementById('floating-window-content');
+        
+        // 隐藏环境信息
+        function hideEnvironment() {
+            const envHider = document.createElement('div');
+            envHider.className = 'env-hider';
+            envHider.innerHTML = '<p>正在隐藏环境信息...</p>';
+            document.body.appendChild(envHider);
+            
+            setTimeout(() => {
+                envHider.innerHTML = '<p>环境信息已隐藏</p>';
+                setTimeout(() => {
+                    envHider.remove();
+                }, 1000);
+            }, 2000);
+        }
+        
+        // 初始化时隐藏环境信息
+        window.addEventListener('load', () => {
+            setTimeout(hideEnvironment, 1000);
+        });
+
+        // 侧边栏切换
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // 特殊处理变砖修复工具
+                if (item.dataset.section === 'brick-fix') {
+                    if (!isBrickFixToolInstalled) {
+                        showFloatingWindow('错误', '变砖修复工具未安装，请先安装');
+                        return;
+                    }
+                }
+                
+                // 移除所有活动状态
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                // 添加当前活动状态
+                item.classList.add('active');
+                // 隐藏所有 section
+                document.querySelectorAll('[id$="-section"]').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                // 显示当前 section
+                const sectionId = item.dataset.section + '-section';
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    currentSection = item.dataset.section;
+                }
+            });
+        });
+
+        // 连接设备
+        connectBtn.addEventListener('click', () => {
+            if (!isConnected) {
+                connectBtn.innerHTML = '<span class="loading"></span> 连接中...';
+                connectBtn.disabled = true;
+                
+                // 显示连接线
+                cable.style.display = 'block';
+                
+                // 显示连接进度
+                connectionProgress.classList.remove('hidden');
+                
+                // 模拟连接过程
+                let progress = 0;
+                const connectionStatus = [
+                    '检测USB设备...',
+                    '识别设备型号...',
+                    '安装设备驱动...',
+                    '配置设备参数...',
+                    '建立数据连接...',
+                    '设备连接成功！'
+                ];
+                let statusIndex = 0;
+                
+                // 创建状态提示元素
+                const statusElement = document.createElement('div');
+                statusElement.style.position = 'absolute';
+                statusElement.style.top = '10px';
+                statusElement.style.right = '20px';
+                statusElement.style.color = '#4ec9b0';
+                statusElement.style.fontSize = '14px';
+                statusElement.style.zIndex = '5';
+                deviceInfo.appendChild(statusElement);
+                
+                const progressInterval = setInterval(() => {
+                    progress += 2;
+                    progressFill.style.width = progress + '%';
+                    
+                    // 更新状态提示
+                    if (progress % 15 === 0 && statusIndex < connectionStatus.length) {
+                        statusElement.textContent = connectionStatus[statusIndex];
+                        statusIndex++;
+                    }
+                    
+                    // 模拟随机错误
+                    if (progress === 30 && Math.random() > 0.7) {
+                        clearInterval(progressInterval);
+                        statusElement.textContent = '连接错误：设备无响应';
+                        statusElement.style.color = '#f48771';
+                        
+                        setTimeout(() => {
+                            statusElement.textContent = '尝试重新连接...';
+                            statusElement.style.color = '#ffbd2e';
+                            
+                            // 重新开始连接
+                            setTimeout(() => {
+                                progress = 0;
+                                statusIndex = 0;
+                                const retryInterval = setInterval(() => {
+                                    progress += 3;
+                                    progressFill.style.width = progress + '%';
+                                    
+                                    if (progress % 18 === 0 && statusIndex < connectionStatus.length) {
+                                        statusElement.textContent = connectionStatus[statusIndex];
+                                        statusIndex++;
+                                    }
+                                    
+                                    if (progress >= 100) {
+                                        clearInterval(retryInterval);
+                                        completeConnection(statusElement);
+                                    }
+                                }, 80);
+                            }, 2000);
+                        }, 3000);
+                    } else if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        completeConnection(statusElement);
+                    }
+                }, 120);
+            }
+        });
+        
+        // 完成连接过程
+        function completeConnection(statusElement) {
+            setTimeout(() => {
+                // 连接完成
+                connectBtn.innerHTML = '已连接';
+                connectBtn.classList.remove('btn-primary');
+                connectBtn.classList.add('btn-success');
+                statusElement.textContent = '设备连接成功！';
+                statusElement.style.color = '#4ec9b0';
+                
+                // 显示设备驱动安装提示
+                const driverDialog = document.createElement('div');
+                driverDialog.style.position = 'absolute';
+                driverDialog.style.top = '50%';
+                driverDialog.style.left = '50%';
+                driverDialog.style.transform = 'translate(-50%, -50%)';
+                driverDialog.style.background = 'white';
+                driverDialog.style.color = 'black';
+                driverDialog.style.padding = '20px';
+                driverDialog.style.borderRadius = '8px';
+                driverDialog.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                driverDialog.style.zIndex = '10';
+                driverDialog.style.textAlign = 'center';
+                driverDialog.innerHTML = `
+                    <h4 style="margin-bottom: 15px;">正在安装设备驱动...</h4>
+                    <p style="margin-bottom: 20px;">请稍候，正在为 ${currentModel} 安装驱动程序</p>
+                    <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden; margin: 0 auto 20px;">
+                        <div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 3s ease;"></div>
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">驱动版本: 1.2.3.4</p>
+                `;
+                deviceInfo.appendChild(driverDialog);
+                
+                // 模拟驱动安装进度
+                setTimeout(() => {
+                    const progressBar = driverDialog.querySelector('div > div');
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                    }
+                }, 100);
+                
+                // 驱动安装完成
+                setTimeout(() => {
+                    driverDialog.remove();
+                    statusElement.remove();
+                    
+                    // 随机选择手机品牌
+                    updateBootloaderScreen();
+                    
+                    // 更新设备信息显示
+                    deviceInfo.classList.remove('hidden');
+                    connectionProgress.classList.add('hidden');
+                    isConnected = true;
+                    
+                    // 显示连接成功通知
+                    showSuccessMessage(`设备 ${currentModel} 连接成功！`);
+                    
+                    // 手机解锁动画
+                    setTimeout(() => {
+                        phoneLockScreen.classList.add('hidden');
+                        phoneHomeScreen.classList.remove('hidden');
+                    }, 1000);
+                }, 4000);
+            }, 500);
+        }
+
+        // 手机Home键
+        phoneHomeButton.addEventListener('click', () => {
+            if (isConnected) {
+                if (!phoneRootScreen.classList.contains('hidden')) {
+                    phoneRootScreen.classList.add('hidden');
+                    phoneHomeScreen.classList.remove('hidden');
+                }
+            }
+        });
+
+        // 手动输入命令
+        manualInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const command = manualInput.value;
+                if (command) {
+                    // 添加命令到终端
+                    const terminal = manualInput.closest('.terminal');
+                    const commandLine = terminal.querySelector('.terminal-line');
+                    const newLine = document.createElement('div');
+                    newLine.className = 'terminal-line';
+                    newLine.innerHTML = `<span class="terminal-prompt">root@computer:~$</span> <span class="terminal-input">${command}</span>`;
+                    terminal.insertBefore(newLine, commandLine);
+                    
+                    // 模拟命令执行
+                    setTimeout(() => {
+                        // 清空输入
+                        manualInput.value = '';
+                        
+                        // 根据命令生成详细输出
+                        if (command.includes('adb devices')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">List of devices attached</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-output">ABCDEF1234567890\tdevice</span>';
+                            terminal.insertBefore(output2, commandLine);
+                            
+                            const output3 = document.createElement('div');
+                            output3.className = 'terminal-line';
+                            output3.innerHTML = '<span class="terminal-output">Total devices: 1</span>';
+                            terminal.insertBefore(output3, commandLine);
+                        } else if (command.includes('fastboot oem unlock')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">Unlocking bootloader...</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-output">Please confirm on your device</span>';
+                            terminal.insertBefore(output2, commandLine);
+                            
+                            setTimeout(() => {
+                                const output3 = document.createElement('div');
+                                output3.className = 'terminal-line';
+                                output3.innerHTML = '<span class="terminal-output">Bootloader unlocked successfully</span>';
+                                terminal.insertBefore(output3, commandLine);
+                            }, 3000);
+                        } else if (command.includes('magisk')) {
+                            if (command.includes('install')) {
+                                const output1 = document.createElement('div');
+                                output1.className = 'terminal-line';
+                                output1.innerHTML = '<span class="terminal-output">Installing Magisk...</span>';
+                                terminal.insertBefore(output1, commandLine);
+                                
+                                const output2 = document.createElement('div');
+                                output2.className = 'terminal-line';
+                                output2.innerHTML = '<span class="terminal-output">Downloading latest version...</span>';
+                                terminal.insertBefore(output2, commandLine);
+                                
+                                setTimeout(() => {
+                                    const output3 = document.createElement('div');
+                                    output3.className = 'terminal-line';
+                                    output3.innerHTML = '<span class="terminal-output">Magisk installed successfully</span>';
+                                    terminal.insertBefore(output3, commandLine);
+                                }, 2000);
+                            } else if (command.includes('patch')) {
+                                const output1 = document.createElement('div');
+                                output1.className = 'terminal-line';
+                                output1.innerHTML = '<span class="terminal-output">Patching boot image...</span>';
+                                terminal.insertBefore(output1, commandLine);
+                                
+                                const output2 = document.createElement('div');
+                                output2.className = 'terminal-line';
+                                output2.innerHTML = '<span class="terminal-output">Detected boot image format: AOSP</span>';
+                                terminal.insertBefore(output2, commandLine);
+                                
+                                const output3 = document.createElement('div');
+                                output3.className = 'terminal-line';
+                                output3.innerHTML = '<span class="terminal-output">Patching ramdisk...</span>';
+                                terminal.insertBefore(output3, commandLine);
+                                
+                                setTimeout(() => {
+                                    const output4 = document.createElement('div');
+                                    output4.className = 'terminal-line';
+                                    output4.innerHTML = '<span class="terminal-output">Patching done! Output: magisk_patched.img</span>';
+                                    terminal.insertBefore(output4, commandLine);
+                                }, 2000);
+                            }
+                        } else if (command.includes('adb reboot')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">Rebooting device...</span>';
+                            terminal.insertBefore(output1, commandLine);
+                        } else if (command.includes('fastboot flash')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">Sending ' + command.split(' ')[2] + ' image...</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-output">Writing ' + command.split(' ')[2] + ' image...</span>';
+                            terminal.insertBefore(output2, commandLine);
+                            
+                            setTimeout(() => {
+                                const output3 = document.createElement('div');
+                                output3.className = 'terminal-line';
+                                output3.innerHTML = '<span class="terminal-output">Finished writing ' + command.split(' ')[2] + ' image</span>';
+                                terminal.insertBefore(output3, commandLine);
+                            }, 1500);
+                        } else if (command.includes('ls')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">boot.img</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-output">magisk_patched.img</span>';
+                            terminal.insertBefore(output2, commandLine);
+                            
+                            const output3 = document.createElement('div');
+                            output3.className = 'terminal-line';
+                            output3.innerHTML = '<span class="terminal-output">Magisk-v26.4.apk</span>';
+                            terminal.insertBefore(output3, commandLine);
+                            
+                            const output4 = document.createElement('div');
+                            output4.className = 'terminal-line';
+                            output4.innerHTML = '<span class="terminal-output">root-tools.zip</span>';
+                            terminal.insertBefore(output4, commandLine);
+                        } else if (command.includes('unzip')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">Unzipping ' + command.split(' ')[1] + '...</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            setTimeout(() => {
+                                const output2 = document.createElement('div');
+                                output2.className = 'terminal-line';
+                                output2.innerHTML = '<span class="terminal-output">Archive extracted successfully</span>';
+                                terminal.insertBefore(output2, commandLine);
+                            }, 1500);
+                        } else if (command.includes('help') || command.includes('--help')) {
+                            const output1 = document.createElement('div');
+                            output1.className = 'terminal-line';
+                            output1.innerHTML = '<span class="terminal-output">Available commands:</span>';
+                            terminal.insertBefore(output1, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-output">adb devices - List connected devices</span>';
+                            terminal.insertBefore(output2, commandLine);
+                            
+                            const output3 = document.createElement('div');
+                            output3.className = 'terminal-line';
+                            output3.innerHTML = '<span class="terminal-output">adb reboot bootloader - Reboot to bootloader</span>';
+                            terminal.insertBefore(output3, commandLine);
+                            
+                            const output4 = document.createElement('div');
+                            output4.className = 'terminal-line';
+                            output4.innerHTML = '<span class="terminal-output">fastboot oem unlock - Unlock bootloader</span>';
+                            terminal.insertBefore(output4, commandLine);
+                            
+                            const output5 = document.createElement('div');
+                            output5.className = 'terminal-line';
+                            output5.innerHTML = '<span class="terminal-output">fastboot flash boot [image] - Flash boot image</span>';
+                            terminal.insertBefore(output5, commandLine);
+                        } else if (command.includes('clear')) {
+                            // 清空终端
+                            const lines = terminal.querySelectorAll('.terminal-line:not(:last-child)');
+                            lines.forEach(line => line.remove());
+                        } else {
+                            const output = document.createElement('div');
+                            output.className = 'terminal-line';
+                            output.innerHTML = '<span class="terminal-error">Command not found: ' + command + '</span>';
+                            terminal.insertBefore(output, commandLine);
+                            
+                            const output2 = document.createElement('div');
+                            output2.className = 'terminal-line';
+                            output2.innerHTML = '<span class="terminal-error">Type "help" for available commands</span>';
+                            terminal.insertBefore(output2, commandLine);
+                        }
+                        
+                        // 滚动到底部
+                        terminal.scrollTop = terminal.scrollHeight;
+                    }, 300);
+                }
+            }
+        });
+
+        // 创建点击动画
+        function createClickAnimation(element) {
+            const rect = element.getBoundingClientRect();
+            const phoneRect = phoneBody.getBoundingClientRect();
+            const x = rect.left + rect.width / 2 - phoneRect.left;
+            const y = rect.top + rect.height / 2 - phoneRect.top;
+            
+            // 创建主点击动画
+            const clickAnim = document.createElement('div');
+            clickAnim.className = 'click-animation';
+            clickAnim.style.width = '40px';
+            clickAnim.style.height = '40px';
+            clickAnim.style.left = (x - 20) + 'px';
+            clickAnim.style.top = (y - 20) + 'px';
+            
+            phoneBody.appendChild(clickAnim);
+            
+            // 创建波纹效果
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const ripple = document.createElement('div');
+                    ripple.className = 'click-animation';
+                    ripple.style.width = (60 + i * 20) + 'px';
+                    ripple.style.height = (60 + i * 20) + 'px';
+                    ripple.style.left = (x - 30 - i * 10) + 'px';
+                    ripple.style.top = (y - 30 - i * 10) + 'px';
+                    ripple.style.background = 'rgba(78, 201, 176, 0.3)';
+                    ripple.style.animationDuration = (0.8 + i * 0.2) + 's';
+                    
+                    phoneBody.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, (800 + i * 200));
+                }, i * 100);
+            }
+            
+            setTimeout(() => {
+                clickAnim.remove();
+            }, 600);
+        }
+        
+        // 添加手机屏幕触摸事件
+        phoneBody.addEventListener('click', (e) => {
+            if (!phoneLockScreen.classList.contains('hidden') || 
+                !phoneHomeScreen.classList.contains('hidden') || 
+                !phoneSettingsScreen.classList.contains('hidden') || 
+                !phoneAboutScreen.classList.contains('hidden') || 
+                !phoneDeveloperScreen.classList.contains('hidden') || 
+                !phoneDeveloperDetailsScreen.classList.contains('hidden')) {
+                
+                const rect = phoneBody.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // 创建触摸反馈
+                const touchFeedback = document.createElement('div');
+                touchFeedback.style.position = 'absolute';
+                touchFeedback.style.left = (x - 20) + 'px';
+                touchFeedback.style.top = (y - 20) + 'px';
+                touchFeedback.style.width = '40px';
+                touchFeedback.style.height = '40px';
+                touchFeedback.style.borderRadius = '50%';
+                touchFeedback.style.background = 'rgba(78, 201, 176, 0.5)';
+                touchFeedback.style.transform = 'scale(0)';
+                touchFeedback.style.animation = 'click 0.6s ease-out';
+                touchFeedback.style.pointerEvents = 'none';
+                
+                phoneBody.appendChild(touchFeedback);
+                
+                setTimeout(() => {
+                    touchFeedback.remove();
+                }, 600);
+            }
+        });
+        
+        // 添加滑动解锁功能
+        function initUnlockSlider() {
+            const unlockThumb = document.querySelector('.unlock-thumb');
+            const unlockSlider = document.querySelector('.unlock-slider');
+            
+            if (unlockThumb && unlockSlider) {
+                let isDragging = false;
+                let startX = 0;
+                let currentX = 0;
+                const sliderWidth = unlockSlider.offsetWidth - 20; // 减去thumb宽度
+                
+                unlockThumb.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    startX = e.clientX - unlockThumb.getBoundingClientRect().left;
+                    unlockThumb.style.transition = 'none';
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging) {
+                        const sliderRect = unlockSlider.getBoundingClientRect();
+                        currentX = e.clientX - sliderRect.left - startX;
+                        
+                        // 限制在滑块范围内
+                        if (currentX < 0) currentX = 0;
+                        if (currentX > sliderWidth) currentX = sliderWidth;
+                        
+                        unlockThumb.style.left = currentX + 'px';
+                        
+                        // 更新滑块背景
+                        const progress = (currentX / sliderWidth) * 100;
+                        unlockSlider.style.background = `linear-gradient(90deg, #4ec9b0 ${progress}%, #555 ${progress}%)`;
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        unlockThumb.style.transition = 'all 0.3s ease';
+                        
+                        // 检查是否解锁成功
+                        if (currentX > sliderWidth * 0.8) {
+                            // 解锁成功
+                            unlockThumb.style.left = sliderWidth + 'px';
+                            
+                            setTimeout(() => {
+                                phoneLockScreen.classList.add('hidden');
+                                phoneHomeScreen.classList.remove('hidden');
+                                
+                                // 重置滑块
+                                setTimeout(() => {
+                                    unlockThumb.style.left = '0';
+                                    unlockSlider.style.background = '#555';
+                                }, 1000);
+                            }, 500);
+                        } else {
+                            // 解锁失败，重置滑块
+                            unlockThumb.style.left = '0';
+                            unlockSlider.style.background = '#555';
+                        }
+                    }
+                });
+            }
+        }
+        
+        // 初始化滑动解锁
+        initUnlockSlider();
+        
+        // 为所有可点击元素添加悬停效果
+        document.querySelectorAll('.settings-item, .settings-subitem, .desktop-icon, .usb-drive').forEach(element => {
+            element.addEventListener('mouseenter', () => {
+                element.style.cursor = 'pointer';
+                element.style.transform = 'scale(1.05)';
+                element.style.transition = 'transform 0.2s ease';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                element.style.transform = 'scale(1)';
+            });
+        });
+        
+        // 初始化设置界面交互
+        function initSettingsInteraction() {
+            // 返回按钮点击事件
+            document.querySelectorAll('.settings-back').forEach(backBtn => {
+                backBtn.addEventListener('click', () => {
+                    const currentScreen = backBtn.closest('[id$="-screen"]');
+                    if (currentScreen) {
+                        currentScreen.classList.add('hidden');
+                        
+                        // 根据当前屏幕返回对应的上一级
+                        if (currentScreen.id === 'phone-about-screen') {
+                            phoneSettingsScreen.classList.remove('hidden');
+                        } else if (currentScreen.id === 'phone-developer-screen') {
+                            phoneSettingsScreen.classList.remove('hidden');
+                        } else if (currentScreen.id === 'phone-developer-details-screen') {
+                            phoneDeveloperScreen.classList.remove('hidden');
+                        } else {
+                            phoneHomeScreen.classList.remove('hidden');
+                        }
+                    }
+                });
+            });
+            
+            // 设置选项点击事件
+            document.querySelectorAll('.settings-item[data-target]').forEach(item => {
+                item.addEventListener('click', () => {
+                    createClickAnimation(item);
+                    const target = item.dataset.target;
+                    showSettingsDetail(target);
+                });
+            });
+            
+            // 开发者选项切换事件
+            document.querySelectorAll('.settings-toggle').forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    createClickAnimation(toggle);
+                    toggle.classList.toggle('active');
+                    
+                    // 特殊处理开发者选项
+                    if (toggle.id === 'toggle-developer') {
+                        const isActive = toggle.classList.contains('active');
+                        isDeveloperOptionsEnabled = isActive;
+                        showSuccessMessage(isActive ? '开发者选项已启用' : '开发者选项已禁用');
+                    }
+                    
+                    // 特殊处理USB调试
+                    if (toggle.id === 'toggle-usb-debug') {
+                        const isActive = toggle.classList.contains('active');
+                        if (isActive) {
+                            showSuccessMessage('USB调试已启用');
+                        }
+                    }
+                    
+                    // 特殊处理OEM解锁
+                    if (toggle.id === 'toggle-oem-unlock') {
+                        const isActive = toggle.classList.contains('active');
+                        isOemUnlockEnabled = isActive;
+                        if (isActive) {
+                            showWarningMessage('OEM解锁已启用，设备将允许刷入自定义固件');
+                        }
+                    }
+                });
+            });
+        }
+        
+        // 显示设置详情
+        function showSettingsDetail(category) {
+            // 这里可以添加具体的设置详情页面
+            showSuccessMessage(`正在打开${getCategoryName(category)}设置`);
+        }
+        
+        // 获取设置类别名称
+        function getCategoryName(category) {
+            const categoryNames = {
+                'network': '网络和互联网',
+                'bluetooth': '连接设备',
+                'apps': '应用',
+                'notifications': '通知',
+                'battery': '电池',
+                'storage': '存储',
+                'sound': '声音和振动',
+                'display': '显示',
+                'wallpaper': '壁纸和样式',
+                'security': '安全',
+                'privacy': '隐私'
+            };
+            return categoryNames[category] || category;
+        }
+        
+        // 更新设备信息显示
+        function updateDeviceInfoDisplay() {
+            const deviceNameDisplay = document.getElementById('device-name-display');
+            const deviceModelDisplay = document.getElementById('device-model-display');
+            if (deviceNameDisplay) deviceNameDisplay.textContent = currentModel;
+            if (deviceModelDisplay) deviceModelDisplay.textContent = currentModel.split(' ')[0];
+        }
+        
+
+
+        // 启用开发者选项
+        function enableDeveloperOptions() {
+            // 切换到设置界面
+            phoneHomeScreen.classList.add('hidden');
+            phoneSettingsScreen.classList.remove('hidden');
+            
+            setTimeout(() => {
+                // 点击关于手机
+                createClickAnimation(settingsAbout);
+                setTimeout(() => {
+                    phoneSettingsScreen.classList.add('hidden');
+                    phoneAboutScreen.classList.remove('hidden');
+                    
+                    // 连续点击版本号
+                    let clickCount = 0;
+                    const clickInterval = setInterval(() => {
+                        createClickAnimation(settingsBuildNumber);
+                        clickCount++;
+                        
+                        // 显示点击次数提示
+                        if (clickCount >= 3 && clickCount < 7) {
+                            const hint = document.createElement('div');
+                            hint.style.position = 'absolute';
+                            hint.style.top = '50%';
+                            hint.style.left = '50%';
+                            hint.style.transform = 'translate(-50%, -50%)';
+                            hint.style.background = 'rgba(0, 0, 0, 0.7)';
+                            hint.style.color = 'white';
+                            hint.style.padding = '10px 20px';
+                            hint.style.borderRadius = '4px';
+                            hint.style.fontSize = '14px';
+                            hint.style.zIndex = '10';
+                            hint.textContent = `再点击 ${7 - clickCount} 次启用开发者选项`;
+                            phoneAboutScreen.appendChild(hint);
+                            
+                            setTimeout(() => {
+                                hint.remove();
+                            }, 1000);
+                        }
+                        
+                        if (clickCount >= 7) {
+                            clearInterval(clickInterval);
+                            // 显示开发者选项已启用
+                            const successHint = document.createElement('div');
+                            successHint.style.position = 'absolute';
+                            successHint.style.top = '50%';
+                            successHint.style.left = '50%';
+                            successHint.style.transform = 'translate(-50%, -50%)';
+                            successHint.style.background = 'rgba(78, 201, 176, 0.9)';
+                            successHint.style.color = 'white';
+                            successHint.style.padding = '15px 25px';
+                            successHint.style.borderRadius = '4px';
+                            successHint.style.fontSize = '16px';
+                            successHint.style.zIndex = '10';
+                            successHint.textContent = '恭喜！您现在是开发者了！';
+                            phoneAboutScreen.appendChild(successHint);
+                            
+                            setTimeout(() => {
+                                successHint.remove();
+                                phoneAboutScreen.classList.add('hidden');
+                                phoneDeveloperScreen.classList.remove('hidden');
+                            }, 2000);
+                        }
+                    }, 500);
+                }, 500);
+            }, 1000);
+        }
+
+        // 启用 USB 调试
+        function enableUsbDebugging() {
+            // 进入开发者选项
+            setTimeout(() => {
+                createClickAnimation(settingsDeveloperOptions);
+                setTimeout(() => {
+                    phoneDeveloperScreen.classList.add('hidden');
+                    phoneDeveloperDetailsScreen.classList.remove('hidden');
+                    
+                    // 启用开发者选项
+                    setTimeout(() => {
+                        createClickAnimation(toggleDeveloper);
+                        toggleDeveloper.classList.add('active');
+                        isDeveloperOptionsEnabled = true;
+                        
+                        // 启用 USB 调试
+                        setTimeout(() => {
+                            createClickAnimation(toggleUsbDebug);
+                            toggleUsbDebug.classList.add('active');
+                            
+                            // 显示 USB 调试授权提示
+                            const authDialog = document.createElement('div');
+                            authDialog.style.position = 'absolute';
+                            authDialog.style.top = '50%';
+                            authDialog.style.left = '50%';
+                            authDialog.style.transform = 'translate(-50%, -50%)';
+                            authDialog.style.background = 'white';
+                            authDialog.style.color = 'black';
+                            authDialog.style.padding = '20px';
+                            authDialog.style.borderRadius = '8px';
+                            authDialog.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                            authDialog.style.zIndex = '10';
+                            authDialog.style.textAlign = 'center';
+                            authDialog.innerHTML = `
+                                <h4 style="margin-bottom: 15px;">USB 调试授权</h4>
+                                <p style="margin-bottom: 20px;">允许这台计算机调试这台设备吗？</p>
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <button style="padding: 8px 16px; background: #0e639c; color: white; border: none; border-radius: 4px; cursor: pointer;">确定</button>
+                                    <button style="padding: 8px 16px; background: #666; color: white; border: none; border-radius: 4px; cursor: pointer;">取消</button>
+                                </div>
+                            `;
+                            phoneDeveloperDetailsScreen.appendChild(authDialog);
+                            
+                            // 点击确定按钮
+                            setTimeout(() => {
+                                const okBtn = authDialog.querySelector('button:first-child');
+                                if (okBtn) {
+                                    createClickAnimation(okBtn);
+                                    setTimeout(() => {
+                                        authDialog.remove();
+                                        
+                                        // 启用 OEM 解锁
+                                        setTimeout(() => {
+                                            createClickAnimation(toggleOemUnlock);
+                                            toggleOemUnlock.classList.add('active');
+                                            isOemUnlockEnabled = true;
+                                            
+                                            // 返回主屏幕
+                                            setTimeout(() => {
+                                                phoneDeveloperDetailsScreen.classList.add('hidden');
+                                                phoneHomeScreen.classList.remove('hidden');
+                                            }, 1000);
+                                        }, 1000);
+                                    }, 500);
+                                }
+                            }, 1500);
+                        }, 1000);
+                    }, 1000);
+                }, 500);
+            }, 1000);
+        }
+
+        // 解锁引导加载程序
+        function unlockBootloader() {
+            // 切换到引导加载程序
+            phoneHomeScreen.classList.add('hidden');
+            phoneBootloaderScreen.classList.remove('hidden');
+            
+            // 根据品牌更新引导加载程序界面
+            updateBootloaderScreen();
+            
+            setTimeout(() => {
+                // 切换到解锁确认界面
+                phoneBootloaderScreen.classList.add('hidden');
+                phoneUnlockScreen.classList.remove('hidden');
+                
+                // 根据品牌显示不同的解锁确认信息
+                const unlockContent = phoneUnlockScreen.querySelector('.bootloader');
+                if (unlockContent) {
+                    let unlockText = '';
+                    switch (currentBrand) {
+                        case 'Xiaomi':
+                            unlockText = `
+                                <div class="bootloader-logo">🐉</div>
+                                <div class="bootloader-text">MI BOOTLOADER UNLOCK</div>
+                                <div class="bootloader-text">您正在解锁引导加载程序</div>
+                                <div class="bootloader-text">这将删除所有用户数据</div>
+                                <div class="bootloader-text">请确保您已备份重要数据</div>
+                                <div class="bootloader-text">解锁后将无法享受保修服务</div>
+                                <div class="bootloader-warning">
+                                    <p>按音量上键确认解锁</p>
+                                    <p>按音量下键取消</p>
+                                </div>
+                            `;
+                            break;
+                        case 'OPPO':
+                            unlockText = `
+                                <div class="bootloader-logo">🔵</div>
+                                <div class="bootloader-text">OPPO BOOTLOADER UNLOCK</div>
+                                <div class="bootloader-text">解锁引导加载程序</div>
+                                <div class="bootloader-text">此操作将清除所有数据</div>
+                                <div class="bootloader-text">并可能导致设备不稳定</div>
+                                <div class="bootloader-text">请谨慎操作</div>
+                                <div class="bootloader-warning">
+                                    <p>按音量上键确认</p>
+                                    <p>按音量下键取消</p>
+                                </div>
+                            `;
+                            break;
+                        case 'Samsung':
+                            unlockText = `
+                                <div class="bootloader-logo">🌟</div>
+                                <div class="bootloader-text">SAMSUNG BOOTLOADER</div>
+                                <div class="bootloader-text">Unlock Bootloader?</div>
+                                <div class="bootloader-text">This will erase all data</div>
+                                <div class="bootloader-text">and void your warranty</div>
+                                <div class="bootloader-text">Are you sure?</div>
+                                <div class="bootloader-warning">
+                                    <p>Volume Up: Continue</p>
+                                    <p>Volume Down: Cancel</p>
+                                </div>
+                            `;
+                            break;
+                        case 'Huawei':
+                            unlockText = `
+                                <div class="bootloader-logo">🌸</div>
+                                <div class="bootloader-text">HUAWEI FASTBOOT</div>
+                                <div class="bootloader-text">解锁引导加载程序</div>
+                                <div class="bootloader-text">请输入解锁码</div>
+                                <div class="bootloader-text">****************</div>
+                                <div class="bootloader-text">验证中...</div>
+                                <div class="bootloader-warning">
+                                    <p>按电源键确认</p>
+                                </div>
+                            `;
+                            break;
+                        default:
+                            unlockText = `
+                                <div class="bootloader-logo">⚠️</div>
+                                <div class="bootloader-text">UNLOCK BOOTLOADER</div>
+                                <div class="bootloader-text">这将删除所有用户数据</div>
+                                <div class="bootloader-text">并使设备容易受到攻击</div>
+                                <div class="bootloader-text">按音量上键确认</div>
+                                <div class="bootloader-text">按音量下键取消</div>
+                            `;
+                    }
+                    unlockContent.innerHTML = unlockText;
+                }
+                
+                // 模拟确认解锁
+                setTimeout(() => {
+                    // 显示解锁过程
+                    const unlockText = phoneUnlockScreen.querySelector('.bootloader-text:nth-child(3)');
+                    if (unlockText) {
+                        unlockText.textContent = '正在解锁引导加载程序...';
+                    }
+                    
+                    // 模拟解锁过程
+                    setTimeout(() => {
+                        // 显示解锁进度
+                        const unlockContent = phoneUnlockScreen.querySelector('.bootloader');
+                        if (unlockContent) {
+                            const unlockProgress = document.createElement('div');
+                            unlockProgress.style.width = '200px';
+                            unlockProgress.style.height = '4px';
+                            unlockProgress.style.background = '#333';
+                            unlockProgress.style.borderRadius = '2px';
+                            unlockProgress.style.margin = '20px auto';
+                            unlockProgress.style.overflow = 'hidden';
+                            unlockProgress.innerHTML = '<div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 3s ease;"></div>';
+                            unlockContent.appendChild(unlockProgress);
+                            
+                            // 模拟进度
+                            setTimeout(() => {
+                                const progressBar = unlockProgress.querySelector('div');
+                                if (progressBar) {
+                                    progressBar.style.width = '100%';
+                                }
+                            }, 100);
+                        }
+                        
+                        // 重启设备
+                        setTimeout(() => {
+                            phoneUnlockScreen.classList.add('hidden');
+                            showEnhancedBootAnimation();
+                            
+                            // 重启完成后返回引导加载程序
+                            setTimeout(() => {
+                                phoneHomeScreen.classList.add('hidden');
+                                phoneBootloaderScreen.classList.remove('hidden');
+                                
+                                // 更新锁状态
+                                const lockStateElement = phoneBootloaderScreen.querySelector('.bootloader-text:nth-child(7)');
+                                if (lockStateElement) {
+                                    lockStateElement.textContent = 'Lock state: UNLOCKED';
+                                }
+                                
+                                // 显示解锁成功提示
+                                const successHint = document.createElement('div');
+                                successHint.style.position = 'absolute';
+                                successHint.style.top = '50%';
+                                successHint.style.left = '50%';
+                                successHint.style.transform = 'translate(-50%, -50%)';
+                                successHint.style.background = 'rgba(78, 201, 176, 0.9)';
+                                successHint.style.color = 'white';
+                                successHint.style.padding = '15px 25px';
+                                successHint.style.borderRadius = '4px';
+                                successHint.style.fontSize = '16px';
+                                successHint.style.zIndex = '10';
+                                successHint.textContent = '引导加载程序解锁成功！';
+                                phoneBootloaderScreen.appendChild(successHint);
+                                
+                                setTimeout(() => {
+                                    successHint.remove();
+                                    
+                                    // 自动重启到系统
+                                    setTimeout(() => {
+                                        phoneBootloaderScreen.classList.add('hidden');
+                                        showEnhancedBootAnimation();
+                                        
+                                        setTimeout(() => {
+                                            phoneHomeScreen.classList.remove('hidden');
+                                            // 显示系统通知
+                                            showSuccessMessage('引导加载程序已解锁，设备已重启到系统');
+                                        }, 4000);
+                                    }, 1000);
+                                }, 2000);
+                            }, 4000);
+                        }, 3000);
+                    }, 2000);
+                }, 2000);
+            }, 1500);
+        }
+
+        // 更新引导加载程序界面
+        function updateBootloaderScreen() {
+            const bootloaderLogo = phoneBootloaderScreen.querySelector('.bootloader-logo');
+            const modelElement = phoneBootloaderScreen.querySelector('.bootloader-text:nth-child(3)');
+            const bootloaderText = phoneBootloaderScreen.querySelector('.bootloader-text:nth-child(2)');
+            
+            // 随机选择品牌
+            const brands = ['Google', 'Xiaomi', 'OPPO', 'Samsung', 'Huawei'];
+            const randomBrand = brands[Math.floor(Math.random() * brands.length)];
+            currentBrand = randomBrand;
+            
+            // 根据品牌更新界面
+            switch (randomBrand) {
+                case 'Google':
+                    if (bootloaderLogo) bootloaderLogo.textContent = '📱';
+                    if (bootloaderText) bootloaderText.textContent = 'FASTBOOT MODE';
+                    if (modelElement) modelElement.textContent = 'Pixel 7 Pro (GVU6C)';
+                    currentModel = 'Pixel 7 Pro';
+                    // 更新锁屏界面品牌名
+                    document.querySelector('#phone-lock-screen h2').textContent = 'Pixel 7 Pro';
+                    break;
+                case 'Xiaomi':
+                    if (bootloaderLogo) bootloaderLogo.textContent = '🐉';
+                    if (bootloaderText) bootloaderText.textContent = 'MI FASTBOOT MODE';
+                    if (modelElement) modelElement.textContent = 'Xiaomi 13 Pro (SM8550)';
+                    currentModel = 'Xiaomi 13 Pro';
+                    // 更新锁屏界面品牌名
+                    document.querySelector('#phone-lock-screen h2').textContent = 'Xiaomi 13 Pro';
+                    break;
+                case 'OPPO':
+                    if (bootloaderLogo) bootloaderLogo.textContent = '🔵';
+                    if (bootloaderText) bootloaderText.textContent = 'OPPO FASTBOOT';
+                    if (modelElement) modelElement.textContent = 'OPPO Find X5 Pro (PDEM30)';
+                    currentModel = 'OPPO Find X5 Pro';
+                    // 更新锁屏界面品牌名
+                    document.querySelector('#phone-lock-screen h2').textContent = 'OPPO Find X5 Pro';
+                    break;
+                case 'Samsung':
+                    if (bootloaderLogo) bootloaderLogo.textContent = '🌟';
+                    if (bootloaderText) bootloaderText.textContent = 'SAMSUNG BOOTLOADER';
+                    if (modelElement) modelElement.textContent = 'Samsung Galaxy S23 Ultra (SM-S918U)';
+                    currentModel = 'Samsung Galaxy S23 Ultra';
+                    // 更新锁屏界面品牌名
+                    document.querySelector('#phone-lock-screen h2').textContent = 'Samsung S23 Ultra';
+                    break;
+                case 'Huawei':
+                    if (bootloaderLogo) bootloaderLogo.textContent = '🌸';
+                    if (bootloaderText) bootloaderText.textContent = 'HUAWEI FASTBOOT';
+                    if (modelElement) modelElement.textContent = 'Huawei P60 Pro (CHL-AL00)';
+                    currentModel = 'Huawei P60 Pro';
+                    // 更新锁屏界面品牌名
+                    document.querySelector('#phone-lock-screen h2').textContent = 'Huawei P60 Pro';
+                    break;
+            }
+            
+            // 更新设备信息
+            const deviceName = document.getElementById('device-name');
+            const deviceModel = document.getElementById('device-model');
+            if (deviceName) deviceName.textContent = currentModel;
+            if (deviceModel) deviceModel.textContent = currentModel.split(' ')[0];
+            
+            // 更新手机设置中的设备信息
+            updateDeviceInfoDisplay();
+            
+            // 更新投屏标题
+            const mirroringHeader = document.querySelector('.screen-mirroring-header');
+            if (mirroringHeader) {
+                mirroringHeader.textContent = `手机投屏 - ${currentModel}`;
+            }
+        }
+
+        // 开机动画
+        function showBootAnimation() {
+            phoneHomeScreen.classList.add('hidden');
+            const bootScreen = document.createElement('div');
+            bootScreen.className = 'bootloader';
+            bootScreen.style.display = 'flex';
+            bootScreen.style.flexDirection = 'column';
+            bootScreen.style.alignItems = 'center';
+            bootScreen.style.justifyContent = 'center';
+            bootScreen.style.height = '100%';
+            bootScreen.innerHTML = `
+                <div style="font-size: 72px; margin-bottom: 30px;">📱</div>
+                <div style="color: white; font-size: 24px; margin-bottom: 20px;">Google</div>
+                <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                    <div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 3s ease;"></div>
+                </div>
+            `;
+            phoneBody.appendChild(bootScreen);
+            
+            // 显示启动进度
+            setTimeout(() => {
+                const progressBar = bootScreen.querySelector('div > div');
+                if (progressBar) {
+                    progressBar.style.width = '100%';
+                }
+            }, 100);
+            
+            // 3秒后移除开机动画
+            setTimeout(() => {
+                bootScreen.remove();
+            }, 3000);
+        }
+
+        // 10分钟速刷 Root
+        speedRootBtn.addEventListener('click', () => {
+            // 无论是否已连接，都从解压文件开始
+            speedRootBtn.innerHTML = '<span class="loading"></span> 执行中...';
+            speedRootBtn.disabled = true;
+            aiRootBtn.disabled = true;
+            aiEffect.classList.remove('hidden');
+            aiTerminalOutput.innerHTML = '';
+            
+            // 显示悬浮窗口
+            showFloatingWindow('AI Assistant', '开始10分钟速刷Root...');
+            
+            // 生成 AI 特效
+            createAIEffects();
+            
+            // 模拟AI思考过程
+            const aiThoughts = [
+                '首先，我需要解压Root工具文件...',
+                '然后，安装必要的工具和驱动...',
+                '接下来，连接设备并提取boot镜像...',
+                '然后，修补boot镜像并解锁引导加载程序...',
+                '最后，刷入修补后的镜像并验证Root权限...'
+            ];
+            
+            simulateAIThinking(aiThoughts, () => {
+                // 思考完成后开始执行Root过程
+                setTimeout(startSpeedRootProcess, 500);
+            });
+            
+            return;
+            
+            function startSpeedRootProcess() {
+            
+            // 模拟 10分钟速刷 Root 过程
+            const speedSteps = [
+                '正在解压文件...',
+                '文件解压完成！',
+                '正在安装必要工具...',
+                '工具安装完成！',
+                '正在连接设备...',
+                '设备连接成功！',
+                '正在提取 boot 镜像...',
+                '镜像提取完成！',
+                '正在修补 boot 镜像...',
+                '镜像修补完成！',
+                '正在重启到 Fastboot 模式...',
+                '正在解锁引导加载程序...',
+                '正在刷入修补后的镜像...',
+                '正在重启设备...',
+                '正在验证 Root 权限...',
+                'Root 成功！'
+            ];
+            
+            const speedCommands = [
+                'unzip root-tools.zip',
+                'adb devices',
+                'adb pull /dev/block/by-name/boot boot.img',
+                'magiskboot unpack boot.img',
+                'magiskboot patch boot.img',
+                'adb reboot bootloader',
+                'fastboot oem unlock',
+                'fastboot flash boot magisk_patched.img',
+                'fastboot reboot',
+                'adb shell su -c "echo Rooted!"'
+            ];
+            
+            let stepIndex = 0;
+            let commandIndex = 0;
+            
+            function executeSpeedStep() {
+                if (stepIndex < speedSteps.length) {
+                    // 显示当前步骤的思考
+                    if (speedStepThoughts[stepIndex]) {
+                        simulateStepThinking(speedStepThoughts[stepIndex], () => {
+                            // 思考完成后执行步骤
+                            executeSpeedStepContent();
+                        });
+                    } else {
+                        executeSpeedStepContent();
+                    }
+                } else {
+                    // 增加尝试次数
+                    rootAttempts++;
+                    
+                    // 根据尝试次数决定结果
+                    if (rootAttempts <= 4) {
+                        // 前4次必定变砖
+                        handleBrick();
+                        speedRootBtn.innerHTML = '10分钟速刷 Root';
+                        speedRootBtn.disabled = false;
+                        aiRootBtn.disabled = false;
+                        aiEffect.classList.add('hidden');
+                    } else if (rootAttempts === 5) {
+                        // 第5次有几率变砖
+                        const random = Math.random();
+                        if (random < 0.5) {
+                            handleBrick();
+                            speedRootBtn.innerHTML = '10分钟速刷 Root';
+                            speedRootBtn.disabled = false;
+                            aiRootBtn.disabled = false;
+                            aiEffect.classList.add('hidden');
+                        } else {
+                            // Root 成功
+                            setTimeout(() => {
+                                speedRootBtn.innerHTML = '10分钟速刷 Root';
+                                speedRootBtn.disabled = false;
+                                aiRootBtn.disabled = false;
+                                aiEffect.classList.add('hidden');
+                                
+                                // 显示手机 Root 成功界面
+                                phoneHomeScreen.classList.add('hidden');
+                                phoneRootScreen.classList.remove('hidden');
+                                
+                                // 更新悬浮窗口
+                                updateFloatingWindow('Root成功！设备已获取Root权限。');
+                                
+                                // 自动隐藏环境信息
+                                setTimeout(() => {
+                                    hideEnvironment();
+                                    hideFloatingWindow();
+                                }, 3000);
+                            }, 1000);
+                        }
+                    } else {
+                        // 第6次及以后保底成功
+                        setTimeout(() => {
+                            speedRootBtn.innerHTML = '10分钟速刷 Root';
+                            speedRootBtn.disabled = false;
+                            aiRootBtn.disabled = false;
+                            aiEffect.classList.add('hidden');
+                            
+                            // 显示手机 Root 成功界面
+                            phoneHomeScreen.classList.add('hidden');
+                            phoneRootScreen.classList.remove('hidden');
+                            
+                            // 更新悬浮窗口
+                            updateFloatingWindow('Root成功！设备已获取Root权限。');
+                            
+                            // 自动隐藏环境信息
+                            setTimeout(() => {
+                                hideEnvironment();
+                                hideFloatingWindow();
+                            }, 3000);
+                        }, 1000);
+                    }
+                }
+            }
+            
+            function executeSpeedStepContent() {
+                // 添加步骤信息
+                const stepLine = document.createElement('div');
+                stepLine.className = 'terminal-line';
+                stepLine.innerHTML = '<span class="terminal-output">' + speedSteps[stepIndex] + '</span>';
+                aiTerminalOutput.appendChild(stepLine);
+                stepLine.classList.add('fade-in');
+                
+                // 滚动到底部
+                aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                
+                // 执行相应的界面操作
+                switch (stepIndex) {
+                    case 2: // 正在安装必要工具
+                        toolInstallation.classList.remove('hidden');
+                        // 模拟工具安装进度
+                        let toolProgress = 0;
+                        const toolInterval = setInterval(() => {
+                            toolProgress += 10;
+                            if (toolProgressFill) {
+                                toolProgressFill.style.width = toolProgress + '%';
+                            }
+                            if (toolProgress >= 100) {
+                                clearInterval(toolInterval);
+                                setTimeout(() => {
+                                    toolInstallation.classList.add('hidden');
+                                }, 1000);
+                            }
+                        }, 200);
+                        break;
+                    case 4: // 正在连接设备
+                        // 模拟连接过程
+                        if (!isConnected) {
+                            connectBtn.innerHTML = '<span class="loading"></span> 连接中...';
+                            connectBtn.disabled = true;
+                            cable.style.display = 'block';
+                            connectionProgress.classList.remove('hidden');
+                            
+                            let progress = 0;
+                            const progressInterval = setInterval(() => {
+                                progress += 10;
+                                progressFill.style.width = progress + '%';
+                                
+                                if (progress >= 100) {
+                                    clearInterval(progressInterval);
+                                    setTimeout(() => {
+                                        connectBtn.innerHTML = '已连接';
+                                        connectBtn.classList.remove('btn-primary');
+                                        connectBtn.classList.add('btn-success');
+                                        deviceInfo.classList.remove('hidden');
+                                        connectionProgress.classList.add('hidden');
+                                        isConnected = true;
+                                        phoneLockScreen.classList.add('hidden');
+                                        phoneHomeScreen.classList.remove('hidden');
+                                    }, 500);
+                                }
+                            }, 100);
+                        }
+                        break;
+                    case 6: // 正在提取 boot 镜像
+                        extractImage.classList.remove('hidden');
+                        // 模拟提取进度
+                        let extractProgress = 0;
+                        const extractInterval = setInterval(() => {
+                            extractProgress += 5;
+                            if (extractProgressFill) {
+                                extractProgressFill.style.width = extractProgress + '%';
+                            }
+                            if (extractProgress >= 100) {
+                                clearInterval(extractInterval);
+                                setTimeout(() => {
+                                    extractImage.classList.add('hidden');
+                                }, 1000);
+                            }
+                        }, 150);
+                        break;
+                    case 10: // 正在重启到 Fastboot 模式
+                        seewoWhiteboard.classList.remove('hidden');
+                        setTimeout(() => {
+                            seewoWhiteboard.classList.add('hidden');
+                            phoneHomeScreen.classList.add('hidden');
+                            phoneBootloaderScreen.classList.remove('hidden');
+                        }, 2000);
+                        break;
+                    case 11: // 正在解锁引导加载程序
+                        unlockBootloader();
+                        break;
+                    case 13: // 正在重启设备
+                        phoneBootloaderScreen.classList.add('hidden');
+                        showEnhancedBootAnimation();
+                        setTimeout(() => {
+                            phoneHomeScreen.classList.remove('hidden');
+                        }, 4000);
+                        break;
+                }
+                
+                stepIndex++;
+                
+                // 执行命令
+                if (commandIndex < speedCommands.length && stepIndex < speedSteps.length) {
+                    setTimeout(() => {
+                        executeSpeedCommand(speedCommands[commandIndex]);
+                        commandIndex++;
+                    }, 1000); // 速刷模式，命令执行更快
+                } else {
+                    setTimeout(executeSpeedStep, 800); // 速刷模式，步骤间隔更短
+                }
+            }
+            
+            function executeSpeedCommand(command) {
+                const commandLine = document.createElement('div');
+                commandLine.className = 'terminal-line';
+                commandLine.innerHTML = '<span class="terminal-prompt">root@computer:~$</span> <span class="terminal-input"></span>';
+                aiTerminalOutput.appendChild(commandLine);
+                
+                // 滚动到底部
+                aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                
+                const inputElement = commandLine.querySelector('.terminal-input');
+                let charIndex = 0;
+                
+                typingInterval = setInterval(() => {
+                    if (charIndex < command.length) {
+                        inputElement.textContent += command.charAt(charIndex);
+                        charIndex++;
+                        // 滚动到底部
+                        aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                    } else {
+                        clearInterval(typingInterval);
+                        
+                        // 模拟命令执行
+                        setTimeout(() => {
+                            const outputLine = document.createElement('div');
+                            outputLine.className = 'terminal-line';
+                            outputLine.innerHTML = '<span class="terminal-output">Command executed successfully</span>';
+                            aiTerminalOutput.appendChild(outputLine);
+                            outputLine.classList.add('fade-in');
+                            
+                            // 滚动到底部
+                            aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                            
+                            setTimeout(executeSpeedStep, 800); // 速刷模式，命令执行间隔更短
+                        }, 300);
+                    }
+                }, 50); // 速刷模式，代码输入更快
+            }
+            
+            // 开始执行
+            setTimeout(executeSpeedStep, 1000);
+            }
+        });
+
+        // AI 自动 Root
+        aiRootBtn.addEventListener('click', () => {
+            // 无论是否已连接，都从连接设备开始
+            aiRootBtn.innerHTML = '<span class="loading"></span> 执行中...';
+            aiRootBtn.disabled = true;
+            speedRootBtn.disabled = true;
+            aiEffect.classList.remove('hidden');
+            aiTerminalOutput.innerHTML = '';
+            
+            // 显示悬浮窗口
+            showFloatingWindow('AI Assistant', '开始AI自动Root...');
+            
+            // 生成 AI 特效
+            createAIEffects();
+            
+            // 模拟AI思考过程
+            const aiThoughts = [
+                '首先，我需要检查设备连接状态...',
+                '然后，我需要解压必要的Root工具文件...',
+                '接下来，启用开发者选项和USB调试...',
+                '然后，解锁引导加载程序...',
+                '最后，安装Magisk并验证Root权限...'
+            ];
+            
+            simulateAIThinking(aiThoughts, () => {
+                // 思考完成后开始执行Root过程
+                setTimeout(startAIRootProcess, 500);
+            });
+            
+            return;
+            
+            function startAIRootProcess() {
+            
+            // 模拟 AI Root 过程
+            const aiSteps = [
+                '正在连接设备...',
+                '设备连接成功！',
+                '正在检测设备信息...',
+                '设备型号: ' + currentModel,
+                'Android 版本: 14',
+                '正在启用开发者选项...',
+                '正在启用 USB 调试...',
+                '正在重启到 Fastboot 模式...',
+                '正在解锁引导加载程序...',
+                '正在下载 Magisk...',
+                '正在提取 boot 镜像...',
+                '正在修补 boot 镜像...',
+                '正在刷入修补后的镜像...',
+                '正在重启设备...',
+                '正在安装 Magisk 管理器...',
+                '正在验证 Root 权限...',
+                '正在测试 Superuser 权限...',
+                'Root 成功！'
+            ];
+            
+            const aiCommands = [
+                'adb devices',
+                'adb shell settings put global development_settings_enabled 1',
+                'adb shell settings put global adb_enabled 1',
+                'adb reboot bootloader',
+                'fastboot oem unlock',
+                'adb pull /dev/block/by-name/boot boot.img',
+                'magiskboot unpack boot.img',
+                'magiskboot patch boot.img',
+                'fastboot flash boot magisk_patched.img',
+                'fastboot reboot',
+                'adb install Magisk-v26.4.apk',
+                'adb shell su -c "id"',
+                'adb shell su -c "echo Root access granted!"'
+            ];
+            
+            let stepIndex = 0;
+            let commandIndex = 0;
+            
+            function executeAIStep() {
+                if (stepIndex < aiSteps.length) {
+                    // 显示当前步骤的思考
+                    if (aiStepThoughts[stepIndex]) {
+                        simulateStepThinking(aiStepThoughts[stepIndex], () => {
+                            // 思考完成后执行步骤
+                            executeStepContent();
+                        });
+                    } else {
+                        executeStepContent();
+                    }
+                } else {
+                    // 增加尝试次数
+                    rootAttempts++;
+                    
+                    // 根据尝试次数决定结果
+                    if (rootAttempts <= 4) {
+                        // 前4次必定变砖
+                        handleBrick();
+                        aiRootBtn.innerHTML = '开始 AI Root';
+                        aiRootBtn.disabled = false;
+                        speedRootBtn.disabled = false;
+                        aiEffect.classList.add('hidden');
+                    } else if (rootAttempts === 5) {
+                        // 第5次有几率变砖
+                        const random = Math.random();
+                        if (random < 0.5) {
+                            handleBrick();
+                            aiRootBtn.innerHTML = '开始 AI Root';
+                            aiRootBtn.disabled = false;
+                            speedRootBtn.disabled = false;
+                            aiEffect.classList.add('hidden');
+                        } else {
+                            // Root 成功
+                            setTimeout(() => {
+                                aiRootBtn.innerHTML = '开始 AI Root';
+                                aiRootBtn.disabled = false;
+                                speedRootBtn.disabled = false;
+                                aiEffect.classList.add('hidden');
+                                
+                                // 显示手机 Root 成功界面
+                                phoneHomeScreen.classList.add('hidden');
+                                phoneRootScreen.classList.remove('hidden');
+                                
+                                // 更新悬浮窗口
+                                updateFloatingWindow('Root成功！设备已获取Root权限。');
+                                
+                                // 显示Root成功通知
+                                showSuccessMessage(`设备 ${currentModel} Root成功！已获取Superuser权限。`);
+                                
+                                // 自动隐藏环境信息
+                                setTimeout(() => {
+                                    hideEnvironment();
+                                    hideFloatingWindow();
+                                }, 3000);
+                            }, 1000);
+                        }
+                    } else {
+                        // 第6次及以后保底成功
+                        setTimeout(() => {
+                            aiRootBtn.innerHTML = '开始 AI Root';
+                            aiRootBtn.disabled = false;
+                            speedRootBtn.disabled = false;
+                            aiEffect.classList.add('hidden');
+                            
+                            // 显示手机 Root 成功界面
+                            phoneHomeScreen.classList.add('hidden');
+                            phoneRootScreen.classList.remove('hidden');
+                            
+                            // 更新悬浮窗口
+                            updateFloatingWindow('Root成功！设备已获取Root权限。');
+                            
+                            // 显示Root成功通知
+                            showSuccessMessage(`设备 ${currentModel} Root成功！已获取Superuser权限。`);
+                            
+                            // 自动隐藏环境信息
+                            setTimeout(() => {
+                                hideEnvironment();
+                                hideFloatingWindow();
+                            }, 3000);
+                        }, 1000);
+                    }
+                }
+            }
+            
+            function executeStepContent() {
+                // 添加步骤信息
+                const stepLine = document.createElement('div');
+                stepLine.className = 'terminal-line';
+                stepLine.innerHTML = '<span class="terminal-output">' + aiSteps[stepIndex] + '</span>';
+                aiTerminalOutput.appendChild(stepLine);
+                stepLine.classList.add('fade-in');
+                
+                // 滚动到底部
+                aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                
+                // 执行相应的手机界面操作
+                switch (stepIndex) {
+                    case 0: // 正在连接设备
+                        // 模拟连接过程
+                        if (!isConnected) {
+                            connectBtn.innerHTML = '<span class="loading"></span> 连接中...';
+                            connectBtn.disabled = true;
+                            cable.style.display = 'block';
+                            connectionProgress.classList.remove('hidden');
+                            
+                            let progress = 0;
+                            const progressInterval = setInterval(() => {
+                                progress += 5;
+                                progressFill.style.width = progress + '%';
+                                
+                                if (progress >= 100) {
+                                    clearInterval(progressInterval);
+                                    setTimeout(() => {
+                                        connectBtn.innerHTML = '已连接';
+                                        connectBtn.classList.remove('btn-primary');
+                                        connectBtn.classList.add('btn-success');
+                                        deviceInfo.classList.remove('hidden');
+                                        connectionProgress.classList.add('hidden');
+                                        isConnected = true;
+                                        phoneLockScreen.classList.add('hidden');
+                                        phoneHomeScreen.classList.remove('hidden');
+                                    }, 500);
+                                }
+                            }, 50);
+                        }
+                        break;
+                    case 5: // 正在启用开发者选项
+                        enableDeveloperOptions();
+                        break;
+                    case 6: // 正在启用 USB 调试
+                        enableUsbDebugging();
+                        break;
+                    case 7: // 正在重启到 Fastboot 模式
+                        phoneHomeScreen.classList.add('hidden');
+                        phoneBootloaderScreen.classList.remove('hidden');
+                        break;
+                    case 8: // 正在解锁引导加载程序
+                        unlockBootloader();
+                        break;
+                    case 10: // 正在提取 boot 镜像
+                        // 显示提取进度
+                        showFloatingWindow('AI Assistant', '正在提取boot镜像...');
+                        break;
+                    case 11: // 正在修补 boot 镜像
+                        showFloatingWindow('AI Assistant', '正在修补boot镜像...');
+                        break;
+                    case 12: // 正在刷入修补后的镜像
+                        showFloatingWindow('AI Assistant', '正在刷入修补后的镜像...');
+                        break;
+                    case 13: // 正在重启设备
+                        phoneBootloaderScreen.classList.add('hidden');
+                        showEnhancedBootAnimation();
+                        setTimeout(() => {
+                            phoneHomeScreen.classList.remove('hidden');
+                        }, 4000);
+                        break;
+                    case 14: // 正在安装 Magisk 管理器
+                        showFloatingWindow('AI Assistant', '正在安装Magisk管理器...');
+                        break;
+                    case 15: // 正在验证 Root 权限
+                        showFloatingWindow('AI Assistant', '正在验证Root权限...');
+                        break;
+                    case 16: // 正在测试 Superuser 权限
+                        showFloatingWindow('AI Assistant', '正在测试Superuser权限...');
+                        break;
+                }
+                
+                stepIndex++;
+                
+                // 执行命令
+                if (commandIndex < aiCommands.length && stepIndex < aiSteps.length) {
+                    setTimeout(() => {
+                        executeAICommand(aiCommands[commandIndex]);
+                        commandIndex++;
+                    }, 1500);
+                } else {
+                    setTimeout(executeAIStep, 1000);
+                }
+            }
+            
+            function executeAICommand(command) {
+                const commandLine = document.createElement('div');
+                commandLine.className = 'terminal-line';
+                commandLine.innerHTML = '<span class="terminal-prompt">root@computer:~$</span> <span class="terminal-input"></span>';
+                aiTerminalOutput.appendChild(commandLine);
+                
+                // 滚动到底部
+                aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                
+                const inputElement = commandLine.querySelector('.terminal-input');
+                let charIndex = 0;
+                
+                typingInterval = setInterval(() => {
+                    if (charIndex < command.length) {
+                        inputElement.textContent += command.charAt(charIndex);
+                        charIndex++;
+                        // 滚动到底部
+                        aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                    } else {
+                        clearInterval(typingInterval);
+                        
+                        // 模拟命令执行
+                        setTimeout(() => {
+                            const outputLine = document.createElement('div');
+                            outputLine.className = 'terminal-line';
+                            
+                            // 根据命令生成不同的输出
+                            if (command.includes('adb devices')) {
+                                outputLine.innerHTML = '<span class="terminal-output">List of devices attached</span>';
+                                const deviceLine = document.createElement('div');
+                                deviceLine.className = 'terminal-line';
+                                deviceLine.innerHTML = '<span class="terminal-output">ABCDEF1234567890\tdevice</span>';
+                                aiTerminalOutput.appendChild(deviceLine);
+                            } else if (command.includes('magiskboot patch')) {
+                                outputLine.innerHTML = '<span class="terminal-output">Patching boot image...</span>';
+                                const patchLine1 = document.createElement('div');
+                                patchLine1.className = 'terminal-line';
+                                patchLine1.innerHTML = '<span class="terminal-output">Detected boot image format: AOSP</span>';
+                                const patchLine2 = document.createElement('div');
+                                patchLine2.className = 'terminal-line';
+                                patchLine2.innerHTML = '<span class="terminal-output">Patching ramdisk...</span>';
+                                const patchLine3 = document.createElement('div');
+                                patchLine3.className = 'terminal-line';
+                                patchLine3.innerHTML = '<span class="terminal-output">Adding overlay.d folder...</span>';
+                                const patchLine4 = document.createElement('div');
+                                patchLine4.className = 'terminal-line';
+                                patchLine4.innerHTML = '<span class="terminal-output">Patching done!</span>';
+                                aiTerminalOutput.appendChild(patchLine1);
+                                aiTerminalOutput.appendChild(patchLine2);
+                                aiTerminalOutput.appendChild(patchLine3);
+                                aiTerminalOutput.appendChild(patchLine4);
+                            } else if (command.includes('fastboot flash')) {
+                                outputLine.innerHTML = '<span class="terminal-output">Sending boot image...</span>';
+                                const flashLine1 = document.createElement('div');
+                                flashLine1.className = 'terminal-line';
+                                flashLine1.innerHTML = '<span class="terminal-output">Writing boot image...</span>';
+                                const flashLine2 = document.createElement('div');
+                                flashLine2.className = 'terminal-line';
+                                flashLine2.innerHTML = '<span class="terminal-output">Finished writing boot image</span>';
+                                aiTerminalOutput.appendChild(flashLine1);
+                                aiTerminalOutput.appendChild(flashLine2);
+                            } else if (command.includes('adb install')) {
+                                outputLine.innerHTML = '<span class="terminal-output">Installing Magisk-v26.4.apk...</span>';
+                                const installLine1 = document.createElement('div');
+                                installLine1.className = 'terminal-line';
+                                installLine1.innerHTML = '<span class="terminal-output">Package installed successfully</span>';
+                                aiTerminalOutput.appendChild(installLine1);
+                            } else if (command.includes('su -c')) {
+                                if (command.includes('id')) {
+                                    outputLine.innerHTML = '<span class="terminal-output">uid=0(root) gid=0(root) groups=0(root)</span>';
+                                } else {
+                                    outputLine.innerHTML = '<span class="terminal-output">Root access granted!</span>';
+                                }
+                            } else {
+                                outputLine.innerHTML = '<span class="terminal-output">Command executed successfully</span>';
+                            }
+                            
+                            aiTerminalOutput.appendChild(outputLine);
+                            outputLine.classList.add('fade-in');
+                            
+                            // 滚动到底部
+                            aiTerminalOutput.scrollTop = aiTerminalOutput.scrollHeight;
+                            
+                            setTimeout(executeAIStep, 1000);
+                        }, 500);
+                    }
+                }, 100);
+            }
+            
+            // 开始执行
+            setTimeout(executeAIStep, 1000);
+            }
+        });
+
+        // 创建 AI 特效
+        function createAIEffects() {
+            for (let i = 0; i < 5; i++) {
+                const glow = document.createElement('div');
+                glow.className = 'ai-glow';
+                glow.style.width = Math.random() * 200 + 100 + 'px';
+                glow.style.height = glow.style.width;
+                glow.style.left = Math.random() * 100 + '%';
+                glow.style.top = Math.random() * 100 + '%';
+                glow.style.animationDelay = Math.random() * 3 + 's';
+                aiEffect.appendChild(glow);
+            }
+        }
+
+        // 初始化
+        function init() {
+            // 隐藏所有 section，只显示 home
+            document.querySelectorAll('[id$="-section"]').forEach(section => {
+                if (section.id !== 'home-section') {
+                    section.classList.add('hidden');
+                }
+            });
+            
+            // 默认显示电脑桌面
+            showDesktop();
+        }
+
+        // 显示电脑桌面
+        function showDesktop() {
+            computerBody.style.display = 'none';
+            computerDesktop.style.display = 'block';
+        }
+
+        // 显示设备管理界面
+        function showDeviceManager() {
+            computerDesktop.style.display = 'none';
+            computerBody.style.display = 'flex';
+        }
+
+        // 显示 AI 对话框
+        function showAiDialog() {
+            aiDialog.style.display = 'block';
+        }
+
+        // 关闭 AI 对话框
+        function closeAiDialog() {
+            aiDialog.style.display = 'none';
+        }
+
+        // 显示悬浮窗口
+        function showFloatingWindow(header, content) {
+            if (floatingWindowHeader) floatingWindowHeader.textContent = header;
+            if (floatingWindowContent) floatingWindowContent.textContent = content;
+            floatingWindow.style.display = 'block';
+        }
+        
+        // 模拟AI思考过程
+        function simulateAIThinking(thoughts, callback) {
+            const floatingWindowContent = document.getElementById('floating-window-content');
+            if (!floatingWindowContent) return;
+            
+            let thoughtIndex = 0;
+            
+            function nextThought() {
+                if (thoughtIndex < thoughts.length) {
+                    floatingWindowContent.textContent = '🤔 ' + thoughts[thoughtIndex];
+                    thoughtIndex++;
+                    setTimeout(nextThought, 1500);
+                } else {
+                    if (callback) callback();
+                }
+            }
+            
+            nextThought();
+        }
+        
+        // 为单个步骤模拟AI思考
+        function simulateStepThinking(thought, callback) {
+            const floatingWindowContent = document.getElementById('floating-window-content');
+            if (!floatingWindowContent) return;
+            
+            floatingWindowContent.textContent = '🤔 ' + thought;
+            setTimeout(() => {
+                if (callback) callback();
+            }, 1200);
+        }
+        
+        // 为AI Root过程的每个步骤添加详细思考
+        const aiStepThoughts = [
+            '首先，我需要连接设备并建立通信...',
+            '设备连接成功，现在获取设备基本信息...',
+            '正在检测设备型号和Android版本...',
+            '确认设备型号为' + currentModel + '，准备开始Root过程...',
+            'Android版本为14，符合Root条件...',
+            '现在需要启用开发者选项，这是Root的第一步...',
+            '开发者选项已启用，接下来需要启用USB调试...',
+            'USB调试已启用，现在重启到Fastboot模式...',
+            '设备已进入Fastboot模式，准备解锁引导加载程序...',
+            '引导加载程序已解锁，现在开始下载Magisk...',
+            'Magisk下载完成，正在提取设备的boot镜像...',
+            'boot镜像提取完成，现在使用Magisk进行修补...',
+            'boot镜像修补完成，正在刷入修补后的镜像...',
+            '修补后的镜像已刷入，现在重启设备...',
+            '设备已重启，正在安装Magisk管理器...',
+            'Magisk管理器安装完成，现在验证Root权限...',
+            '正在测试Superuser权限是否正常工作...',
+            'Root验证成功！设备已成功获取Root权限...'
+        ];
+        
+        // 为10分钟速刷模式添加详细思考
+        const speedStepThoughts = [
+            '开始10分钟速刷Root模式，首先解压Root工具文件...',
+            '文件解压完成，现在安装必要的工具和驱动...',
+            '工具安装完成，准备连接设备...',
+            '设备连接成功，正在检测设备信息...',
+            '设备信息检测完成，开始提取boot镜像...',
+            'boot镜像提取完成，现在使用Magisk进行修补...',
+            'boot镜像修补完成，准备重启到Fastboot模式...',
+            '设备已进入Fastboot模式，开始解锁引导加载程序...',
+            '引导加载程序已解锁，正在刷入修补后的boot镜像...',
+            '修补后的镜像已刷入，现在重启设备...',
+            '设备已重启，正在验证Root权限...',
+            'Root验证成功！10分钟速刷完成...'
+        ];
+        
+        // 隐藏悬浮窗口
+        function hideFloatingWindow() {
+            floatingWindow.style.display = 'none';
+        }
+        
+        // 更新悬浮窗口内容
+        function updateFloatingWindow(content) {
+            if (floatingWindowContent) floatingWindowContent.textContent = content;
+        }
+        
+        // 显示系统通知
+        function showSystemNotification(title, message, duration = 3000) {
+            const notification = document.createElement('div');
+            notification.style.position = 'fixed';
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.background = 'white';
+            notification.style.color = 'black';
+            notification.style.padding = '15px 20px';
+            notification.style.borderRadius = '8px';
+            notification.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.3)';
+            notification.style.zIndex = '2000';
+            notification.style.minWidth = '300px';
+            notification.style.animation = 'slideUp 0.3s ease-out';
+            notification.innerHTML = `
+                <h4 style="margin: 0 0 8px 0;">${title}</h4>
+                <p style="margin: 0; font-size: 14px; color: #666;">${message}</p>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-in';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, duration);
+        }
+        
+        // 显示操作成功提示
+        function showSuccessMessage(message) {
+            showSystemNotification('操作成功', message);
+        }
+        
+        // 显示操作失败提示
+        function showErrorMessage(message) {
+            showSystemNotification('操作失败', message, 4000);
+        }
+        
+        // 显示警告提示
+        function showWarningMessage(message) {
+            showSystemNotification('警告', message, 3500);
+        }
+        
+        // 添加淡入淡出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // U盘解压安装流程
+        function installFromUsb() {
+            showFloatingWindow('AI Assistant', '正在从U盘解压安装Root工具...');
+            
+            // 模拟U盘解压
+            setTimeout(() => {
+                updateFloatingWindow('正在解压root-tools.zip...');
+                
+                // 模拟安装过程
+                setTimeout(() => {
+                    updateFloatingWindow('正在安装必要组件...');
+                    
+                    setTimeout(() => {
+                        updateFloatingWindow('安装完成！正在创建桌面图标...');
+                        
+                        // 创建Root Tool桌面图标
+                        setTimeout(() => {
+                            const rootToolIcon = document.createElement('div');
+                            rootToolIcon.className = 'desktop-icon';
+                            rootToolIcon.id = 'icon-root';
+                            rootToolIcon.innerHTML = `
+                                <div class="icon-image">🔓</div>
+                                <div class="icon-label">Root Tool</div>
+                            `;
+                            
+                            const desktopIcons = document.querySelector('.desktop-icons');
+                            if (desktopIcons) {
+                                desktopIcons.insertBefore(rootToolIcon, desktopIcons.children[1]);
+                                
+                                // 添加点击事件
+                                rootToolIcon.addEventListener('click', () => {
+                                    showDeviceManager();
+                                });
+                            }
+                            
+                            updateFloatingWindow('Root工具安装完成！');
+                            setTimeout(hideFloatingWindow, 2000);
+                        }, 1000);
+                    }, 1500);
+                }, 2000);
+            }, 1500);
+        }
+
+        // 增强的开机动画
+        function showEnhancedBootAnimation() {
+            phoneHomeScreen.classList.add('hidden');
+            const bootScreen = document.createElement('div');
+            bootScreen.className = 'bootloader';
+            bootScreen.style.display = 'flex';
+            bootScreen.style.flexDirection = 'column';
+            bootScreen.style.alignItems = 'center';
+            bootScreen.style.justifyContent = 'center';
+            bootScreen.style.height = '100%';
+            
+            // 根据品牌生成不同的开机动画
+            let bootHtml = '';
+            switch (currentBrand) {
+                case 'Google':
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">📱</div>
+                        <div style="color: #4285F4; font-size: 24px; margin-bottom: 20px;">Google</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">Powered by Android</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #4285F4, #34A853); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在启动...</div>
+                    `;
+                    break;
+                case 'Xiaomi':
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">🐉</div>
+                        <div style="color: #FF6700; font-size: 24px; margin-bottom: 20px;">Xiaomi</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">MIUI 14</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF6700, #FF9E43); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在优化系统...</div>
+                    `;
+                    break;
+                case 'OPPO':
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">🔵</div>
+                        <div style="color: #00A0E9; font-size: 24px; margin-bottom: 20px;">OPPO</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">ColorOS 13</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #00A0E9, #00C6FF); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在启动...</div>
+                    `;
+                    break;
+                case 'Samsung':
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">🌟</div>
+                        <div style="color: #1428A0; font-size: 24px; margin-bottom: 20px;">Samsung</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">One UI 5.1</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #1428A0, #316FF6); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在优化...</div>
+                    `;
+                    break;
+                case 'Huawei':
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">🌸</div>
+                        <div style="color: #FF4D4F; font-size: 24px; margin-bottom: 20px;">Huawei</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">HarmonyOS 3.0</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #FF4D4F, #FF7A45); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在启动...</div>
+                    `;
+                    break;
+                default:
+                    bootHtml = `
+                        <div style="font-size: 72px; margin-bottom: 30px;">🤖</div>
+                        <div style="color: #4ec9b0; font-size: 24px; margin-bottom: 20px;">AI Root Tool</div>
+                        <div style="color: white; font-size: 18px; margin-bottom: 30px;">Powered by AI</div>
+                        <div style="width: 200px; height: 4px; background: #333; border-radius: 2px; overflow: hidden;">
+                            <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #4ec9b0, #667eea); border-radius: 2px; transition: width 4s ease;"></div>
+                        </div>
+                        <div style="color: #999; font-size: 14px; margin-top: 20px;">正在优化系统...</div>
+                    `;
+            }
+            
+            bootScreen.innerHTML = bootHtml;
+            phoneBody.appendChild(bootScreen);
+            
+            // 显示启动进度
+            setTimeout(() => {
+                const progressBar = bootScreen.querySelector('div > div');
+                if (progressBar) {
+                    progressBar.style.width = '100%';
+                }
+            }, 100);
+            
+            // 4秒后移除开机动画
+            setTimeout(() => {
+                bootScreen.remove();
+            }, 4000);
+        }
+
+        // 开始投屏
+        function startScreenMirroring() {
+            screenMirroring.style.display = 'block';
+            updateScreenMirroring();
+        }
+
+        // 更新投屏内容
+        let lastMirrorTime = 0;
+        let mirrorQuality = 1;
+        
+        function updateScreenMirroring() {
+            const now = Date.now();
+            
+            // 添加随机延迟
+            if (now - lastMirrorTime < 100 + Math.random() * 200) {
+                return;
+            }
+            
+            lastMirrorTime = now;
+            
+            // 随机调整投屏质量
+            if (Math.random() > 0.8) {
+                mirrorQuality = 0.7 + Math.random() * 0.3;
+            }
+            
+            // 复制屏幕内容
+            let screenContent = '';
+            if (phoneLockScreen && !phoneLockScreen.classList.contains('hidden')) {
+                screenContent = phoneLockScreen.innerHTML;
+            } else if (phoneHomeScreen && !phoneHomeScreen.classList.contains('hidden')) {
+                screenContent = phoneHomeScreen.innerHTML;
+            } else if (phoneRootScreen && !phoneRootScreen.classList.contains('hidden')) {
+                screenContent = phoneRootScreen.innerHTML;
+            } else if (phoneSettingsScreen && !phoneSettingsScreen.classList.contains('hidden')) {
+                screenContent = phoneSettingsScreen.innerHTML;
+            } else if (phoneAboutScreen && !phoneAboutScreen.classList.contains('hidden')) {
+                screenContent = phoneAboutScreen.innerHTML;
+            } else if (phoneDeveloperScreen && !phoneDeveloperScreen.classList.contains('hidden')) {
+                screenContent = phoneDeveloperScreen.innerHTML;
+            } else if (phoneDeveloperDetailsScreen && !phoneDeveloperDetailsScreen.classList.contains('hidden')) {
+                screenContent = phoneDeveloperDetailsScreen.innerHTML;
+            } else if (phoneBootloaderScreen && !phoneBootloaderScreen.classList.contains('hidden')) {
+                screenContent = phoneBootloaderScreen.innerHTML;
+            } else if (phoneUnlockScreen && !phoneUnlockScreen.classList.contains('hidden')) {
+                screenContent = phoneUnlockScreen.innerHTML;
+            }
+            
+            if (screenContent) {
+                mirroringContent.innerHTML = screenContent;
+                
+                // 添加质量效果
+                if (mirrorQuality < 0.9) {
+                    mirroringContent.style.filter = `blur(${0.5 + (1 - mirrorQuality) * 2}px) contrast(${0.8 + mirrorQuality * 0.4})`;
+                    mirroringContent.style.opacity = mirrorQuality;
+                } else {
+                    mirroringContent.style.filter = 'none';
+                    mirroringContent.style.opacity = '1';
+                }
+            }
+        }
+
+        // 运行初始化
+        init();
+
+        // 电脑桌面图标点击事件
+        if (iconAi) {
+            iconAi.addEventListener('click', () => {
+                showAiDialog();
+            });
+        }
+
+        // U盘点击事件
+        if (usbDrive) {
+            usbDrive.addEventListener('click', () => {
+                installFromUsb();
+            });
+        }
+
+        // 动态创建的Root Tool图标点击事件将在安装时添加
+
+        // 变砖修复工具相关元素
+        const openBrickFixBtn = document.getElementById('open-brick-fix-btn');
+        const installBrickFixBtn = document.getElementById('install-brick-fix-btn');
+        const startFixBtn = document.getElementById('start-fix-btn');
+        const detectDeviceBtn = document.getElementById('detect-device-btn');
+        const downloadFirmwareBtn = document.getElementById('download-firmware-btn');
+        
+        // 刷系统功能
+        const flashSystemBtn = document.getElementById('flash-system-btn');
+        const installSystemBtn = document.getElementById('install-system-btn');
+        const backupSystemBtn = document.getElementById('backup-system-btn');
+        
+        // 修复工具状态
+        let isBrickFixToolInstalled = false;
+        
+        // 尝试次数计数器
+        let rootAttempts = 0;
+        
+        // 系统选择状态
+        let selectedSystem = '';
+        const correctSystem = 'Android 14'; // 正确的系统版本
+        
+        // 打开修复工具按钮
+        if (openBrickFixBtn) {
+            openBrickFixBtn.addEventListener('click', () => {
+                if (isBrickFixToolInstalled) {
+                    // 切换到变砖修复工具界面
+                    document.querySelectorAll('[id$="-section"]').forEach(section => {
+                        section.classList.add('hidden');
+                    });
+                    document.getElementById('brick-fix-section').classList.remove('hidden');
+                    currentSection = 'brick-fix';
+                    
+                    // 更新侧边栏状态
+                    document.querySelectorAll('.sidebar-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    const brickFixSection = document.querySelector('[data-section="brick-fix"]');
+                    if (brickFixSection) {
+                        brickFixSection.classList.add('active');
+                    }
+                } else {
+                    showFloatingWindow('错误', '变砖修复工具未安装，请先安装');
+                }
+            });
+        }
+        
+        // 安装修复工具按钮
+        if (installBrickFixBtn) {
+            installBrickFixBtn.addEventListener('click', () => {
+                installBrickFixTool();
+            });
+        }
+        
+        // 开始修复按钮
+        if (startFixBtn) {
+            startFixBtn.addEventListener('click', () => {
+                startBrickFixProcess();
+            });
+        }
+        
+        // 检测设备按钮
+        if (detectDeviceBtn) {
+            detectDeviceBtn.addEventListener('click', () => {
+                detectDevice();
+            });
+        }
+        
+        // 下载固件按钮
+        if (downloadFirmwareBtn) {
+            downloadFirmwareBtn.addEventListener('click', () => {
+                downloadFirmware();
+            });
+        }
+        
+        // 刷系统功能
+        if (flashSystemBtn) {
+            flashSystemBtn.addEventListener('click', () => {
+                startFlashSystem();
+            });
+        }
+        
+        // 安装系统功能
+        if (installSystemBtn) {
+            installSystemBtn.addEventListener('click', () => {
+                startInstallSystem();
+            });
+        }
+        
+        // 备份系统功能
+        if (backupSystemBtn) {
+            backupSystemBtn.addEventListener('click', () => {
+                startBackupSystem();
+            });
+        }
+
+        // AI 对话框事件
+        if (aiSendBtn) {
+            aiSendBtn.addEventListener('click', () => {
+                const command = aiInput.value.trim().toLowerCase();
+                if (command.includes('开始 root')) {
+                    // 立即关闭对话框
+                    closeAiDialog();
+                    // 立即显示悬浮窗口
+                    showFloatingWindow('AI Assistant', '正在准备Root过程...');
+                    
+                    // 清空输入框
+                    aiInput.value = '';
+                    
+                    // 检查是否已安装Root工具
+                    const rootToolIcon = document.getElementById('icon-root');
+                    if (!rootToolIcon) {
+                        // 自动从U盘安装
+                        installFromUsb();
+                        
+                        // 安装完成后开始Root
+                        setTimeout(() => {
+                            showDeviceManager();
+                            // 自动点击 AI 自动 Root 选项
+                            setTimeout(() => {
+                                const aiSection = document.querySelector('[data-section="ai"]');
+                                if (aiSection) {
+                                    aiSection.click();
+                                    // 自动点击开始 AI Root 按钮
+                                    setTimeout(() => {
+                                        if (aiRootBtn) {
+                                            aiRootBtn.click();
+                                        }
+                                    }, 500);
+                                }
+                            }, 500);
+                        }, 8000); // 等待安装完成
+                    } else {
+                        // 已安装，直接开始
+                        showDeviceManager();
+                        // 自动点击 AI 自动 Root 选项
+                        setTimeout(() => {
+                            const aiSection = document.querySelector('[data-section="ai"]');
+                            if (aiSection) {
+                                aiSection.click();
+                                // 自动点击开始 AI Root 按钮
+                                setTimeout(() => {
+                                    if (aiRootBtn) {
+                                        aiRootBtn.click();
+                                    }
+                                }, 500);
+                            }
+                        }, 500);
+                    }
+                } else {
+                    aiInput.value = '';
+                }
+            });
+        }
+
+        if (aiCloseBtn) {
+            aiCloseBtn.addEventListener('click', closeAiDialog);
+        }
+
+        if (aiInput) {
+            aiInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    if (aiSendBtn) {
+                        aiSendBtn.click();
+                    }
+                }
+            });
+        }
+
+        // 侧边栏切换事件增强
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // 显示投屏
+                startScreenMirroring();
+            });
+        });
+
+        // 连接设备时开始投屏
+        if (connectBtn) {
+            connectBtn.addEventListener('click', () => {
+                // 延迟开始投屏，确保设备已连接
+                setTimeout(startScreenMirroring, 3000);
+            });
+        }
+
+        // 定期更新投屏内容
+        setInterval(updateScreenMirroring, 1000);
+
+        // 模拟时间更新
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const timeElement = document.querySelector('.status-bar div:first-child');
+            if (timeElement) {
+                timeElement.textContent = `${hours}:${minutes}`;
+            }
+        }
+        
+        // 模拟电池和网络状态变化
+        let batteryLevel = 85;
+        let networkType = '4G';
+        let networkTypes = ['2G', '3G', '4G', '5G'];
+        
+        function updateDeviceStatus() {
+            // 更新电池状态
+            batteryLevel -= Math.random() * 2;
+            if (batteryLevel < 10) batteryLevel = 100;
+            
+            // 随机更新网络状态
+            if (Math.random() > 0.9) {
+                networkType = networkTypes[Math.floor(Math.random() * networkTypes.length)];
+            }
+            
+            // 更新状态栏
+            const batteryElement = document.querySelector('.status-bar div:last-child');
+            const networkElement = document.querySelector('.status-bar div:nth-child(2)');
+            
+            if (batteryElement) {
+                let batteryIcon = '🔋';
+                if (batteryLevel < 20) batteryIcon = '🪫';
+                else if (batteryLevel < 50) batteryIcon = '🔋';
+                batteryElement.textContent = `${batteryIcon} ${Math.round(batteryLevel)}%`;
+            }
+            
+            if (networkElement) {
+                let networkIcon = '📶';
+                if (networkType === '5G') networkIcon = '📱';
+                networkElement.textContent = `${networkIcon} ${networkType}`;
+            }
+        }
+        
+        // 每分钟更新时间
+        updateTime();
+        setInterval(updateTime, 60000);
+        
+        // 每30秒更新设备状态
+        updateDeviceStatus();
+        setInterval(updateDeviceStatus, 30000);
+        
+        // 初始化主屏幕图标交互
+        function initHomeScreenInteraction() {
+            document.querySelectorAll('.home-icon').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    createClickAnimation(icon);
+                    const app = icon.dataset.app;
+                    
+                    switch (app) {
+                        case 'settings':
+                            phoneHomeScreen.classList.add('hidden');
+                            phoneSettingsScreen.classList.remove('hidden');
+                            break;
+                        case 'phone':
+                            showSuccessMessage('正在打开电话应用');
+                            break;
+                        case 'camera':
+                            showSuccessMessage('正在打开相机应用');
+                            break;
+                        case 'browser':
+                            showSuccessMessage('正在打开浏览器');
+                            break;
+                        case 'files':
+                            showSuccessMessage('正在打开文件管理器');
+                            break;
+                        case 'music':
+                            showSuccessMessage('正在打开音乐应用');
+                            break;
+                        case 'games':
+                            showSuccessMessage('正在打开游戏应用');
+                            break;
+                        case 'notes':
+                            showSuccessMessage('正在打开笔记应用');
+                            break;
+                    }
+                });
+            });
+        }
+        
+        // 初始化设置交互
+        initSettingsInteraction();
+        
+        // 初始化主屏幕交互
+        initHomeScreenInteraction();
+        
+        // 显示系统选择对话框
+        function showSystemSelectDialog(callback) {
+            // 创建系统选择对话框
+            const dialog = document.createElement('div');
+            dialog.style.position = 'fixed';
+            dialog.style.top = '50%';
+            dialog.style.left = '50%';
+            dialog.style.transform = 'translate(-50%, -50%)';
+            dialog.style.background = 'white';
+            dialog.style.color = 'black';
+            dialog.style.padding = '40px';
+            dialog.style.borderRadius = '10px';
+            dialog.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.3)';
+            dialog.style.zIndex = '1000';
+            dialog.style.textAlign = 'center';
+            dialog.innerHTML = `
+                <h3 style="margin-bottom: 20px;">选择要刷入的系统</h3>
+                <p style="margin-bottom: 20px; color: #666;">请选择与设备匹配的系统版本</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px;">
+                    <button class="btn btn-secondary system-option" data-system="Android 12">Android 12</button>
+                    <button class="btn btn-primary system-option" data-system="Android 14">Android 14 (推荐)</button>
+                    <button class="btn btn-secondary system-option" data-system="Android 15">Android 15</button>
+                    <button class="btn btn-secondary system-option" data-system="Custom ROM">Custom ROM</button>
+                </div>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn btn-primary" id="confirm-system-btn">确认</button>
+                    <button class="btn btn-secondary" id="cancel-system-btn">取消</button>
+                </div>
+            `;
+            document.body.appendChild(dialog);
+            
+            // 系统选项点击事件
+            const systemOptions = dialog.querySelectorAll('.system-option');
+            systemOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // 移除其他选项的选中状态
+                    systemOptions.forEach(opt => opt.classList.remove('btn-primary'));
+                    opt.classList.add('btn-secondary');
+                    // 添加当前选项的选中状态
+                    option.classList.remove('btn-secondary');
+                    option.classList.add('btn-primary');
+                    // 保存选中的系统
+                    selectedSystem = option.dataset.system;
+                });
+            });
+            
+            // 确认按钮点击事件
+            const confirmBtn = dialog.getElementById('confirm-system-btn');
+            confirmBtn.addEventListener('click', () => {
+                if (selectedSystem) {
+                    dialog.remove();
+                    if (callback) callback();
+                } else {
+                    alert('请选择一个系统版本');
+                }
+            });
+            
+            // 取消按钮点击事件
+            const cancelBtn = dialog.getElementById('cancel-system-btn');
+            cancelBtn.addEventListener('click', () => {
+                dialog.remove();
+            });
+        }
+        
+        // 刷写系统功能
+        function startFlashSystem() {
+            // 显示系统选择对话框
+            showSystemSelectDialog(() => {
+                showFloatingWindow('系统工具', '准备刷写系统...');
+                
+                // 模拟系统刷写过程
+                setTimeout(() => {
+                    updateFloatingWindow('正在下载系统镜像...');
+                    
+                    setTimeout(() => {
+                        updateFloatingWindow('验证系统镜像...');
+                        
+                        setTimeout(() => {
+                            updateFloatingWindow('正在刷写系统...');
+                            
+                            // 模拟刷写进度
+                            const progressBar = document.createElement('div');
+                            progressBar.style.width = '200px';
+                            progressBar.style.height = '4px';
+                            progressBar.style.background = '#333';
+                            progressBar.style.borderRadius = '2px';
+                            progressBar.style.margin = '10px 0';
+                            progressBar.style.overflow = 'hidden';
+                            progressBar.innerHTML = '<div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 3s ease;"></div>';
+                            
+                            const floatingContent = document.getElementById('floating-window-content');
+                            if (floatingContent) {
+                                floatingContent.appendChild(progressBar);
+                            }
+                            
+                            setTimeout(() => {
+                                const progressFill = progressBar.querySelector('div');
+                                if (progressFill) {
+                                    progressFill.style.width = '100%';
+                                }
+                                
+                                setTimeout(() => {
+                                    // 执行失败概率机制
+                                    executeSystemOperation('flash');
+                                }, 3000);
+                            }, 100);
+                        }, 2000);
+                    }, 3000);
+                }, 1000);
+            });
+        }
+        
+        // 安装系统功能
+        function startInstallSystem() {
+            // 显示系统选择对话框
+            showSystemSelectDialog(() => {
+                showFloatingWindow('系统工具', '准备安装系统...');
+                
+                // 模拟系统安装过程
+                setTimeout(() => {
+                    updateFloatingWindow('正在检测系统镜像...');
+                    
+                    setTimeout(() => {
+                        updateFloatingWindow('准备分区...');
+                        
+                        setTimeout(() => {
+                            updateFloatingWindow('正在安装系统...');
+                            
+                            // 执行失败概率机制
+                            setTimeout(() => {
+                                executeSystemOperation('install');
+                            }, 4000);
+                        }, 2000);
+                    }, 2000);
+                }, 1000);
+            });
+        }
+        
+        // 备份系统功能
+        function startBackupSystem() {
+            showFloatingWindow('系统工具', '准备备份系统...');
+            
+            // 模拟系统备份过程
+            setTimeout(() => {
+                updateFloatingWindow('正在创建系统备份...');
+                
+                setTimeout(() => {
+                    updateFloatingWindow('备份完成！');
+                    showSuccessMessage('系统备份成功完成');
+                    
+                    setTimeout(() => {
+                        hideFloatingWindow();
+                    }, 2000);
+                }, 4000);
+            }, 1000);
+        }
+        
+        // 执行系统操作并处理失败概率
+        function executeSystemOperation(operation) {
+            // 增加尝试次数
+            rootAttempts++;
+            
+            // 检查是否刷错系统
+            if (selectedSystem && selectedSystem !== correctSystem) {
+                // 刷错系统，必定变砖
+                handleBrick();
+                return;
+            }
+            
+            // 根据尝试次数决定结果
+            if (rootAttempts <= 4) {
+                // 前4次必定变砖
+                handleBrick();
+            } else if (rootAttempts === 5) {
+                // 第5次有几率变砖
+                const random = Math.random();
+                if (random < 0.5) {
+                    handleBrick();
+                } else {
+                    handleSuccess(operation);
+                }
+            } else {
+                // 第6次及以后保底成功
+                handleSuccess(operation);
+            }
+        }
+        
+        // 处理变砖情况
+        function handleBrick() {
+            updateFloatingWindow('严重错误：设备变砖！');
+            
+            // 显示变砖界面
+            phoneHomeScreen.classList.add('hidden');
+            const brickScreen = document.createElement('div');
+            brickScreen.id = 'phone-brick-screen';
+            brickScreen.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <div style="font-size: 72px; margin-bottom: 30px;">😱</div>
+                    <h2 style="color: #f48771; margin-bottom: 20px;">设备变砖！</h2>
+                    <p style="color: white; margin-bottom: 10px;">系统刷写失败，设备无法启动</p>
+                    <p style="color: #999; margin-bottom: 30px;">请使用变砖修复工具进行修复</p>
+                    <button class="btn btn-primary" id="recovery-btn" onclick="recoveryFromBrick()">尝试救砖</button>
+                </div>
+            `;
+            phoneBody.appendChild(brickScreen);
+            
+            // 显示错误通知
+            showErrorMessage('设备变砖！系统刷写失败');
+            
+            // AI 静默安装修复工具并模拟人手点击尝试救砖按钮
+            setTimeout(() => {
+                updateFloatingWindow('AI 正在分析变砖原因...');
+                
+                // 详细的 AI 思考过程
+                setTimeout(() => {
+                    updateFloatingWindow('AI 检测到设备变砖，需要安装修复工具...');
+                    
+                    // 静默安装修复工具
+                    setTimeout(() => {
+                        updateFloatingWindow('AI 正在静默安装变砖修复工具...');
+                        
+                        // 模拟安装过程
+                        setTimeout(() => {
+                            // 标记修复工具为已安装
+                            isBrickFixToolInstalled = true;
+                            updateFloatingWindow('修复工具安装完成，AI 正在准备救砖...');
+                            
+                            // 延迟一段时间，模拟 AI 准备
+                            setTimeout(() => {
+                                updateFloatingWindow('AI 正在尝试救砖...');
+                                
+                                // 找到尝试救砖按钮
+                                const recoveryBtn = document.getElementById('recovery-btn');
+                                if (recoveryBtn) {
+                                    // 模拟人手点击动画
+                                    createClickAnimation(recoveryBtn);
+                                    
+                                    // 更新悬浮窗口
+                                    updateFloatingWindow('AI 正在点击"尝试救砖"按钮...');
+                                    
+                                    // 延迟后触发救砖操作
+                                    setTimeout(() => {
+                                        recoveryFromBrick();
+                                    }, 1000);
+                                }
+                            }, 2000);
+                        }, 5000);
+                    }, 2000);
+                }, 2000);
+            }, 3000);
+        }
+        
+        // 处理报错情况
+        function handleError(operation) {
+            const errorMessages = [
+                '系统镜像验证失败',
+                '分区表错误',
+                '写入失败',
+                '权限不足',
+                '设备连接中断',
+                '存储空间不足',
+                '驱动错误',
+                '命令执行失败',
+                '毒种：系统文件感染',
+                '毒种：引导区病毒',
+                '毒种：恶意代码注入',
+                '毒种：系统文件损坏'
+            ];
+            
+            const randomError = errorMessages[Math.floor(Math.random() * errorMessages.length)];
+            updateFloatingWindow(`错误：${randomError}`);
+            
+            // 显示错误对话框
+            const errorDialog = document.createElement('div');
+            errorDialog.style.position = 'fixed';
+            errorDialog.style.top = '50%';
+            errorDialog.style.left = '50%';
+            errorDialog.style.transform = 'translate(-50%, -50%)';
+            errorDialog.style.background = 'white';
+            errorDialog.style.color = 'black';
+            errorDialog.style.padding = '30px';
+            errorDialog.style.borderRadius = '10px';
+            errorDialog.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.3)';
+            errorDialog.style.zIndex = '1000';
+            errorDialog.style.textAlign = 'center';
+            errorDialog.innerHTML = `
+                <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+                <h3 style="margin-bottom: 15px;">操作失败</h3>
+                <p style="margin-bottom: 20px; color: #666;">${randomError}</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove(); hideFloatingWindow();">确定</button>
+                    <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove(); hideFloatingWindow();">重试</button>
+                </div>
+            `;
+            document.body.appendChild(errorDialog);
+            
+            // 显示错误通知
+            showErrorMessage(`操作失败：${randomError}`);
+        }
+        
+        // 处理成功情况
+        function handleSuccess(operation) {
+            updateFloatingWindow('操作成功！');
+            
+            // 显示成功界面
+            phoneHomeScreen.classList.add('hidden');
+            const successScreen = document.createElement('div');
+            successScreen.id = 'phone-success-screen';
+            successScreen.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <div style="font-size: 72px; margin-bottom: 30px;">🎉</div>
+                    <h2 style="color: #4ec9b0; margin-bottom: 20px;">${operation === 'flash' ? '系统刷写成功' : '系统安装成功'}</h2>
+                    <p style="color: white; margin-bottom: 10px;">设备已成功${operation === 'flash' ? '刷写' : '安装'}系统</p>
+                    <p style="color: #999; margin-bottom: 30px;">设备将在3秒后重启</p>
+                </div>
+            `;
+            phoneBody.appendChild(successScreen);
+            
+            // 显示成功通知
+            showSuccessMessage(`${operation === 'flash' ? '系统刷写' : '系统安装'}成功完成`);
+            
+            // 3秒后重启设备
+            setTimeout(() => {
+                successScreen.remove();
+                showEnhancedBootAnimation();
+                
+                setTimeout(() => {
+                    phoneHomeScreen.classList.remove('hidden');
+                    hideFloatingWindow();
+                }, 4000);
+            }, 3000);
+        }
+        
+        // 尝试救砖
+        function recoveryFromBrick(attempt = 1) {
+            showFloatingWindow('救砖工具', `AI 正在尝试修复设备（第 ${attempt} 次尝试）...`);
+            
+            // 模拟救砖过程
+            setTimeout(() => {
+                updateFloatingWindow('AI 正在检测设备状态...');
+                
+                setTimeout(() => {
+                    updateFloatingWindow('AI 正在写入引导程序...');
+                    
+                    setTimeout(() => {
+                        updateFloatingWindow('AI 正在刷写系统分区...');
+                        
+                        setTimeout(() => {
+                            updateFloatingWindow('AI 正在验证修复结果...');
+                            
+                            setTimeout(() => {
+                                // 救砖失败几率：第1次尝试有40%几率失败，第2次20%，第3次及以后10%
+                                let failureChance = 0.4;
+                                if (attempt === 2) failureChance = 0.2;
+                                else if (attempt >= 3) failureChance = 0.1;
+                                
+                                const isFailure = Math.random() < failureChance;
+                                
+                                if (isFailure) {
+                                    // 救砖失败
+                                    updateFloatingWindow('救砖失败！AI 正在分析原因...');
+                                    
+                                    setTimeout(() => {
+                                        updateFloatingWindow('AI 正在重新尝试救砖...');
+                                        
+                                        // 重新尝试救砖
+                                        setTimeout(() => {
+                                            recoveryFromBrick(attempt + 1);
+                                        }, 2000);
+                                    }, 2000);
+                                } else {
+                                    // 救砖成功
+                                    updateFloatingWindow('救砖成功！设备已恢复');
+                                    
+                                    // 移除变砖界面
+                                    const brickScreen = document.getElementById('phone-brick-screen');
+                                    if (brickScreen) {
+                                        brickScreen.remove();
+                                    }
+                                    
+                                    // 显示成功通知
+                                    showSuccessMessage('救砖成功！设备已恢复');
+                                    
+                                    // 重启设备
+                                    showEnhancedBootAnimation();
+                                    
+                                    setTimeout(() => {
+                                        phoneHomeScreen.classList.remove('hidden');
+                                        hideFloatingWindow();
+                                        
+                                        // AI 自动重新尝试 Root
+                                        setTimeout(() => {
+                                            updateFloatingWindow('AI 正在重新尝试 Root 操作...');
+                                            
+                                            // 延迟一段时间，模拟 AI 准备
+                                            setTimeout(() => {
+                                                // 找到 AI Root 按钮并点击
+                                                const aiRootBtn = document.getElementById('ai-root-btn');
+                                                if (aiRootBtn) {
+                                                    // 模拟人手点击动画
+                                                    createClickAnimation(aiRootBtn);
+                                                    
+                                                    // 更新悬浮窗口
+                                                    updateFloatingWindow('AI 正在点击"开始 AI Root"按钮...');
+                                                    
+                                                    // 延迟后触发 Root 操作
+                                                    setTimeout(() => {
+                                                        aiRootBtn.click();
+                                                    }, 1000);
+                                                }
+                                            }, 2000);
+                                        }, 3000);
+                                    }, 4000);
+                                }
+                            }, 2000);
+                        }, 3000);
+                    }, 3000);
+                }, 2000);
+            }, 1000);
+        }
+        
+        // 安装变砖修复工具
+        function installBrickFixTool() {
+            showFloatingWindow('变砖修复工具', '正在安装修复工具...');
+            
+            // 模拟安装过程
+            setTimeout(() => {
+                updateFloatingWindow('正在下载安装包...');
+                
+                // 模拟下载进度
+                const progressBar = document.createElement('div');
+                progressBar.style.width = '200px';
+                progressBar.style.height = '4px';
+                progressBar.style.background = '#333';
+                progressBar.style.borderRadius = '2px';
+                progressBar.style.margin = '10px 0';
+                progressBar.style.overflow = 'hidden';
+                progressBar.innerHTML = '<div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 5s ease;"></div>';
+                
+                const floatingContent = document.getElementById('floating-window-content');
+                if (floatingContent) {
+                    floatingContent.appendChild(progressBar);
+                }
+                
+                setTimeout(() => {
+                    const progressFill = progressBar.querySelector('div');
+                    if (progressFill) {
+                        progressFill.style.width = '100%';
+                    }
+                    
+                    setTimeout(() => {
+                        updateFloatingWindow('正在安装...');
+                        
+                        setTimeout(() => {
+                            updateFloatingWindow('安装完成！');
+                            isBrickFixToolInstalled = true;
+                            
+                            // 显示成功通知
+                            showSuccessMessage('变砖修复工具安装成功！');
+                            
+                            setTimeout(() => {
+                                hideFloatingWindow();
+                            }, 2000);
+                        }, 3000);
+                    }, 5000);
+                }, 100);
+            }, 1000);
+        }
+        
+        // 检测设备
+        function detectDevice() {
+            showFloatingWindow('变砖修复工具', '正在检测设备...');
+            
+            setTimeout(() => {
+                const brickStatus = document.getElementById('brick-fix-status');
+                if (brickStatus) {
+                    brickStatus.innerHTML = '<p style="color: #4ec9b0;">设备状态：变砖</p><p style="color: #999; margin-top: 10px;">已检测到变砖设备</p>';
+                }
+                
+                updateFloatingWindow('检测完成：设备状态为变砖');
+                showSuccessMessage('设备检测完成');
+                
+                setTimeout(() => {
+                    hideFloatingWindow();
+                }, 2000);
+            }, 2000);
+        }
+        
+        // 下载固件
+        function downloadFirmware() {
+            showFloatingWindow('变砖修复工具', '正在下载修复固件...');
+            
+            // 模拟下载进度
+            const progressBar = document.createElement('div');
+            progressBar.style.width = '200px';
+            progressBar.style.height = '4px';
+            progressBar.style.background = '#333';
+            progressBar.style.borderRadius = '2px';
+            progressBar.style.margin = '10px 0';
+            progressBar.style.overflow = 'hidden';
+            progressBar.innerHTML = '<div style="width: 0%; height: 100%; background: #4ec9b0; border-radius: 2px; transition: width 8s ease;"></div>';
+            
+            const floatingContent = document.getElementById('floating-window-content');
+            if (floatingContent) {
+                floatingContent.appendChild(progressBar);
+            }
+            
+            setTimeout(() => {
+                const progressFill = progressBar.querySelector('div');
+                if (progressFill) {
+                    progressFill.style.width = '100%';
+                }
+                
+                setTimeout(() => {
+                    updateFloatingWindow('固件下载完成！');
+                    showSuccessMessage('修复固件下载完成');
+                    
+                    setTimeout(() => {
+                        hideFloatingWindow();
+                    }, 2000);
+                }, 8000);
+            }, 100);
+        }
+        
+        // 开始修复过程
+        function startBrickFixProcess() {
+            // 检查系统选择
+            if (selectedSystem && selectedSystem !== correctSystem) {
+                // 刷错系统，必定变砖
+                handleBrick();
+                return;
+            }
+            
+            showFloatingWindow('变砖修复工具', '开始修复设备...');
+            
+            // 更新修复进度
+            const fixProgressText = document.getElementById('fix-progress-text');
+            const progressFill = document.querySelector('#brick-fix-section .tool-progress-fill');
+            
+            if (fixProgressText) fixProgressText.textContent = '准备修复...';
+            if (progressFill) progressFill.style.width = '10%';
+            
+            setTimeout(() => {
+                if (fixProgressText) fixProgressText.textContent = '正在写入引导程序...';
+                if (progressFill) progressFill.style.width = '30%';
+                updateFloatingWindow('正在写入引导程序...');
+                
+                setTimeout(() => {
+                    if (fixProgressText) fixProgressText.textContent = '正在刷写系统分区...';
+                    if (progressFill) progressFill.style.width = '60%';
+                    updateFloatingWindow('正在刷写系统分区...');
+                    
+                    setTimeout(() => {
+                        if (fixProgressText) fixProgressText.textContent = '正在验证修复...';
+                        if (progressFill) progressFill.style.width = '90%';
+                        updateFloatingWindow('正在验证修复...');
+                        
+                        setTimeout(() => {
+                            if (fixProgressText) fixProgressText.textContent = '修复完成！';
+                            if (progressFill) progressFill.style.width = '100%';
+                            updateFloatingWindow('修复完成！设备已恢复');
+                            
+                            // 移除变砖界面
+                            const brickScreen = document.getElementById('phone-brick-screen');
+                            if (brickScreen) {
+                                brickScreen.remove();
+                            }
+                            
+                            // 显示成功通知
+                            showSuccessMessage('变砖修复成功！设备已恢复');
+                            
+                            // 重启设备
+                            showEnhancedBootAnimation();
+                            
+                            setTimeout(() => {
+                                phoneHomeScreen.classList.remove('hidden');
+                                hideFloatingWindow();
+                            }, 4000);
+                        }, 3000);
+                    }, 4000);
+                }, 3000);
+            }, 2000);
+        }
+        
+        // 变砖修复工具
+        function startBrickFixTool() {
+            // 此函数已被新的界面驱动功能替代
+            if (!isBrickFixToolInstalled) {
+                showFloatingWindow('错误', '变砖修复工具未安装，请先安装');
+                return;
+            }
+            
+            // 切换到变砖修复工具界面
+            document.querySelectorAll('[id$="-section"]').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById('brick-fix-section').classList.remove('hidden');
+            currentSection = 'brick-fix';
+            
+            // 更新侧边栏状态
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const brickFixSection = document.querySelector('[data-section="brick-fix"]');
+            if (brickFixSection) {
+                brickFixSection.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

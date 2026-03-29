@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows 10 文件资源管理器</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'windows-blue': '#0078d7',
+                        'windows-light-blue': '#106ebe',
+                        'windows-dark-blue': '#0063b1',
+                        'windows-gray': '#f2f2f2',
+                        'windows-light-gray': '#e6e6e6',
+                        'windows-dark-gray': '#d9d9d9',
+                        'windows-black': '#000000',
+                        'windows-white': '#ffffff',
+                        'windows-red': '#e74c3c',
+                        'windows-yellow': '#f39c12',
+                        'windows-green': '#2ecc71'
+                    },
+                    fontFamily: {
+                        'segoe-ui': ['Segoe UI', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'windows': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'windows-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .windows-scrollbar::-webkit-scrollbar {
+                width: 12px;
+                height: 12px;
+            }
+            .windows-scrollbar::-webkit-scrollbar-track {
+                background-color: #f5f5f5;
+                border: 1px solid #e0e0e0;
+            }
+            .windows-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #c1c1c1;
+                border: 1px solid #a8a8a8;
+            }
+            .windows-scrollbar::-webkit-scrollbar-thumb:hover {
+                background-color: #a8a8a8;
+            }
+            .windows-scrollbar::-webkit-scrollbar-corner {
+                background-color: #f5f5f5;
+                border: 1px solid #e0e0e0;
+            }
+            .folder-tree-line {
+                position: relative;
+            }
+            .folder-tree-line::before {
+                content: '';
+                position: absolute;
+                left: 10px;
+                top: 0;
+                height: 100%;
+                width: 1px;
+                background-color: #ccc;
+            }
+            .folder-tree-item::before {
+                content: '';
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                width: 10px;
+                height: 1px;
+                background-color: #ccc;
+            }
+            .window-drag {
+                -webkit-app-region: drag;
+            }
+            .window-no-drag {
+                -webkit-app-region: no-drag;
+            }
+            .context-menu {
+                z-index: 1000;
+            }
+        }
+    </style>
+</head>
+<body class="bg-windows-gray font-segoe-ui overflow-hidden h-screen">
+    <!-- Windows 桌面背景 -->
+    <div id="desktop" class="fixed inset-0 bg-[url('https://p26-doubao-search-sign.byteimg.com/labis/69c69cb853261f39ae4bf6b0b9a235e2~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786257180&x-signature=%2BJZ2J4J5e8y98SZ4uTVXEKgL1g0%3D')] bg-cover bg-center">
+        <!-- 桌面图标 -->
+        <div class="desktop-icon absolute left-4 top-4 cursor-pointer hover:bg-white/10 p-2 rounded-sm" onclick="openFileExplorer()">
+            <img src="https://p11-doubao-search-sign.byteimg.com/labis/15b85465cc1751ad5c09778a59d934e8~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786256640&x-signature=qhNdKPQ3wgfFaCz0mZpB%2Bt3MnW4%3D" alt="文件资源管理器" class="w-10 h-10 mx-auto">
+            <p class="text-white text-xs text-center mt-1">文件资源管理器</p>
+        </div>
+    </div>
+
+    <!-- Windows 任务栏 -->
+    <div id="taskbar" class="fixed bottom-0 left-0 right-0 h-14 bg-[#00000080] flex items-center px-4 z-50">
+        <!-- 开始菜单按钮 -->
+        <button id="start-menu-btn" class="w-10 h-10 flex items-center justify-center mr-2 hover:bg-white/20 rounded">
+            <i class="fa fa-windows text-white text-xl"></i>
+        </button>
+        
+        <!-- 固定的应用程序 -->
+        <div class="flex items-center space-x-1">
+            <button class="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded" onclick="openFileExplorer()">
+                <i class="fa fa-folder text-white"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded">
+                <i class="fa fa-chrome text-white"></i>
+            </button>
+            <button class="w-10 h-10 flex items-center justify-center hover:bg-white/20 rounded">
+                <i class="fa fa-file-text-o text-white"></i>
+            </button>
+        </div>
+        
+        <!-- 任务栏中间区域 -->
+        <div class="flex-grow"></div>
+        
+        <!-- 系统托盘 -->
+        <div class="flex items-center space-x-2 text-white">
+            <div class="relative group">
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded">
+                    <i class="fa fa-volume-up"></i>
+                </button>
+                <div class="absolute bottom-full right-0 mb-2 hidden group-hover:block">
+                    <div class="bg-white p-2 rounded shadow-windows">
+                        <input type="range" min="0" max="100" value="50" class="w-24" onchange="updateVolume(this.value)">
+                    </div>
+                </div>
+            </div>
+            <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded" onclick="showNetworkStatus()">
+                <i class="fa fa-wifi"></i>
+            </button>
+            <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded">
+                <i class="fa fa-battery-three-quarters"></i>
+            </button>
+            <button id="clock" class="text-xs hover:bg-white/20 rounded px-2 py-1 cursor-pointer" onclick="toggleCalendar()">
+                <span id="current-time">12:34</span>
+                <span id="current-date">2023-01-01</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 文件资源管理器窗口 -->
+    <div id="file-explorer" class="fixed top-1/4 left-1/4 w-3/4 h-3/4 bg-white rounded-sm shadow-windows border border-windows-dark-gray hidden" style="z-index: 100;">
+        <!-- 窗口标题栏 -->
+        <div class="bg-windows-blue text-white flex items-center justify-between px-4 py-2 window-drag">
+            <div class="flex items-center">
+                <img src="https://p11-doubao-search-sign.byteimg.com/labis/15b85465cc1751ad5c09778a59d934e8~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786256640&x-signature=qhNdKPQ3wgfFaCz0mZpB%2Bt3MnW4%3D" alt="文件资源管理器" class="w-6 h-6 mr-2">
+                <span>文件资源管理器</span>
+            </div>
+            <div class="flex items-center space-x-1 window-no-drag">
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded" onclick="minimizeWindow('file-explorer')">
+                    <i class="fa fa-minus"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded" onclick="maximizeWindow('file-explorer')">
+                    <i class="fa fa-square-o"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/20 rounded" onclick="closeWindow('file-explorer')">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 地址栏 -->
+        <div class="bg-windows-light-gray border-b border-windows-dark-gray px-4 py-2 flex items-center">
+            <div class="flex items-center space-x-2 mr-4">
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/50 rounded">
+                    <i class="fa fa-arrow-left"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/50 rounded">
+                    <i class="fa fa-arrow-right"></i>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center hover:bg-white/50 rounded">
+                    <i class="fa fa-arrow-up"></i>
+                </button>
+            </div>
+            <div class="flex-grow bg-white rounded border border-windows-dark-gray flex items-center px-2">
+                <span class="text-gray-500 mr-2">▼</span>
+                <span id="current-path" class="text-sm">此电脑 > 本地磁盘 (C:)</span>
+            </div>
+            <div class="ml-4 flex items-center">
+                <div class="relative">
+                    <input type="text" placeholder="搜索" class="bg-white rounded border border-windows-dark-gray px-2 py-1 text-sm w-40">
+                    <i class="fa fa-search absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="bg-windows-light-gray border-b border-windows-dark-gray px-4 py-1 flex items-center space-x-2">
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-folder mr-1"></i> 新建文件夹
+            </button>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-cut mr-1"></i> 剪切
+            </button>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-copy mr-1"></i> 复制
+            </button>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-paste mr-1"></i> 粘贴
+            </button>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-trash mr-1"></i> 删除
+            </button>
+            <div class="h-6 border-r border-windows-dark-gray mx-1"></div>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-share-alt mr-1"></i> 共享
+            </button>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-download mr-1"></i> 下载
+            </button>
+            <div class="h-6 border-r border-windows-dark-gray mx-1"></div>
+            <button class="px-3 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                <i class="fa fa-info-circle mr-1"></i> 属性
+            </button>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="flex h-[calc(100%-130px)]">
+            <!-- 导航窗格 -->
+            <div class="w-64 border-r border-windows-dark-gray bg-windows-light-gray flex flex-col">
+                <!-- 导航窗格选项卡 -->
+                <div class="flex border-b border-windows-dark-gray">
+                    <button class="flex-1 py-2 text-center text-sm bg-white border-b-2 border-windows-blue font-medium">导航</button>
+                    <button class="flex-1 py-2 text-center text-sm hover:bg-white/50">搜索</button>
+                </div>
+                
+                <!-- 导航树 -->
+                <div class="flex-grow overflow-y-auto windows-scrollbar p-2">
+                    <!-- 快速访问 -->
+                    <div class="mb-4">
+                        <div class="text-sm font-medium text-gray-700 mb-1 px-2">快速访问</div>
+                        <div class="space-y-1">
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-star text-yellow-500 mr-2"></i>
+                                <span class="text-sm">收藏夹</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-clock-o text-blue-500 mr-2"></i>
+                                <span class="text-sm">最近访问的位置</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-download text-green-500 mr-2"></i>
+                                <span class="text-sm">下载</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-file-text-o text-red-500 mr-2"></i>
+                                <span class="text-sm">文档</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-picture-o text-purple-500 mr-2"></i>
+                                <span class="text-sm">图片</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-music text-orange-500 mr-2"></i>
+                                <span class="text-sm">音乐</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                                <i class="fa fa-film text-indigo-500 mr-2"></i>
+                                <span class="text-sm">视频</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 此电脑 -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between px-2 py-1 cursor-pointer" onclick="toggleTreeItem('this-pc')">
+                            <div class="text-sm font-medium text-gray-700">此电脑</div>
+                            <i id="this-pc-icon" class="fa fa-chevron-down text-xs"></i>
+                        </div>
+                        <div id="this-pc-content" class="ml-4 mt-1 space-y-1 folder-tree-line">
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer folder-tree-item" onclick="selectDrive('c')">
+                                <i class="fa fa-hdd-o text-gray-700 mr-2"></i>
+                                <span class="text-sm">本地磁盘 (C:)</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer folder-tree-item">
+                                <i class="fa fa-hdd-o text-gray-700 mr-2"></i>
+                                <span class="text-sm">本地磁盘 (D:)</span>
+                            </div>
+                            <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer folder-tree-item">
+                                <i class="fa fa-dvd text-gray-700 mr-2"></i>
+                                <span class="text-sm">DVD 驱动器 (E:)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 网络 -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between px-2 py-1 cursor-pointer" onclick="toggleTreeItem('network')">
+                            <div class="text-sm font-medium text-gray-700">网络</div>
+                            <i id="network-icon" class="fa fa-chevron-right text-xs"></i>
+                        </div>
+                        <div id="network-content" class="ml-4 mt-1 space-y-1 folder-tree-line hidden">
+                            <!-- 网络内容 -->
+                        </div>
+                    </div>
+                    
+                    <!-- 回收站 -->
+                    <div>
+                        <div class="flex items-center px-2 py-1 hover:bg-white/50 rounded cursor-pointer">
+                            <i class="fa fa-trash text-gray-700 mr-2"></i>
+                            <span class="text-sm">回收站</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文件列表区域 -->
+            <div class="flex-grow flex flex-col">
+                <!-- 文件列表工具栏 -->
+                <div class="bg-windows-light-gray border-b border-windows-dark-gray px-4 py-1 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <button class="px-2 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                            <i class="fa fa-th-large mr-1"></i>
+                        </button>
+                        <button class="px-2 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                            <i class="fa fa-th mr-1"></i>
+                        </button>
+                        <button class="px-2 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                            <i class="fa fa-list mr-1"></i>
+                        </button>
+                        <button class="px-2 py-1 text-sm hover:bg-white/50 rounded flex items-center">
+                            <i class="fa fa-columns mr-1"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-600">排序方式:</span>
+                        <select class="text-xs bg-white border border-windows-dark-gray rounded px-1">
+                            <option>名称</option>
+                            <option>修改日期</option>
+                            <option>类型</option>
+                            <option>大小</option>
+                        </select>
+                        <span class="text-xs text-gray-600">视图:</span>
+                        <select class="text-xs bg-white border border-windows-dark-gray rounded px-1">
+                            <option>详细信息</option>
+                            <option>列表</option>
+                            <option>大图标</option>
+                            <option>中等图标</option>
+                            <option>小图标</option>
+                            <option>平铺</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 文件列表 -->
+                <div id="file-list" class="flex-grow overflow-y-auto windows-scrollbar p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <!-- 文件和文件夹将通过JavaScript动态生成 -->
+                </div>
+                
+                <!-- 状态栏 -->
+                <div class="bg-windows-light-gray border-t border-windows-dark-gray px-4 py-1 flex items-center justify-between text-xs text-gray-600">
+                    <div>12 个项目</div>
+                    <div>总计大小: 1.2 GB</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div id="context-menu" class="hidden fixed bg-white shadow-windows border border-windows-dark-gray rounded-sm context-menu">
+        <div class="py-1">
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer" onclick="createNewFolder()">
+                <i class="fa fa-folder mr-2"></i> 新建文件夹
+            </div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-file-text-o mr-2"></i> 新建文本文档
+            </div>
+            <div class="border-t border-windows-dark-gray my-1"></div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-cut mr-2"></i> 剪切
+            </div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-copy mr-2"></i> 复制
+            </div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-paste mr-2"></i> 粘贴
+            </div>
+            <div class="border-t border-windows-dark-gray my-1"></div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-rename mr-2"></i> 重命名
+            </div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-delete mr-2"></i> 删除
+            </div>
+            <div class="border-t border-windows-dark-gray my-1"></div>
+            <div class="px-4 py-1 hover:bg-windows-blue hover:text-white cursor-pointer">
+                <i class="fa fa-info-circle mr-2"></i> 属性
+            </div>
+        </div>
+    </div>
+
+    <!-- 日历组件 -->
+    <div id="calendar" class="hidden fixed bottom-16 right-4 bg-white shadow-windows border border-windows-dark-gray rounded-sm z-50 w-64">
+        <div class="bg-windows-blue text-white p-2">
+            <div class="text-center mb-1">
+                <span id="calendar-time" class="text-lg font-medium">12:34:56</span>
+            </div>
+            <div class="text-center text-xs">
+                <span id="calendar-date" class="mr-2">2023年1月1日 星期一</span>
+                <span id="lunar-date">农历腊月初一</span>
+            </div>
+        </div>
+        <div class="bg-windows-blue text-white p-2 flex items-center justify-between">
+            <button class="hover:bg-white/20 rounded p-1" onclick="changeMonth(-1)">
+                <i class="fa fa-chevron-left"></i>
+            </button>
+            <h3 id="calendar-title" class="text-center flex-grow">2023年1月</h3>
+            <button class="hover:bg-white/20 rounded p-1" onclick="changeMonth(1)">
+                <i class="fa fa-chevron-right"></i>
+            </button>
+        </div>
+        <div class="p-2">
+            <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-600 mb-1">
+                <div>日</div>
+                <div>一</div>
+                <div>二</div>
+                <div>三</div>
+                <div>四</div>
+                <div>五</div>
+                <div>六</div>
+            </div>
+            <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center text-xs">
+                <!-- 日历天数将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 开始菜单 -->
+    <div id="start-menu" class="hidden fixed bottom-14 left-0 bg-[#00000080] rounded-t-lg shadow-windows z-50 w-[300px] max-h-[calc(100vh-80px)] flex">
+        <!-- 左侧菜单 -->
+        <div class="w-1/3 bg-[#00000099] text-white p-2 flex flex-col">
+            <div class="flex items-center mb-4">
+                <img src="https://p11-doubao-search-sign.byteimg.com/labis/image/2bea4cf5b42e837e03bf465070c2bf6b~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786256640&x-signature=HEtB3n3%2FcxAVXeGJ6bMI3zEfO2Q%3D" alt="用户头像" class="w-10 h-10 rounded-full mr-2">
+                <div>
+                    <div class="text-sm font-medium">用户</div>
+                    <div class="text-xs opacity-75">管理员</div>
+                </div>
+            </div>
+            <div class="space-y-1 flex-grow overflow-y-auto">
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openNotepad()">
+                    <i class="fa fa-file-text-o w-6"></i>
+                    <span>记事本</span>
+                </div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openCalculator()">
+                    <i class="fa fa-calculator w-6"></i>
+                    <span>计算器</span>
+                </div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openPaint()">
+                    <i class="fa fa-paint-brush w-6"></i>
+                    <span>画图</span>
+                </div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openFileExplorer()">
+                    <i class="fa fa-folder w-6"></i>
+                    <span>文件资源管理器</span>
+                </div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openEdge()">
+                    <i class="fa fa-chrome w-6"></i>
+                    <span>Microsoft Edge</span>
+                </div>
+                <div class="border-t border-white/20 my-2"></div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer" onclick="openSettings()">
+                    <i class="fa fa-cog w-6"></i>
+                    <span>设置</span>
+                </div>
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer">
+                    <i class="fa fa-question-circle w-6"></i>
+                    <span>帮助和支持</span>
+                </div>
+            </div>
+            <div class="mt-auto">
+                <div class="flex items-center p-2 hover:bg-white/20 rounded cursor-pointer">
+                    <i class="fa fa-power-off w-6"></i>
+                    <span>电源</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧磁贴区域 -->
+        <div class="w-2/3 bg-[#00000080] p-2 grid grid-cols-3 gap-2">
+            <div class="bg-windows-blue rounded p-1 cursor-pointer hover:bg-windows-light-blue">
+                <div class="text-white text-center text-xs">Edge</div>
+            </div>
+            <div class="bg-green-600 rounded p-1 cursor-pointer hover:bg-green-700">
+                <div class="text-white text-center text-xs">Xbox</div>
+            </div>
+            <div class="bg-purple-600 rounded p-1 cursor-pointer hover:bg-purple-700">
+                <div class="text-white text-center text-xs">OneNote</div>
+            </div>
+            <div class="bg-red-600 rounded p-1 cursor-pointer hover:bg-red-700">
+                <div class="text-white text-center text-xs">Groove</div>
+            </div>
+            <div class="bg-orange-600 rounded p-1 cursor-pointer hover:bg-orange-700">
+                <div class="text-white text-center text-xs">人脉</div>
+            </div>
+            <div class="bg-blue-400 rounded p-1 cursor-pointer hover:bg-blue-500">
+                <div class="text-white text-center text-xs">天气</div>
+            </div>
+            <div class="bg-teal-600 rounded p-1 cursor-pointer hover:bg-teal-700">
+                <div class="text-white text-center text-xs">照片</div>
+            </div>
+            <div class="bg-blue-800 rounded p-1 cursor-pointer hover:bg-blue-900">
+                <div class="text-white text-center text-xs">邮件</div>
+            </div>
+            <div class="bg-gray-600 rounded p-1 cursor-pointer hover:bg-gray-700">
+                <div class="text-white text-center text-xs">日历</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟文件系统数据
+        const fileSystem = {
+            'c': {
+                name: '本地磁盘 (C:)',
+                type: 'drive',
+                size: '500 GB',
+                freeSpace: '250 GB',
+                items: [
+                    {
+                        name: 'Windows',
+                        type: 'folder',
+                        size: '30 GB',
+                        modified: '2023-01-15',
+                        items: [
+                            {
+                                name: 'System32',
+                                type: 'folder',
+                                size: '15 GB',
+                                modified: '2023-01-15',
+                                items: []
+                            },
+                            {
+                                name: 'explorer.exe',
+                                type: 'file',
+                                size: '3.5 MB',
+                                modified: '2023-01-15',
+                                extension: 'exe'
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Program Files',
+                        type: 'folder',
+                        size: '50 GB',
+                        modified: '2023-02-10',
+                        items: [
+                            {
+                                name: 'Microsoft',
+                                type: 'folder',
+                                size: '10 GB',
+                                modified: '2023-02-10',
+                                items: []
+                            },
+                            {
+                                name: 'Google',
+                                type: 'folder',
+                                size: '5 GB',
+                                modified: '2023-02-10',
+                                items: []
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Program Files (x86)',
+                        type: 'folder',
+                        size: '30 GB',
+                        modified: '2023-02-10',
+                        items: []
+                    },
+                    {
+                        name: 'Users',
+                        type: 'folder',
+                        size: '40 GB',
+                        modified: '2023-03-05',
+                        items: [
+                            {
+                                name: 'Admin',
+                                type: 'folder',
+                                size: '20 GB',
+                                modified: '2023-03-05',
+                                items: [
+                                    {
+                                        name: 'Desktop',
+                                        type: 'folder',
+                                        size: '2 GB',
+                                        modified: '2023-03-05',
+                                        items: []
+                                    },
+                                    {
+                                        name: 'Documents',
+                                        type: 'folder',
+                                        size: '5 GB',
+                                        modified: '2023-03-05',
+                                        items: []
+                                    },
+                                    {
+                                        name: 'Downloads',
+                                        type: 'folder',
+                                        size: '8 GB',
+                                        modified: '2023-03-05',
+                                        items: []
+                                    },
+                                    {
+                                        name: ' Pictures',
+                                        type: 'folder',
+                                        size: '3 GB',
+                                        modified: '2023-03-05',
+                                        items: []
+                                    },
+                                    {
+                                        name: 'Music',
+                                        type: 'folder',
+                                        size: '2 GB',
+                                        modified: '2023-03-05',
+                                        items: []
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: 'temp',
+                        type: 'folder',
+                        size: '2 GB',
+                        modified: '2023-04-20',
+                        items: []
+                    },
+                    {
+                        name: 'pagefile.sys',
+                        type: 'file',
+                        size: '8 GB',
+                        modified: '2023-01-10',
+                        extension: 'sys'
+                    },
+                    {
+                        name: 'hiberfil.sys',
+                        type: 'file',
+                        size: '6 GB',
+                        modified: '2023-01-10',
+                        extension: 'sys'
+                    }
+                ]
+            }
+        };
+
+        // 当前路径
+        let currentPath = ['c'];
+        let currentFolder = fileSystem.c;
+
+        // 打开文件资源管理器
+        function openFileExplorer() {
+            document.getElementById('file-explorer').classList.remove('hidden');
+            updateFileList();
+        }
+
+        // 关闭窗口
+        function closeWindow(windowId) {
+            document.getElementById(windowId).classList.add('hidden');
+        }
+
+        // 最小化窗口
+        function minimizeWindow(windowId) {
+            // 模拟最小化效果
+            alert('窗口已最小化');
+        }
+
+        // 最大化窗口
+        function maximizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            if (window.classList.contains('maximized')) {
+                window.classList.remove('maximized');
+                window.style.top = '25%';
+                window.style.left = '25%';
+                window.style.width = '75%';
+                window.style.height = '75%';
+            } else {
+                window.classList.add('maximized');
+                window.style.top = '0';
+                window.style.left = '0';
+                window.style.width = '100%';
+                window.style.height = '100%';
+            }
+        }
+
+        // 切换导航树项目
+        function toggleTreeItem(id) {
+            const content = document.getElementById(`${id}-content`);
+            const icon = document.getElementById(`${id}-icon`);
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            }
+        }
+
+        // 选择驱动器
+        function selectDrive(drive) {
+            currentPath = [drive];
+            currentFolder = fileSystem[drive];
+            updateFileList();
+            updatePathDisplay();
+        }
+
+        // 打开文件夹
+        function openFolder(folderName) {
+            const folder = currentFolder.items.find(item => item.name === folderName && item.type === 'folder');
+            if (folder) {
+                currentPath.push(folderName);
+                currentFolder = folder;
+                updateFileList();
+                updatePathDisplay();
+            }
+        }
+
+        // 返回上一级
+        function goUp() {
+            if (currentPath.length > 1) {
+                currentPath.pop();
+                // 重新构建当前文件夹路径
+                let tempFolder = fileSystem[currentPath[0]];
+                for (let i = 1; i < currentPath.length; i++) {
+                    tempFolder = tempFolder.items.find(item => item.name === currentPath[i]);
+                }
+                currentFolder = tempFolder;
+                updateFileList();
+                updatePathDisplay();
+            }
+        }
+
+        // 更新路径显示
+        function updatePathDisplay() {
+            let pathDisplay = '此电脑';
+            if (currentPath.length > 0) {
+                pathDisplay += ` > 本地磁盘 (${currentPath[0].toUpperCase()}:)`;
+                for (let i = 1; i < currentPath.length; i++) {
+                    pathDisplay += ` > ${currentPath[i]}`;
+                }
+            }
+            document.getElementById('current-path').textContent = pathDisplay;
+        }
+
+        // 更新文件列表
+        function updateFileList() {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            // 添加返回上一级选项（如果不是根目录）
+            if (currentPath.length > 1) {
+                const upItem = document.createElement('div');
+                upItem.className = 'flex flex-col items-center cursor-pointer hover:bg-windows-light-gray p-2 rounded';
+                upItem.onclick = goUp;
+                upItem.innerHTML = `
+                    <div class="w-16 h-16 flex items-center justify-center bg-white rounded">
+                        <i class="fa fa-arrow-up text-2xl text-windows-blue"></i>
+                    </div>
+                    <p class="text-xs text-center mt-1">向上</p>
+                `;
+                fileList.appendChild(upItem);
+            }
+            
+            // 添加文件夹
+            currentFolder.items
+                .filter(item => item.type === 'folder')
+                .forEach(folder => {
+                    const folderItem = document.createElement('div');
+                    folderItem.className = 'flex flex-col items-center cursor-pointer hover:bg-windows-light-gray p-2 rounded';
+                    folderItem.onclick = () => openFolder(folder.name);
+                    folderItem.ondblclick = () => openFolder(folder.name);
+                    folderItem.oncontextmenu = (e) => showContextMenu(e, folder);
+                    folderItem.innerHTML = `
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <img src="https://p11-doubao-search-sign.byteimg.com/labis/15b85465cc1751ad5c09778a59d934e8~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1786256640&x-signature=qhNdKPQ3wgfFaCz0mZpB%2Bt3MnW4%3D" alt="文件夹" class="w-12 h-12">
+                        </div>
+                        <p class="text-xs text-center mt-1 truncate w-16" title="${folder.name}">${folder.name}</p>
+                    `;
+                    fileList.appendChild(folderItem);
+                });
+            
+            // 添加文件
+            currentFolder.items
+                .filter(item => item.type === 'file')
+                .forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'flex flex-col items-center cursor-pointer hover:bg-windows-light-gray p-2 rounded';
+                    fileItem.oncontextmenu = (e) => showContextMenu(e, file);
+                    
+                    // 根据文件扩展名选择图标
+                    let fileIcon = 'fa-file-o';
+                    if (file.extension) {
+                        switch (file.extension.toLowerCase()) {
+                            case 'txt':
+                                fileIcon = 'fa-file-text-o';
+                                break;
+                            case 'doc':
+                            case 'docx':
+                                fileIcon = 'fa-file-word-o';
+                                break;
+                            case 'xls':
+                            case 'xlsx':
+                                fileIcon = 'fa-file-excel-o';
+                                break;
+                            case 'ppt':
+                            case 'pptx':
+                                fileIcon = 'fa-file-powerpoint-o';
+                                break;
+                            case 'pdf':
+                                fileIcon = 'fa-file-pdf-o';
+                                break;
+                            case 'jpg':
+                            case 'jpeg':
+                            case 'png':
+                            case 'gif':
+                                fileIcon = 'fa-file-image-o';
+                                break;
+                            case 'mp3':
+                            case 'wav':
+                                fileIcon = 'fa-file-audio-o';
+                                break;
+                            case 'mp4':
+                            case 'avi':
+                            case 'mov':
+                                fileIcon = 'fa-file-video-o';
+                                break;
+                            case 'exe':
+                                fileIcon = 'fa-file-exe-o';
+                                break;
+                            default:
+                                fileIcon = 'fa-file-o';
+                        }
+                    }
+                    
+                    fileItem.innerHTML = `
+                        <div class="w-16 h-16 flex items-center justify-center">
+                            <i class="fa ${fileIcon} text-4xl text-windows-blue"></i>
+                        </div>
+                        <p class="text-xs text-center mt-1 truncate w-16" title="${file.name}">${file.name}</p>
+                    `;
+                    fileList.appendChild(fileItem);
+                });
+        }
+
+        // 显示右键菜单
+        function showContextMenu(e, item) {
+            e.preventDefault();
+            const contextMenu = document.getElementById('context-menu');
+            contextMenu.style.top = `${e.clientY}px`;
+            contextMenu.style.left = `${e.clientX}px`;
+            contextMenu.classList.remove('hidden');
+            
+            // 存储当前选中的项目
+            contextMenu.dataset.selectedItem = JSON.stringify(item);
+        }
+
+        // 隐藏右键菜单
+        document.addEventListener('click', function() {
+            document.getElementById('context-menu').classList.add('hidden');
+        });
+
+        // 创建新文件夹
+        function createNewFolder() {
+            const newFolderName = prompt('请输入新文件夹名称:', '新建文件夹');
+            if (newFolderName && newFolderName.trim() !== '') {
+                // 检查文件夹名称是否已存在
+                const folderExists = currentFolder.items.some(item => 
+                    item.name === newFolderName && item.type === 'folder'
+                );
+                
+                if (folderExists) {
+                    alert('文件夹名称已存在，请选择其他名称。');
+                    return;
+                }
+                
+                // 创建新文件夹
+                const newFolder = {
+                    name: newFolderName,
+                    type: 'folder',
+                    size: '0 KB',
+                    modified: new Date().toISOString().split('T')[0],
+                    items: []
+                };
+                
+                // 添加到当前文件夹
+                currentFolder.items.push(newFolder);
+                
+                // 更新文件列表
+                updateFileList();
+                
+                // 隐藏右键菜单
+                document.getElementById('context-menu').classList.add('hidden');
+            }
+        }
+
+        // 窗口拖拽功能
+        const fileExplorer = document.getElementById('file-explorer');
+        const titleBar = fileExplorer.querySelector('.window-drag');
+        
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        titleBar.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.window-no-drag')) return;
+            
+            isDragging = true;
+            offsetX = e.clientX - fileExplorer.getBoundingClientRect().left;
+            offsetY = e.clientY - fileExplorer.getBoundingClientRect().top;
+            
+            // 移除最大化类，以便可以拖动
+            fileExplorer.classList.remove('maximized');
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            const x = e.clientX - offsetX;
+            const y = e.clientY - offsetY;
+            
+            // 确保窗口不会超出屏幕
+            const maxX = window.innerWidth - fileExplorer.offsetWidth;
+            const maxY = window.innerHeight - fileExplorer.offsetHeight;
+            
+            fileExplorer.style.left = `${Math.max(0, Math.min(x, maxX))}px`;
+            fileExplorer.style.top = `${Math.max(0, Math.min(y, maxY))}px`;
+        });
+        
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+
+        // 当前日期和时间
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekday = weekdays[now.getDay()];
+            
+            // 更新任务栏时间
+            document.getElementById('current-time').textContent = `${hours}:${minutes}`;
+            document.getElementById('current-date').textContent = `${year}-${month}-${day}`;
+            
+            // 更新日历时间
+            document.getElementById('calendar-time').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('calendar-date').textContent = `${year}年${month}月${day}日 ${weekday}`;
+            
+            // 更新农历日期
+            document.getElementById('lunar-date').textContent = getLunarDate(now);
+        }
+
+        // 获取农历日期（简化版）
+        function getLunarDate(date) {
+            const lunarMonths = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '腊月'];
+            const lunarDays = ['初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+                              '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+                              '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'];
+            
+            // 这里使用简化的农历计算，实际应用中可能需要更复杂的算法
+            const month = date.getMonth();
+            const day = date.getDate() - 1;
+            
+            return `农历${lunarMonths[month]}${lunarDays[day]}`;
+        }
+
+        // 切换日历显示
+        function toggleCalendar() {
+            const calendar = document.getElementById('calendar');
+            if (calendar.classList.contains('hidden')) {
+                calendar.classList.remove('hidden');
+                updateCalendar();
+            } else {
+                calendar.classList.add('hidden');
+            }
+        }
+
+        // 更新日历
+        function updateCalendar() {
+            const calendarDays = document.getElementById('calendar-days');
+            const calendarTitle = document.getElementById('calendar-title');
+            
+            // 设置标题
+            const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+            calendarTitle.textContent = `${currentYear}年${monthNames[currentMonth]}`;
+            
+            // 清空日历
+            calendarDays.innerHTML = '';
+            
+            // 获取当月第一天是星期几
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            
+            // 获取当月的天数
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // 添加空白格子
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'h-6 flex items-center justify-center';
+                calendarDays.appendChild(emptyDay);
+            }
+            
+            // 添加日期
+            for (let i = 1; i <= daysInMonth; i++) {
+                const day = document.createElement('div');
+                day.className = 'h-6 flex items-center justify-center rounded cursor-pointer';
+                
+                // 高亮今天
+                const today = new Date();
+                if (i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear()) {
+                    day.classList.add('bg-windows-blue', 'text-white');
+                } else {
+                    day.classList.add('hover:bg-windows-light-gray');
+                }
+                
+                day.textContent = i;
+                calendarDays.appendChild(day);
+            }
+        }
+
+        // 切换月份
+        function changeMonth(direction) {
+            currentMonth += direction;
+            
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            
+            updateCalendar();
+        }
+
+        // 切换开始菜单
+        function toggleStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            if (startMenu.classList.contains('hidden')) {
+                startMenu.classList.remove('hidden');
+            } else {
+                startMenu.classList.add('hidden');
+            }
+        }
+
+        // 打开记事本
+        function openNotepad() {
+            alert('记事本已打开');
+            // 在实际应用中，这里可以创建一个新的窗口来模拟记事本
+            toggleStartMenu();
+        }
+
+        // 打开计算器
+        function openCalculator() {
+            alert('计算器已打开');
+            // 在实际应用中，这里可以创建一个新的窗口来模拟计算器
+            toggleStartMenu();
+        }
+
+        // 打开画图
+        function openPaint() {
+            alert('画图已打开');
+            // 在实际应用中，这里可以创建一个新的窗口来模拟画图
+            toggleStartMenu();
+        }
+
+        // 打开Edge浏览器
+        function openEdge() {
+            alert('Microsoft Edge已打开');
+            // 在实际应用中，这里可以创建一个新的窗口来模拟浏览器
+            toggleStartMenu();
+        }
+
+        // 打开设置
+        function openSettings() {
+            alert('设置已打开');
+            // 在实际应用中，这里可以创建一个新的窗口来模拟设置
+            toggleStartMenu();
+        }
+
+        // 更新音量
+        function updateVolume(value) {
+            console.log(`音量已调整为: ${value}%`);
+            // 在实际应用中，这里可以使用Web Audio API来控制音量
+        }
+
+        // 显示网络状态
+        function showNetworkStatus() {
+            alert('因特网已连接');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 点击桌面空白处隐藏右键菜单
+            document.getElementById('desktop').addEventListener('click', function() {
+                document.getElementById('context-menu').classList.add('hidden');
+                document.getElementById('start-menu').classList.add('hidden');
+            });
+            
+            // 点击文件资源管理器背景隐藏右键菜单
+            document.getElementById('file-list').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    document.getElementById('context-menu').classList.add('hidden');
+                }
+            });
+            
+            // 绑定开始菜单按钮
+            document.getElementById('start-menu-btn').addEventListener('click', toggleStartMenu);
+            
+            // 点击其他地方关闭开始菜单
+            document.addEventListener('click', function(e) {
+                const startMenu = document.getElementById('start-menu');
+                const startMenuBtn = document.getElementById('start-menu-btn');
+                
+                if (!startMenu.contains(e.target) && !startMenuBtn.contains(e.target)) {
+                    startMenu.classList.add('hidden');
+                }
+            });
+            
+            // 点击其他地方关闭日历
+            document.addEventListener('click', function(e) {
+                const calendar = document.getElementById('calendar');
+                const clock = document.getElementById('clock');
+                
+                if (!calendar.contains(e.target) && !clock.contains(e.target)) {
+                    calendar.classList.add('hidden');
+                }
+            });
+            
+            // 初始化时间
+            updateTime();
+            setInterval(updateTime, 1000); // 每秒更新一次
+            
+            // 初始化日历
+            updateCalendar();
+        });
+    </script>
+</body>
+</html>
