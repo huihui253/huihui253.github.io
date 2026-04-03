@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MineCraft Web - 科技感启动器</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto+Mono:wght@300;400;500&display=swap">
+        <link type="text/css" href="res/css/index.css" rel="stylesheet"/>
+    </head>
+    <body>
+        <div id="iApp">
+            <!-- 现代科技感顶部栏 -->
+            <div class="top">
+                <div class="top-content">
+                    <div class="logo-container">
+                        <div class="logo-icon">⛏️</div>
+                        <div class="logo-text">
+                            <span class="main-title">MINECRAFT</span>
+                            <span class="sub-title">WEB LAUNCHER</span>
+                        </div>
+                    </div>
+                    
+                    <div class="header-controls">
+                        <div class="system-indicator">
+                            <div class="indicator-dot active"></div>
+                            <span class="indicator-label">系统在线</span>
+                        </div>
+                        <div class="time-display" id="headerTime">--:--:--</div>
+                    </div>
+                </div>
+                
+                <!-- 导航栏 -->
+                <div class="nav-bar">
+                    <button class="nav-btn active" data-section="launch">
+                        <span class="nav-icon">🚀</span>
+                        <span class="nav-text">启动</span>
+                    </button>
+                    <button class="nav-btn" data-section="tools">
+                        <span class="nav-icon">🛠️</span>
+                        <span class="nav-text">工具</span>
+                    </button>
+                    <button class="nav-btn" data-section="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">设置</span>
+                    </button>
+                    <button class="nav-btn" data-section="about">
+                        <span class="nav-icon">ℹ️</span>
+                        <span class="nav-text">关于</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 主内容区域 -->
+            <div class="main-content">
+                <!-- 启动面板 -->
+                <div id="launchSection" class="content-section active">
+                    <div class="section-grid">
+                        <!-- 左侧：版本控制区 -->
+                        <div class="version-panel">
+                            <h2 class="section-header">
+                                <span class="header-icon">📦</span>
+                                <span>版本选择</span>
+                            </h2>
+                            
+                            <div class="version-list">
+                                <div class="version-item selected" data-version="1.8.9">
+                                    <div class="version-badge release">稳定版</div>
+                                    <div class="version-info">
+                                        <div class="version-name">1.8.9</div>
+                                        <div class="version-desc">最佳兼容性，推荐使用</div>
+                                    </div>
+                                    <div class="version-selector">
+                                        <div class="select-indicator"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="version-item" data-version="1.5.2">
+                                    <div class="version-badge classic">经典版</div>
+                                    <div class="version-info">
+                                        <div class="version-name">1.5.2</div>
+                                        <div class="version-desc">经典红石系统</div>
+                                    </div>
+                                    <div class="version-selector">
+                                        <div class="select-indicator"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="launch-controls">
+                                <button id="startGameBtn" class="launch-btn primary">
+                                    <span class="launch-icon">▶</span>
+                                    <span class="launch-text">启动游戏</span>
+                                    <div class="launch-glow"></div>
+                                </button>
+                                
+                                <div class="quick-actions">
+                                    <button class="action-btn" onclick="toggleFullscreen()" id="fullscreenBtn" disabled>
+                                        <span class="action-icon">⛶</span>
+                                        <span>全屏</span>
+                                    </button>
+                                    <button class="action-btn" onclick="reloadGame()" id="reloadBtn" disabled>
+                                        <span class="action-icon">↻</span>
+                                        <span>重载</span>
+                                    </button>
+                                    <button class="action-btn" onclick="takeScreenshot()">
+                                        <span class="action-icon">📸</span>
+                                        <span>截图</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 中间：游戏预览区 -->
+                        <div class="preview-panel">
+                            <div class="preview-header">
+                                <h2 class="section-header">
+                                    <span class="header-icon">🎮</span>
+                                    <span>游戏预览</span>
+                                </h2>
+                                <div class="preview-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-label">状态:</span>
+                                        <span class="stat-value offline">离线</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-label">延迟:</span>
+                                        <span class="stat-value">-- ms</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="game-preview">
+                                <div id="gamePlaceholder" class="preview-placeholder active">
+                                    <div class="placeholder-animation">
+                                        <div class="floating-cube">
+                                            <div class="cube-face front"></div>
+                                            <div class="cube-face back"></div>
+                                            <div class="cube-face left"></div>
+                                            <div class="cube-face right"></div>
+                                            <div class="cube-face top"></div>
+                                            <div class="cube-face bottom"></div>
+                                        </div>
+                                        <div class="particles">
+                                            <div class="particle"></div>
+                                            <div class="particle"></div>
+                                            <div class="particle"></div>
+                                        </div>
+                                    </div>
+                                    <div class="placeholder-info">
+                                        <h3>准备启动</h3>
+                                        <p>选择一个版本并点击启动按钮</p>
+                                        <p class="hint-text">使用WASD移动 | 空格跳跃 | 鼠标控制视角</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- 游戏iframe -->
+                                <iframe 
+                                    id="gameFrame" 
+                                    class="game-frame"
+                                    src="about:blank"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                    style="display:none;">
+                                </iframe>
+                            </div>
+                            
+                            <div class="progress-container" style="display:none;" id="loadingProgressContainer">
+                                <div class="progress-header">
+                                    <span>正在加载游戏...</span>
+                                    <span id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="loadingProgress" class="progress-fill"></div>
+                                </div>
+                                <div class="progress-steps">
+                                    <div class="progress-step active">初始化</div>
+                                    <div class="progress-step">加载资源</div>
+                                    <div class="progress-step">连接服务器</div>
+                                    <div class="progress-step">启动引擎</div>
+                                    <div class="progress-step">准备完成</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 右侧：状态信息区 -->
+                        <div class="status-panel">
+                            <h2 class="section-header">
+                                <span class="header-icon">📊</span>
+                                <span>系统状态</span>
+                            </h2>
+                            
+                            <div class="status-cards">
+                                <div class="status-card">
+                                    <div class="card-icon performance">⚡</div>
+                                    <div class="card-content">
+                                        <div class="card-label">性能</div>
+                                        <div class="card-value">待机中</div>
+                                    </div>
+                                    <div class="card-graph" id="performanceGraph"></div>
+                                </div>
+                                
+                                <div class="status-card">
+                                    <div class="card-icon memory">🧠</div>
+                                    <div class="card-content">
+                                        <div class="card-label">内存</div>
+                                        <div class="card-value">-- MB</div>
+                                    </div>
+                                    <div class="card-graph" id="memoryGraph"></div>
+                                </div>
+                                
+                                <div class="status-card">
+                                    <div class="card-icon network">🌐</div>
+                                    <div class="card-content">
+                                        <div class="card-label">网络</div>
+                                        <div class="card-value">等待连接</div>
+                                    </div>
+                                    <div class="card-graph" id="networkGraph"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="quick-tools">
+                                <h3 class="tools-title">快速工具</h3>
+                                <div class="tools-grid">
+                                    <button class="tool-btn" onclick="togglePerformanceMonitor()">
+                                        <span class="tool-icon">📈</span>
+                                        <span>性能监视</span>
+                                    </button>
+                                    <button class="tool-btn" onclick="toggleCommandInput()">
+                                        <span class="tool-icon">⌨️</span>
+                                        <span>命令控制</span>
+                                    </button>
+                                    <button class="tool-btn" onclick="quickSave()">
+                                        <span class="tool-icon">💾</span>
+                                        <span>快速保存</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 工具面板 -->
+                <div id="toolsSection" class="content-section">
+                    <div class="section-header">
+                        <span class="header-icon">🛠️</span>
+                        <span>工具面板</span>
+                    </div>
+                    
+                    <div class="tools-container">
+                        <div class="tool-category">
+                            <h3 class="category-title">游戏工具</h3>
+                            <div class="tools-grid">
+                                <div class="tool-card" onclick="takeScreenshot()">
+                                    <div class="tool-icon">📸</div>
+                                    <div class="tool-name">游戏截图</div>
+                                    <div class="tool-desc">捕获游戏画面</div>
+                                </div>
+                                
+                                <div class="tool-card" onclick="quickSave()">
+                                    <div class="tool-icon">💾</div>
+                                    <div class="tool-name">快速保存</div>
+                                    <div class="tool-desc">保存游戏进度</div>
+                                </div>
+                                
+                                <div class="tool-card" onclick="showControls()">
+                                    <div class="tool-icon">🎮</div>
+                                    <div class="tool-name">控制说明</div>
+                                    <div class="tool-desc">查看游戏操作</div>
+                                </div>
+                                
+                                <div class="tool-card" onclick="toggleCommandInput()">
+                                    <div class="tool-icon">⌨️</div>
+                                    <div class="tool-name">命令控制台</div>
+                                    <div class="tool-desc">输入游戏命令</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-category">
+                            <h3 class="category-title">系统工具</h3>
+                            <div class="tools-grid">
+                                <div class="tool-card" onclick="togglePerformanceMonitor()">
+                                    <div class="tool-icon">📊</div>
+                                    <div class="tool-name">性能监视器</div>
+                                    <div class="tool-desc">监控系统性能</div>
+                                </div>
+                                
+                                <div class="tool-card" onclick="runDiagnostics()">
+                                    <div class="tool-icon">🔍</div>
+                                    <div class="tool-name">系统诊断</div>
+                                    <div class="tool-desc">检查系统状态</div>
+                                </div>
+                                
+                                <div class="tool-card" onclick="clearCache()">
+                                    <div class="tool-icon">🧹</div>
+                                        <div class="tool-name">清除缓存</div>
+                                    <div class="tool-desc">清理临时数据</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置面板 -->
+                <div id="settingsSection" class="content-section">
+                    <div class="section-header">
+                        <span class="header-icon">⚙️</span>
+                                        <span>系统设置</span>
+                    </div>
+                    
+                    <div class="settings-container">
+                        <div class="settings-group">
+                            <h3 class="group-title">游戏设置</h3>
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>启用音效</span>
+                                        <span class="setting-hint">游戏音效和界面反馈</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="switch">
+                                            <input type="checkbox" id="soundToggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>自动保存</span>
+                                        <span class="setting-hint">定期保存游戏进度</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="switch">
+                                            <input type="checkbox" id="autoSaveToggle">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>启动全屏</span>
+                                        <span class="setting-hint">游戏启动时自动全屏</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="switch">
+                                            <input type="checkbox" id="fullscreenToggle">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <h3 class="group-title">界面设置</h3>
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>启用动画</span>
+                                        <span class="setting-hint">界面过渡和特效</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="switch">
+                                            <input type="checkbox" id="animationsToggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>显示通知</span>
+                                        <span class="setting-hint">系统消息提示</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <label class="switch">
+                                            <input type="checkbox" id="notificationsToggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <span>主题颜色</span>
+                                        <span class="setting-hint">界面主题样式</span>
+                                    </div>
+                                    <div class="setting-control">
+                                        <div class="theme-selector">
+                                            <button class="theme-option active" data-theme="tech-blue">
+                                                <div class="theme-preview blue"></div>
+                                                <span>科技蓝</span>
+                                            </button>
+                                            <button class="theme-option" data-theme="matrix-green">
+                                                <div class="theme-preview green"></div>
+                                                <span>矩阵绿</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-actions">
+                            <button id="saveSettingsBtn" class="settings-save-btn">
+                                <span class="btn-icon">✓</span>
+                                <span>保存设置</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 关于面板 -->
+                <div id="aboutSection" class="content-section">
+                    <div class="about-container">
+                        <div class="about-header">
+                            <div class="about-logo">
+                                <div class="logo-animation">
+                                    <div class="logo-cube">
+                                        <div class="cube-side front"></div>
+                                        <div class="cube-side back"></div>
+                                        <div class="cube-side left"></div>
+                                        <div class="cube-side right"></div>
+                                        <div class="cube-side top"></div>
+                                        <div class="cube-side bottom"></div>
+                                    </div>
+                                </div>
+                                <div class="about-title">
+                                    <h1>MineCraft Web</h1>
+                                    <div class="version-badge">版本 2.1.0</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="about-content">
+                            <div class="about-section">
+                                <h3>关于项目</h3>
+                                <p>这是一个基于Web技术的Minecraft游戏启动器，采用现代前端技术构建，提供科技感的用户界面和流畅的游戏体验。</p>
+                                <p class="developer-info">开发者：爱写代码的辉辉</p>
+                            </div>
+                            
+                            <div class="about-section">
+                                <h3>系统信息</h3>
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <span class="info-label">引擎版本:</span>
+                                        <span class="info-value" id="engineVersion">2.1.0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">渲染引擎:</span>
+                                        <span class="info-value">WebGL 2.0</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">构建日期:</span>
+                                        <span class="info-value">2024.01.15</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">浏览器:</span>
+                                        <span class="info-value" id="browserInfo">检测中...</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label">开发者:</span>
+                                        <span class="info-value">爱写代码的辉辉</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="about-section">
+                                <h3>技术支持</h3>
+                                <div class="tech-grid">
+                                    <div class="tech-item">
+                                        <div class="tech-icon">🎯</div>
+                                        <div class="tech-info">
+                                            <div class="tech-name">高性能渲染</div>
+                                            <div class="tech-desc">基于WebGL加速</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-item">
+                                        <div class="tech-icon">📱</div>
+                                        <div class="tech-info">
+                                            <div class="tech-name">响应式设计</div>
+                                            <div class="tech-desc">支持多终端设备</div>
+                                        </div>
+                                    </div>
+                                    <div class="tech-item">
+                                        <div class="tech-icon">⚡</div>
+                                        <div class="tech-info">
+                                            <div class="tech-name">快速加载</div>
+                                            <div class="tech-desc">智能缓存系统</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="about-footer">
+                                <p class="copyright">© 2024 MineCraft Web Launcher. 仅供学习和演示使用。</p>
+                                <p class="developer-credit">开发与维护：爱写代码的辉辉</p>
+                                <div class="links">
+                                    <button class="link-btn" onclick="showSystemInfo()">
+                                        <span class="link-icon">📊</span>
+                                        <span>系统诊断</span>
+                                    </button>
+                                    <button class="link-btn" onclick="clearCache()">
+                                        <span class="link-icon">🧹</span>
+                                        <span>清除缓存</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部状态栏 -->
+            <div class="bottom-bar">
+                <div class="status-items">
+                    <div class="status-item">
+                        <span class="status-label">系统:</span>
+                        <span class="status-value" id="systemStatus">就绪</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">内存:</span>
+                        <span class="status-value" id="memoryStatus">-- MB</span>
+                    </div>
+                </div>
+                <div class="connection-status">
+                    <div class="connection-dot active"></div>
+                    <span class="connection-text">连接正常</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 浮动工具 -->
+        <div class="floating-tools">
+            <button class="float-btn screenshot" onclick="takeScreenshot()" title="截图">
+                <span class="float-icon">📸</span>
+            </button>
+            <button class="float-btn fullscreen" onclick="toggleFullscreen()" title="全屏" id="floatFullscreenBtn" disabled>
+                <span class="float-icon">⛶</span>
+            </button>
+            <button class="float-btn performance" onclick="togglePerformanceMonitor()" title="性能">
+                <span class="float-icon">📊</span>
+            </button>
+        </div>
+        
+        <!-- 弹出面板 -->
+        <div id="commandInputContainer" class="popup-panel">
+            <div class="popup-header">
+                <h3>命令控制台</h3>
+                <button class="popup-close" onclick="toggleCommandInput()">×</button>
+            </div>
+            <div class="popup-content">
+                <input type="text" id="commandInput" class="command-input" placeholder="输入游戏命令...">
+                <div id="command-history">
+                    <!-- 命令历史记录将通过JS动态生成 -->
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button id="sendCommandBtn" class="popup-btn primary">发送命令</button>
+                                <button class="popup-btn" onclick="toggleCommandInput()">关闭</button>
+            </div>
+        </div>
+        
+        <div id="performanceMonitor" class="popup-panel">
+            <div class="popup-header">
+                <h3>性能监视器</h3>
+                <button class="popup-close" onclick="togglePerformanceMonitor()">×</button>
+            </div>
+            <div class="popup-content">
+                <div class="performance-metrics">
+                    <div class="metric">
+                        <div class="metric-header">
+                            <span class="metric-label">FPS</span>
+                            <span id="fpsValue" class="metric-value">60</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div id="fpsBar" class="metric-fill" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-header">
+                            <span class="metric-label">内存</span>
+                            <span id="memoryValue" class="metric-value">2048 MB</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div id="memoryBar" class="metric-fill" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-header">
+                            <span class="metric-label">延迟</span>
+                            <span id="latencyValue" class="metric-value">24 ms</span>
+                        </div>
+                        <div class="metric-bar">
+                            <div id="latencyBar" class="metric-fill" style="width: 80%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="performance-chart" id="performanceChart"></div>
+            </div>
+        </div>
+        
+        <!-- 截图预览 -->
+        <div id="screenshotPreview" class="popup-panel screenshot-preview">
+            <div class="popup-header">
+                <h3>游戏截图</h3>
+                <button class="popup-close" onclick="closeScreenshot()">×</button>
+            </div>
+            <div class="popup-content">
+                <img id="screenshotImg" alt="游戏截图">
+                <p class="screenshot-info">截图已保存到剪贴板</p>
+            </div>
+        </div>
+        
+        <script src="res/js/index.js"></script>
+        <script src="res/js/MC.js"></script>
+    </body>
+</html>
