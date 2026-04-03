@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>爱写代码的辉辉 - 个人主页</title>
+    <title>我的主页</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -189,8 +190,64 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="auth-buttons" style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
+                <button id="loginBtn" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">登录</button>
+                <button id="registerBtn" style="padding: 8px 16px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">注册</button>
+                <button id="guestBtn" onclick="enterGuestMode()" style="padding: 8px 16px; background: #475569; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">游客模式</button>
+                <div id="userInfo" style="display: none; align-items: center; gap: 10px; color: white;">
+                    <span id="userName"></span>
+                    <button id="adminPanelBtn" onclick="openAdminPanel()" style="display: none; padding: 6px 12px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 5px; color: #3b82f6; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">后台管理</button>
+                    <button id="logoutBtn" style="padding: 6px 12px; background: #f5576c; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">退出</button>
+                </div>
+            </div>
             <h1>爱写代码的辉辉</h1>
             <p>六年级小学生的技术探索之旅</p>
+        </div>
+        
+        <!-- 登录模态框 -->
+        <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <h3 style="margin-bottom: 20px; color: #667eea;">登录</h3>
+                <form id="loginForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555;">用户名</label>
+                        <input type="text" id="loginUsername" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555;">密码</label>
+                        <input type="password" id="loginPassword" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">登录</button>
+                        <button type="button" id="closeLogin" style="flex: 1; padding: 10px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 注册模态框 -->
+        <div id="registerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <h3 style="margin-bottom: 20px; color: #764ba2;">注册</h3>
+                <form id="registerForm" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555;">用户名</label>
+                        <input type="text" id="registerUsername" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555;">密码</label>
+                        <input type="password" id="registerPassword" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555;">确认密码</label>
+                        <input type="password" id="confirmPassword" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" style="flex: 1; padding: 10px; background: #764ba2; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">注册</button>
+                        <button type="button" id="closeRegister" style="flex: 1; padding: 10px; background: #999; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s ease;">取消</button>
+                    </div>
+                </form>
+            </div>
         </div>
         
         <div class="card">
@@ -305,11 +362,11 @@
             <h2>KALLPC相关信息</h2>
             <div class="kallpc-section">
                 <h4>KALLPC 6.0</h4>
-                <p>最新版本，已发布正式版测试视频，包含功能测试和修复内容。</p>
+                <p>最新版本，已发布正式版测试视频，包含功能测试和修复内容。请在元玩平台游戏界面申请下载。</p>
             </div>
             <div class="kallpc-section">
                 <h4>KALLPC 5.0 Pro</h4>
-                <p>专业版本，发布过测试视频。</p>
+                <p>专业版本，发布过测试视频。请在元玩平台游戏界面下载。</p>
             </div>
             <div class="kallpc-section">
                 <h4>KALLPC 4.0</h4>
@@ -317,9 +374,168 @@
             </div>
         </div>
         
+        
         <footer>
             <p>© 2026 爱写代码的辉辉 - 个人主页</p>
         </footer>
     </div>
+    
+    <script>
+        // 加密的Supabase配置
+        function decryptConfig() {
+            // 简单的加密处理
+            const encryptedUrl = 'aHR0cHM6Ly9pcnB6b3h0aWZ4cGppYm16dXcuc3VwYWJhc2UuY28='; // Base64编码
+            const encryptedKey = 'c2Jfc2VjcmV0X1RiNU1VQmJMejBYMWlNM3FVc05TQ3hWQUdWc2J1QnR1M0J5U2V2K3p4U1dNMjV5Sm10d2dYUXl6SjJkOTR0T0I1dVJ6ckQ5TURoM0x1T2JtM3B0R1Z6S2d6WUNLWE1Wbjg0UkZTR2xT0g=='; // Base64编码
+            
+            return {
+                url: atob(encryptedUrl),
+                key: atob(encryptedKey)
+            };
+        }
+
+        // 初始化Supabase
+        const config = decryptConfig();
+        const supabaseUrl = config.url;
+        const supabaseKey = config.key;
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            setupEventListeners();
+        });
+        
+        // 检查登录状态
+        async function checkLoginStatus() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                showUserInfo(session.user);
+            }
+        }
+        
+        // 显示用户信息
+        function showUserInfo(user, isGuest = false) {
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('registerBtn').style.display = 'none';
+            document.getElementById('guestBtn').style.display = 'none';
+            const userInfo = document.getElementById('userInfo');
+            userInfo.style.display = 'flex';
+            
+            if (isGuest) {
+                document.getElementById('userName').textContent = '游客';
+                document.getElementById('adminPanelBtn').style.display = 'none';
+            } else {
+                // 提取用户名（从邮箱中）
+                const username = user.email.split('@')[0];
+                document.getElementById('userName').textContent = username;
+                
+                // 检查是否是管理员
+                if (username === 'JGht') {
+                    document.getElementById('adminPanelBtn').style.display = 'block';
+                } else {
+                    document.getElementById('adminPanelBtn').style.display = 'none';
+                }
+            }
+        }
+        
+        // 隐藏用户信息
+        function hideUserInfo() {
+            document.getElementById('loginBtn').style.display = 'block';
+            document.getElementById('registerBtn').style.display = 'block';
+            document.getElementById('guestBtn').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'none';
+        }
+
+        // 游客模式
+        function enterGuestMode() {
+            showUserInfo(null, true);
+        }
+
+        // 后台管理功能
+        function openAdminPanel() {
+            // 这里可以实现后台管理界面
+            alert('后台管理功能开发中...');
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 登录按钮
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                document.getElementById('loginModal').style.display = 'flex';
+            });
+            
+            // 注册按钮
+            document.getElementById('registerBtn').addEventListener('click', function() {
+                document.getElementById('registerModal').style.display = 'flex';
+            });
+            
+            // 关闭登录模态框
+            document.getElementById('closeLogin').addEventListener('click', function() {
+                document.getElementById('loginModal').style.display = 'none';
+            });
+            
+            // 关闭注册模态框
+            document.getElementById('closeRegister').addEventListener('click', function() {
+                document.getElementById('registerModal').style.display = 'none';
+            });
+            
+            // 登录表单提交
+            document.getElementById('loginForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: username + '@example.com', // 临时处理，使用用户名作为邮箱
+                    password: password
+                });
+                
+                if (error) {
+                    alert('登录失败：' + error.message);
+                } else {
+                    showUserInfo(data.user);
+                    document.getElementById('loginModal').style.display = 'none';
+                    alert('登录成功！');
+                }
+            });
+            
+            // 注册表单提交
+            document.getElementById('registerForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const username = document.getElementById('registerUsername').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                if (password !== confirmPassword) {
+                    alert('两次输入的密码不一致！');
+                    return;
+                }
+                
+                const { data, error } = await supabase.auth.signUp({
+                    email: username + '@example.com', // 临时处理，使用用户名作为邮箱
+                    password: password
+                });
+                
+                if (error) {
+                    alert('注册失败：' + error.message);
+                } else {
+                    showUserInfo(data.user);
+                    document.getElementById('registerModal').style.display = 'none';
+                    alert('注册成功！');
+                }
+            });
+            
+            // 退出登录
+            document.getElementById('logoutBtn').addEventListener('click', async function() {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    alert('退出失败：' + error.message);
+                } else {
+                    hideUserInfo();
+                    alert('已退出登录！');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

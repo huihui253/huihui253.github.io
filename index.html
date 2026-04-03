@@ -4,250 +4,1128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>元玩 - 游戏平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #06b6d4;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--dark);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            color: var(--text);
+            overflow-x: hidden;
         }
-        
-        .container {
-            flex: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+
+        /* 动态背景 */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 40% 40%, rgba(6, 182, 212, 0.1) 0%, transparent 40%);
         }
-        
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            color: white;
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
         }
-        
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
         }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .game-card {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .game-card a {
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        
-        .game-image {
-            height: 180px;
-            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+
+        /* 登录/注册界面 */
+        .auth-container {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
-            color: white;
-        }
-        
-        .game-info {
             padding: 20px;
         }
-        
-        .game-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
+
+        .auth-box {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 48px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
         }
-        
-        .game-description {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
+
+        .auth-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
         }
-        
-        .game-link {
-            display: inline-block;
-            padding: 8px 16px;
-            background: #667eea;
-            color: white;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            transition: background 0.3s ease;
-        }
-        
-        .game-link:hover {
-            background: #764ba2;
-        }
-        
-        footer {
+
+        .auth-logo {
             text-align: center;
-            padding: 20px;
-            color: white;
-            opacity: 0.8;
+            margin-bottom: 32px;
         }
-        
+
+        .auth-logo h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .auth-logo p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .auth-btn:hover::before {
+            left: 100%;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        /* 主界面 */
+        .main-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .main-container.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* 导航栏 */
+        .navbar {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 16px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-name {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            padding: 8px 20px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+
+        .hero-section {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 48px 0;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--text), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 游戏网格 */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .game-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(99, 102, 241, 0.2);
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+        }
+
+        .game-image {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, var(--dark-light) 100%);
+        }
+
+        .game-info {
+            padding: 24px;
+        }
+
+        .game-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .game-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .game-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--glass-border);
+            margin-top: 60px;
+        }
+
+        /* 响应式 */
         @media (max-width: 768px) {
-            .game-grid {
-                grid-template-columns: 1fr;
+            .auth-box {
+                padding: 32px 24px;
             }
-            
-            h1 {
+
+            .auth-logo h1 {
                 font-size: 2rem;
             }
+
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .navbar {
+                padding: 16px 20px;
+            }
+
+            .main-content {
+                padding: 24px 20px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>元玩</h1>
-            <p class="subtitle">游戏平台 - 探索无限乐趣</p>
-        </header>
-        
-        <div class="game-grid">
-            <!-- 极光模拟器 -->
-            <div class="game-card">
-                <a href="jg模拟器/极光os.html" target="_blank">
-                    <div class="game-image">🎮</div>
+    <div class="bg-animation"></div>
+
+    <!-- 登录/注册界面 -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="auth-logo">
+                <h1>元玩</h1>
+                <p>探索无限游戏世界</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">登录</button>
+                <button class="auth-tab" onclick="switchTab('register')">注册</button>
+                <button class="auth-tab" onclick="enterGuestMode()">游客模式</button>
+            </div>
+
+            <!-- 登录表单 -->
+            <form class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" id="loginUsername" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="auth-btn">立即登录</button>
+            </form>
+
+            <!-- 注册表单 -->
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" id="registerUsername" placeholder="创建用户名" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="设置密码" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">确认密码</label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="再次输入密码" required>
+                </div>
+                <button type="submit" class="auth-btn">创建账号</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div class="main-container" id="mainContainer">
+        <!-- 导航栏 -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="nav-logo">元玩</div>
+                <div class="nav-user">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <span class="user-name" id="userName"></span>
+                    <button id="adminPanelBtn" onclick="openAdminPanel()" style="display: none; padding: 8px 20px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #3b82f6; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">后台管理</button>
+                    <button class="logout-btn" onclick="logout()">退出登录</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <main class="main-content">
+            <section class="hero-section">
+                <h2 class="hero-title">欢迎来到元玩平台</h2>
+                <p class="hero-subtitle">发现精彩游戏，开启无限可能。这里汇集了各种有趣的模拟游戏和创意作品。</p>
+            </section>
+
+            <div class="games-grid">
+                <!-- 极光模拟器 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎮</div>
                     <div class="game-info">
                         <h3 class="game-title">极光模拟器</h3>
-                        <p class="game-description">体验极光OS系统的模拟器</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">体验极光OS系统的模拟器，感受独特的操作系统界面。</p>
+                        <a href="jg模拟器/极光os.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- Root模拟器 -->
-            <div class="game-card">
-                <a href="root/root-simulator.html" target="_blank">
-                    <div class="game-image">🔧</div>
+                </div>
+
+                <!-- Root模拟器 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🔧</div>
                     <div class="game-info">
                         <h3 class="game-title">Root模拟器</h3>
-                        <p class="game-description">模拟Root权限操作</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟Root权限操作，体验系统管理员的强大功能。</p>
+                        <a href="root/root-simulator.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 接单 -->
-            <div class="game-card">
-                <a href="root/接单.html" target="_blank">
-                    <div class="game-image">📱</div>
+                </div>
+
+                <!-- 接单 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">📱</div>
                     <div class="game-info">
                         <h3 class="game-title">接单</h3>
-                        <p class="game-description">模拟接单流程</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟接单流程，体验服务行业的日常工作。</p>
+                        <a href="root/接单.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 修手机 -->
-            <div class="game-card">
-                <a href="修手机/index.html" target="_blank">
-                    <div class="game-image">🔩</div>
+                </div>
+
+                <!-- 修手机 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">🔩</div>
                     <div class="game-info">
                         <h3 class="game-title">修手机</h3>
-                        <p class="game-description">模拟手机维修过程</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟手机维修过程，学习电子设备维修技巧。</p>
+                        <a href="修手机/index.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 抽车 -->
-            <div class="game-card">
-                <a href="抽车/index.html" target="_blank">
-                    <div class="game-image">🚗</div>
+                </div>
+
+                <!-- 抽车 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">🚗</div>
                     <div class="game-info">
                         <h3 class="game-title">抽车</h3>
-                        <p class="game-description">模拟抽车游戏</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟抽车游戏，体验收集各种车辆的乐趣。</p>
+                        <a href="抽车/index.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 炒股 -->
-            <div class="game-card">
-                <a href="炒股/stock-trading-app.html" target="_blank">
-                    <div class="game-image">📈</div>
+                </div>
+
+                <!-- 炒股 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">📈</div>
                     <div class="game-info">
                         <h3 class="game-title">炒股</h3>
-                        <p class="game-description">模拟股票交易</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟股票交易，学习投资理财知识。</p>
+                        <a href="炒股/stock-trading-app.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 系统模拟器 -->
-            <div class="game-card">
-                <a href="系统模拟器/启动器.html" target="_blank">
-                    <div class="game-image">💻</div>
+                </div>
+
+                <!-- 系统模拟器 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">💻</div>
                     <div class="game-info">
                         <h3 class="game-title">系统模拟器</h3>
-                        <p class="game-description">模拟各种操作系统</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟各种操作系统，包括Windows、Linux、macOS等。</p>
+                        <a href="系统模拟器/启动器.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 酒店 -->
-            <div class="game-card">
-                <a href="酒店/酒店.html" target="_blank">
-                    <div class="game-image">🏨</div>
+                </div>
+
+                <!-- 酒店 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">🏨</div>
                     <div class="game-info">
                         <h3 class="game-title">酒店</h3>
-                        <p class="game-description">模拟酒店经营</p>
-                        <span class="game-link">开始游戏</span>
+                        <p class="game-description">模拟酒店经营，体验管理酒店的挑战与乐趣。</p>
+                        <a href="酒店/酒店.html" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
-            </div>
-            
-            <!-- 辉辉主页 -->
-            <div class="game-card">
-                <a href="辉辉主页.html" target="_blank">
-                    <div class="game-image">👨‍💻</div>
+                </div>
+
+                <!-- 辉辉主页 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">👨‍💻</div>
                     <div class="game-info">
                         <h3 class="game-title">辉辉主页</h3>
-                        <p class="game-description">爱写代码的辉辉个人主页</p>
-                        <span class="game-link">访问主页</span>
+                        <p class="game-description">爱写代码的辉辉个人主页，了解更多关于开发者的信息。</p>
+                        <a href="辉辉主页.html" class="game-btn" target="_blank">
+                            <span>访问主页</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
                     </div>
-                </a>
+                </div>
+
+                <!-- 我的世界网页版 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">⛏️</div>
+                    <div class="game-info">
+                        <h3 class="game-title">我的世界网页版</h3>
+                        <p class="game-description">基于Web技术的Minecraft游戏，在浏览器中体验经典沙盒游戏。</p>
+                        <a href="mc/assets/index.htm" class="game-btn" target="_blank">
+                            <span>开始游戏</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 云原神 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);">☁️</div>
+                    <div class="game-info">
+                        <h3 class="game-title">云原神</h3>
+                        <p class="game-description">无需下载，随时随地进入异想世界开始游戏。</p>
+                        <a href="https://ys.mihoyo.com/cloud/?utm_source=yuanshen_web#/" class="game-btn" target="_blank">
+                            <span>立即体验</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- KALLPC 5.0 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🛡️</div>
+                    <div class="game-info">
+                        <h3 class="game-title">KALLPC 5.0</h3>
+                        <p class="game-description">专业版本，发布过测试视频。直接下载，无需邀请码。</p>
+                        <a href="https://wwaou.lanzouv.com/iSwtV3eyu78h" class="game-btn" target="_blank">
+                            <span>立即下载</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- KALLPC 6.0 -->
+                <div class="game-card">
+                    <div class="game-image" style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);">🔐</div>
+                    <div class="game-info">
+                        <h3 class="game-title">KALLPC 6.0</h3>
+                        <p class="game-description">最新版本，已发布正式版测试视频。需要邀请码才能下载。</p>
+                        <button class="game-btn" onclick="requestKallpc6Download()">
+                            <span>申请下载</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <footer>
+        </main>
+
+        <footer class="footer">
             <p>© 2026 元玩游戏平台 - 所有游戏均为模拟体验</p>
         </footer>
     </div>
+
+    <script>
+        // 加密的Supabase配置
+        function decryptConfig() {
+            // 简单的加密处理
+            const encryptedUrl = 'aHR0cHM6Ly9pcnB6b3h0aWZ4cGppYm16dXcuc3VwYWJhc2UuY28='; // Base64编码
+            const encryptedKey = 'c2Jfc2VjcmV0X1RiNU1VQmJMejBYMWlNM3FVc05TQ3hWQUdWc2J1QnR1M0J5U2V2K3p4U1dNMjV5Sm10d2dYUXl6SjJkOTR0T0I1dVJ6ckQ5TURoM0x1T2JtM3B0R1Z6S2d6WUNLWE1Wbjg0UkZTR2xT0g=='; // Base64编码
+            
+            return {
+                url: atob(encryptedUrl),
+                key: atob(encryptedKey)
+            };
+        }
+
+        // 初始化Supabase
+        const config = decryptConfig();
+        const supabaseUrl = config.url;
+        const supabaseKey = config.key;
+        let supabase = null;
+        let supabaseConnected = false;
+
+        // 尝试初始化Supabase
+        try {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                console.log('Supabase初始化成功');
+            } else {
+                console.warn('Supabase库未加载，将使用本地存储模式');
+            }
+        } catch (err) {
+            console.error('Supabase初始化失败:', err);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+
+        // 检查登录状态
+        async function checkLoginStatus() {
+            // 先检查本地存储
+            const localUser = localStorage.getItem('user');
+            if (localUser) {
+                showMainInterface(JSON.parse(localUser));
+                return;
+            }
+            
+            // 再检查Supabase会话（如果已连接）
+            if (supabase) {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        localStorage.setItem('user', JSON.stringify(session.user));
+                        showMainInterface(session.user);
+                    }
+                } catch (err) {
+                    console.error('检查登录状态错误:', err);
+                }
+            }
+        }
+
+        // 切换登录/注册标签
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            const forms = document.querySelectorAll('.auth-form');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+            
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+        }
+
+        // 内置管理员账号
+        const ADMIN_USERNAME = 'JGht';
+        const ADMIN_PASSWORD = '882511';
+
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // 检查是否是内置管理员账号
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                // 内置管理员登录成功
+                const adminUser = { email: ADMIN_USERNAME + '@admin.com', id: 'admin_builtin' };
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                localStorage.setItem('isAdmin', 'true');
+                showMainInterface(adminUser);
+                return;
+            }
+            
+            // 先尝试本地存储登录（离线模式）
+            const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            const localUser = localUsers.find(u => u.username === username && u.password === password);
+            if (localUser) {
+                localStorage.setItem('user', JSON.stringify(localUser));
+                showMainInterface(localUser);
+                alert('登录成功（本地模式）');
+                return;
+            }
+            
+            // 尝试Supabase登录（在线模式）
+            if (supabase) {
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: username + '@example.com',
+                        password: password
+                    });
+                    
+                    if (error) {
+                        alert('登录失败：' + error.message);
+                    } else {
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        showMainInterface(data.user);
+                    }
+                } catch (err) {
+                    console.error('Supabase登录错误:', err);
+                    alert('无法连接到服务器，已切换到本地模式\n请使用本地注册的账号或注册新账号');
+                }
+            } else {
+                alert('用户名或密码错误');
+            }
+        });
+
+        // 注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致！');
+                return;
+            }
+            
+            // 检查是否是内置管理员账号名
+            if (username === ADMIN_USERNAME) {
+                alert('该用户名已被保留');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: username + '@example.com',
+                    password: password
+                });
+                
+                if (error) {
+                    alert('注册失败：' + error.message);
+                } else {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    showMainInterface(data.user);
+                    alert('注册成功！');
+                }
+            } catch (err) {
+                console.error('注册错误:', err);
+                // 如果Supabase连接失败，使用本地存储作为备用
+                const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+                if (localUsers.some(u => u.username === username)) {
+                    alert('用户名已存在');
+                    return;
+                }
+                const newUser = { username, password, email: username + '@example.com', id: 'local_' + Date.now() };
+                localUsers.push(newUser);
+                localStorage.setItem('localUsers', JSON.stringify(localUsers));
+                localStorage.setItem('user', JSON.stringify(newUser));
+                showMainInterface(newUser);
+                alert('注册成功（本地模式）');
+            }
+        });
+
+        // 显示主界面
+        function showMainInterface(user, isGuest = false) {
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('mainContainer').classList.add('active');
+            
+            if (isGuest) {
+                document.getElementById('userName').textContent = '游客';
+                document.getElementById('userAvatar').textContent = '游';
+                document.getElementById('adminPanelBtn').style.display = 'none';
+                localStorage.setItem('isGuest', 'true');
+            } else {
+                // 提取用户名（从邮箱中）
+                const username = user.email ? user.email.split('@')[0] : user.username || '用户';
+                document.getElementById('userName').textContent = username;
+                document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+                
+                // 检查是否是管理员（内置账号或标记为管理员）
+                const isAdmin = localStorage.getItem('isAdmin') === 'true' || username === ADMIN_USERNAME;
+                if (isAdmin) {
+                    document.getElementById('adminPanelBtn').style.display = 'block';
+                    localStorage.setItem('isAdmin', 'true');
+                } else {
+                    document.getElementById('adminPanelBtn').style.display = 'none';
+                }
+                localStorage.setItem('isGuest', 'false');
+            }
+        }
+
+        // 游客模式
+        function enterGuestMode() {
+            showMainInterface(null, true);
+        }
+
+        // 后台管理功能
+        function openAdminPanel() {
+            showAdminPanel();
+        }
+
+        // 显示后台管理界面
+        function showAdminPanel() {
+            // 创建管理界面
+            const adminPanel = document.createElement('div');
+            adminPanel.id = 'adminPanel';
+            adminPanel.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(15, 23, 42, 0.95);
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 40px;
+            `;
+
+            const downloadRequests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            
+            adminPanel.innerHTML = `
+                <div style="max-width: 1200px; margin: 0 auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                        <h2 style="color: white; font-size: 2rem;">后台管理</h2>
+                        <button onclick="closeAdminPanel()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">关闭</button>
+                    </div>
+                    
+                    <div style="background: var(--glass); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
+                        <h3 style="color: white; margin-bottom: 20px;">KALLPC 6.0 下载申请</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">当前待处理申请: ${downloadRequests.length}</p>
+                        
+                        ${downloadRequests.length === 0 ? 
+                            '<p style="color: var(--text-muted);">暂无下载申请</p>' :
+                            downloadRequests.map((req, index) => `
+                                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                                    <p style="color: white;"><strong>用户:</strong> ${req.username}</p>
+                                    <p style="color: var(--text-muted);"><strong>申请时间:</strong> ${req.time}</p>
+                                    <p style="color: var(--text-muted);"><strong>邀请码:</strong> ${req.inviteCode}</p>
+                                    <button onclick="approveDownload(${index})" style="margin-top: 10px; padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 6px; cursor: pointer;">批准下载</button>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+
+                    <div style="background: var(--glass); padding: 30px; border-radius: 16px;">
+                        <h3 style="color: white; margin-bottom: 20px;">用户管理</h3>
+                        <p style="color: var(--text-muted);">功能开发中...</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(adminPanel);
+        }
+
+        // 关闭后台管理界面
+        function closeAdminPanel() {
+            const panel = document.getElementById('adminPanel');
+            if (panel) {
+                panel.remove();
+            }
+        }
+
+        // 批准下载
+        function approveDownload(index) {
+            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            if (requests[index]) {
+                const req = requests[index];
+                // 生成新的邀请码
+                const newInviteCode = generateInviteCode();
+                
+                // 保存新的邀请码
+                localStorage.setItem('currentKallpc6InviteCode', newInviteCode);
+                
+                // 移除已处理的申请
+                requests.splice(index, 1);
+                localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
+                
+                alert(`已批准 ${req.username} 的下载申请\n新的邀请码: ${newInviteCode}`);
+                closeAdminPanel();
+                showAdminPanel(); // 刷新界面
+            }
+        }
+
+        // 生成随机邀请码
+        function generateInviteCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // 申请KALLPC 6.0下载
+        function requestKallpc6Download() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const username = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '游客');
+            
+            // 生成邀请码（不显示给用户）
+            const inviteCode = generateInviteCode();
+            
+            // 保存申请到本地存储
+            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            requests.push({
+                username: username,
+                time: new Date().toLocaleString(),
+                inviteCode: inviteCode,
+                status: 'pending'
+            });
+            localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
+            
+            // 同时保存当前邀请码
+            localStorage.setItem('currentKallpc6InviteCode', inviteCode);
+            
+            alert('下载申请已提交！\n请等待管理员审核。\n审核通过后，您将可以下载KALLPC 6.0。');
+            
+            // 如果是管理员，提示有新的申请
+            if (localStorage.getItem('isAdmin') === 'true') {
+                alert('【管理员提示】有新的KALLPC 6.0下载申请，请进入后台管理查看。');
+            }
+        }
+
+        // 退出登录
+        async function logout() {
+            // 清除本地存储
+            localStorage.removeItem('user');
+            localStorage.removeItem('isAdmin');
+            localStorage.removeItem('isGuest');
+            
+            // 尝试退出Supabase
+            try {
+                await supabase.auth.signOut();
+            } catch (err) {
+                console.error('Supabase退出错误:', err);
+            }
+            
+            document.getElementById('mainContainer').classList.remove('active');
+            document.getElementById('authContainer').style.display = 'flex';
+            
+            // 清空表单
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+        }
+    </script>
 </body>
 </html>
