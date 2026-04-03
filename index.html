@@ -811,6 +811,7 @@
             const localUser = localStorage.getItem('user');
             if (localUser) {
                 showMainInterface(JSON.parse(localUser));
+                checkApprovalNotification();
                 return;
             }
             
@@ -821,9 +822,36 @@
                     if (session) {
                         localStorage.setItem('user', JSON.stringify(session.user));
                         showMainInterface(session.user);
+                        checkApprovalNotification();
                     }
                 } catch (err) {
                     console.error('检查登录状态错误:', err);
+                }
+            }
+        }
+
+        // 检查批准通知
+        function checkApprovalNotification() {
+            const approvalInfo = localStorage.getItem('kallpc6Approval');
+            if (approvalInfo) {
+                try {
+                    const info = JSON.parse(approvalInfo);
+                    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+                    
+                    // 检查是否是当前用户的批准通知
+                    if (info.username === currentUsername) {
+                        alert(`您的KALLPC 6.0下载申请已批准！\n邀请码: ${info.inviteCode}\n正在跳转到下载链接...`);
+                        
+                        // 延迟跳转，让用户有时间看到通知
+                        setTimeout(() => {
+                            window.open(info.downloadLink, '_blank');
+                            // 清除通知，避免重复显示
+                            localStorage.removeItem('kallpc6Approval');
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('检查批准通知错误:', err);
                 }
             }
         }
@@ -1056,11 +1084,20 @@
                 // 保存新的邀请码
                 localStorage.setItem('currentKallpc6InviteCode', newInviteCode);
                 
+                // 保存批准信息，用于通知用户
+                const approvalInfo = {
+                    username: req.username,
+                    time: new Date().toLocaleString(),
+                    inviteCode: newInviteCode,
+                    downloadLink: 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485'
+                };
+                localStorage.setItem('kallpc6Approval', JSON.stringify(approvalInfo));
+                
                 // 移除已处理的申请
                 requests.splice(index, 1);
                 localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
                 
-                alert(`已批准 ${req.username} 的下载申请\n新的邀请码: ${newInviteCode}`);
+                alert(`已批准 ${req.username} 的下载申请\n新的邀请码: ${newInviteCode}\n用户将收到通知并自动跳转到下载链接`);
                 closeAdminPanel();
                 showAdminPanel(); // 刷新界面
             }
