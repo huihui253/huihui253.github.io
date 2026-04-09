@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>元玩 - 游戏平台</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -752,12 +751,14 @@
                     <div class="game-info">
                         <h3 class="game-title">KALLPC 6.0</h3>
                         <p class="game-description">最新版本，已发布正式版测试视频。需要邀请码才能下载。</p>
-                        <button class="game-btn" onclick="requestKallpc6Download()">
-                            <span>申请下载</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 12h14M12 5l7 7-7 7"/>
-                            </svg>
-                        </button>
+                        <div id="kallpc6BtnContainer">
+                            <button class="game-btn" id="kallpc6Btn" onclick="requestKallpc6Download()">
+                                <span>申请下载</span>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -769,91 +770,120 @@
     </div>
 
     <script>
-        // 加密的Supabase配置
-        function decryptConfig() {
-            // 简单的加密处理
-            const encryptedUrl = 'aHR0cHM6Ly9pcnB6b3h0aWZ4cGppYm16dXcuc3VwYWJhc2UuY28='; // Base64编码
-            const encryptedKey = 'c2Jfc2VjcmV0X1RiNU1VQmJMejBYMWlNM3FVc05TQ3hWQUdWc2J1QnR1M0J5U2V2K3p4U1dNMjV5Sm10d2dYUXl6SjJkOTR0T0I1dVJ6ckQ5TURoM0x1T2JtM3B0R1Z6S2d6WUNLWE1Wbjg0UkZTR2xT0g=='; // Base64编码
-            
-            return {
-                url: atob(encryptedUrl),
-                key: atob(encryptedKey)
-            };
-        }
-
-        // 初始化Supabase
-        const config = decryptConfig();
-        const supabaseUrl = config.url;
-        const supabaseKey = config.key;
-        let supabase = null;
-        let supabaseConnected = false;
-
-        // 尝试初始化Supabase
-        try {
-            if (window.supabase) {
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-                console.log('Supabase初始化成功');
-            } else {
-                console.warn('Supabase库未加载，将使用本地存储模式');
-            }
-        } catch (err) {
-            console.error('Supabase初始化失败:', err);
-        }
-
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             checkLoginStatus();
         });
 
         // 检查登录状态
-        async function checkLoginStatus() {
-            // 先检查本地存储
+        function checkLoginStatus() {
+            // 检查本地存储
             const localUser = localStorage.getItem('user');
             if (localUser) {
                 showMainInterface(JSON.parse(localUser));
-                checkApprovalNotification();
-                return;
-            }
-            
-            // 再检查Supabase会话（如果已连接）
-            if (supabase) {
-                try {
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session) {
-                        localStorage.setItem('user', JSON.stringify(session.user));
-                        showMainInterface(session.user);
-                        checkApprovalNotification();
-                    }
-                } catch (err) {
-                    console.error('检查登录状态错误:', err);
-                }
+                checkApprovalStatus();
             }
         }
 
-        // 检查批准通知
-        function checkApprovalNotification() {
-            const approvalInfo = localStorage.getItem('kallpc6Approval');
-            if (approvalInfo) {
-                try {
-                    const info = JSON.parse(approvalInfo);
-                    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                    const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
-                    
-                    // 检查是否是当前用户的批准通知
-                    if (info.username === currentUsername) {
-                        alert(`您的KALLPC 6.0下载申请已批准！\n邀请码: ${info.inviteCode}\n正在跳转到下载链接...`);
-                        
-                        // 延迟跳转，让用户有时间看到通知
-                        setTimeout(() => {
-                            window.open(info.downloadLink, '_blank');
-                            // 清除通知，避免重复显示
-                            localStorage.removeItem('kallpc6Approval');
-                        }, 2000);
-                    }
-                } catch (err) {
-                    console.error('检查批准通知错误:', err);
-                }
+        // 检查批准状态和更新按钮
+        function checkApprovalStatus() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            
+            if (!currentUsername) return;
+            
+            // 检查是否已经下载过
+            const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            if (downloadedUsers.includes(currentUsername)) {
+                updateKallpc6Button('downloaded');
+                return;
             }
+            
+            // 检查是否已经被批准
+            const approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+            const approvedUser = approvedUsers.find(user => user.username === currentUsername);
+            if (approvedUser) {
+                updateKallpc6Button('approved', approvedUser.inviteCode);
+                return;
+            }
+            
+            // 检查是否已经申请过
+            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            const existingRequest = requests.find(req => req.username === currentUsername);
+            if (existingRequest) {
+                updateKallpc6Button('pending');
+                return;
+            }
+            
+            // 默认状态
+            updateKallpc6Button('default');
+        }
+
+        // 更新KALLPC 6.0按钮状态
+        function updateKallpc6Button(status, inviteCode = '') {
+            const btnContainer = document.getElementById('kallpc6BtnContainer');
+            if (!btnContainer) return;
+            
+            const downloadLink = 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485';
+            
+            switch (status) {
+                case 'default':
+                    btnContainer.innerHTML = `
+                        <button class="game-btn" id="kallpc6Btn" onclick="requestKallpc6Download()">
+                            <span>申请下载</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    `;
+                    break;
+                case 'pending':
+                    btnContainer.innerHTML = `
+                        <button class="game-btn" style="background: #f59e0b; cursor: not-allowed;" disabled>
+                            <span>审核中</span>
+                        </button>
+                    `;
+                    break;
+                case 'approved':
+                    btnContainer.innerHTML = `
+                        <button class="game-btn" onclick="downloadKallpc6('${inviteCode}')">
+                            <span>立即下载</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    `;
+                    break;
+                case 'downloaded':
+                    btnContainer.innerHTML = `
+                        <button class="game-btn" style="background: #22c55e; cursor: not-allowed;" disabled>
+                            <span>已下载</span>
+                        </button>
+                    `;
+                    break;
+            }
+        }
+
+        // 下载KALLPC 6.0
+        function downloadKallpc6(inviteCode) {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            
+            // 标记为已下载
+            const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            if (!downloadedUsers.includes(currentUsername)) {
+                downloadedUsers.push(currentUsername);
+                localStorage.setItem('kallpc6Downloaded', JSON.stringify(downloadedUsers));
+            }
+            
+            // 打开下载链接
+            const downloadLink = 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485';
+            window.open(downloadLink, '_blank');
+            
+            // 更新按钮状态
+            updateKallpc6Button('downloaded');
+            
+            alert(`下载已开始！\n邀请码: ${inviteCode}`);
         }
 
         // 切换登录/注册标签
@@ -878,7 +908,7 @@
         const ADMIN_PASSWORD = '882511';
 
         // 登录表单提交
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('loginUsername').value;
             const password = document.getElementById('loginPassword').value;
@@ -893,41 +923,21 @@
                 return;
             }
             
-            // 先尝试本地存储登录（离线模式）
+            // 本地存储登录
             const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
             const localUser = localUsers.find(u => u.username === username && u.password === password);
             if (localUser) {
                 localStorage.setItem('user', JSON.stringify(localUser));
                 showMainInterface(localUser);
-                alert('登录成功（本地模式）');
+                alert('登录成功！');
                 return;
             }
             
-            // 尝试Supabase登录（在线模式）
-            if (supabase) {
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email: username + '@example.com',
-                        password: password
-                    });
-                    
-                    if (error) {
-                        alert('登录失败：' + error.message);
-                    } else {
-                        localStorage.setItem('user', JSON.stringify(data.user));
-                        showMainInterface(data.user);
-                    }
-                } catch (err) {
-                    console.error('Supabase登录错误:', err);
-                    alert('无法连接到服务器，已切换到本地模式\n请使用本地注册的账号或注册新账号');
-                }
-            } else {
-                alert('用户名或密码错误');
-            }
+            alert('用户名或密码错误');
         });
 
         // 注册表单提交
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
@@ -944,34 +954,20 @@
                 return;
             }
             
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email: username + '@example.com',
-                    password: password
-                });
-                
-                if (error) {
-                    alert('注册失败：' + error.message);
-                } else {
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    showMainInterface(data.user);
-                    alert('注册成功！');
-                }
-            } catch (err) {
-                console.error('注册错误:', err);
-                // 如果Supabase连接失败，使用本地存储作为备用
-                const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
-                if (localUsers.some(u => u.username === username)) {
-                    alert('用户名已存在');
-                    return;
-                }
-                const newUser = { username, password, email: username + '@example.com', id: 'local_' + Date.now() };
-                localUsers.push(newUser);
-                localStorage.setItem('localUsers', JSON.stringify(localUsers));
-                localStorage.setItem('user', JSON.stringify(newUser));
-                showMainInterface(newUser);
-                alert('注册成功（本地模式）');
+            // 检查用户名是否已存在
+            const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            if (localUsers.some(u => u.username === username)) {
+                alert('用户名已存在');
+                return;
             }
+            
+            // 创建新用户
+            const newUser = { username, password, email: username + '@example.com', id: 'local_' + Date.now() };
+            localUsers.push(newUser);
+            localStorage.setItem('localUsers', JSON.stringify(localUsers));
+            localStorage.setItem('user', JSON.stringify(newUser));
+            showMainInterface(newUser);
+            alert('注册成功！');
         });
 
         // 显示主界面
@@ -1081,23 +1077,20 @@
                 // 生成新的邀请码
                 const newInviteCode = generateInviteCode();
                 
-                // 保存新的邀请码
-                localStorage.setItem('currentKallpc6InviteCode', newInviteCode);
-                
-                // 保存批准信息，用于通知用户
-                const approvalInfo = {
+                // 保存批准信息，标记用户为已批准
+                const approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+                approvedUsers.push({
                     username: req.username,
-                    time: new Date().toLocaleString(),
                     inviteCode: newInviteCode,
-                    downloadLink: 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485'
-                };
-                localStorage.setItem('kallpc6Approval', JSON.stringify(approvalInfo));
+                    approvalTime: new Date().toLocaleString()
+                });
+                localStorage.setItem('kallpc6Approved', JSON.stringify(approvedUsers));
                 
                 // 移除已处理的申请
                 requests.splice(index, 1);
                 localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
                 
-                alert(`已批准 ${req.username} 的下载申请\n新的邀请码: ${newInviteCode}\n用户将收到通知并自动跳转到下载链接`);
+                alert(`已批准 ${req.username} 的下载申请\n邀请码: ${newInviteCode}\n用户的"申请下载"按钮已变为"立即下载"`);
                 closeAdminPanel();
                 showAdminPanel(); // 刷新界面
             }
@@ -1118,11 +1111,25 @@
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
             const username = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '游客');
             
+            // 检查是否已经申请过
+            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            const existingRequest = requests.find(req => req.username === username);
+            if (existingRequest) {
+                alert('您已经提交过下载申请，请等待管理员审核。');
+                return;
+            }
+            
+            // 检查是否已经下载过
+            const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            if (downloadedUsers.includes(username)) {
+                alert('您已经下载过KALLPC 6.0，不能重复下载。');
+                return;
+            }
+            
             // 生成邀请码（不显示给用户）
             const inviteCode = generateInviteCode();
             
             // 保存申请到本地存储
-            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
             requests.push({
                 username: username,
                 time: new Date().toLocaleString(),
@@ -1134,7 +1141,7 @@
             // 同时保存当前邀请码
             localStorage.setItem('currentKallpc6InviteCode', inviteCode);
             
-            alert('下载申请已提交！\n请等待管理员审核。\n审核通过后，您将可以下载KALLPC 6.0。');
+            alert('下载申请已提交！\n请等待管理员审核。\n审核通过后，"申请下载"按钮会变为"立即下载"。');
             
             // 如果是管理员，提示有新的申请
             if (localStorage.getItem('isAdmin') === 'true') {
@@ -1143,18 +1150,11 @@
         }
 
         // 退出登录
-        async function logout() {
+        function logout() {
             // 清除本地存储
             localStorage.removeItem('user');
             localStorage.removeItem('isAdmin');
             localStorage.removeItem('isGuest');
-            
-            // 尝试退出Supabase
-            try {
-                await supabase.auth.signOut();
-            } catch (err) {
-                console.error('Supabase退出错误:', err);
-            }
             
             document.getElementById('mainContainer').classList.remove('active');
             document.getElementById('authContainer').style.display = 'flex';
