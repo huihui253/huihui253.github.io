@@ -317,6 +317,16 @@
             max-width: 1400px;
             margin: 0 auto;
             padding: 40px 32px;
+            display: flex;
+            gap: 40px;
+        }
+
+        .content-left {
+            flex: 1;
+        }
+
+        .content-right {
+            width: 320px;
         }
 
         .hero-section {
@@ -347,6 +357,95 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 24px;
+        }
+
+        /* 专区样式 */
+        .section {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        .section-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .section-item:last-child {
+            border-bottom: none;
+        }
+
+        .section-item-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .section-item-info {
+            flex: 1;
+        }
+
+        .section-item-title {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .section-item-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .section-item-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .section-item-link:hover {
+            color: var(--secondary);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .content-right {
+                width: 100%;
+            }
         }
 
         .game-card {
@@ -559,12 +658,13 @@
 
         <!-- 主内容 -->
         <main class="main-content">
-            <section class="hero-section">
-                <h2 class="hero-title">欢迎来到元玩平台</h2>
-                <p class="hero-subtitle">发现精彩游戏，开启无限可能。这里汇集了各种有趣的模拟游戏和创意作品。</p>
-            </section>
+            <div class="content-left">
+                <section class="hero-section">
+                    <h2 class="hero-title">欢迎来到元玩平台</h2>
+                    <p class="hero-subtitle">发现精彩游戏，开启无限可能。这里汇集了各种有趣的模拟游戏和创意作品。</p>
+                </section>
 
-            <div class="games-grid">
+                <div class="games-grid">
                 <!-- 极光模拟器 -->
                 <div class="game-card">
                     <div class="game-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎮</div>
@@ -762,6 +862,74 @@
                     </div>
                 </div>
             </div>
+
+            <div class="content-right">
+                <!-- 游戏专区 -->
+                <div class="section">
+                    <h3 class="section-title">游戏专区</h3>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🎮</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">极光模拟器</div>
+                            <div class="section-item-desc">体验极光OS系统</div>
+                        </div>
+                        <a href="jg模拟器/极光os.html" class="section-item-link" target="_blank">进入</a>
+                    </div>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">🔧</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">Root模拟器</div>
+                            <div class="section-item-desc">模拟Root权限操作</div>
+                        </div>
+                        <a href="root/root-simulator.html" class="section-item-link" target="_blank">进入</a>
+                    </div>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">⛏️</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">我的世界网页版</div>
+                            <div class="section-item-desc">浏览器中体验经典游戏</div>
+                        </div>
+                        <a href="mc/index.htm" class="section-item-link" target="_blank">进入</a>
+                    </div>
+                </div>
+
+                <!-- 软件专区 -->
+                <div class="section">
+                    <h3 class="section-title">软件专区</h3>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">📱</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">PCL</div>
+                            <div class="section-item-desc">Plain Craft Launcher 2</div>
+                        </div>
+                        <a href="https://exe1.webgetstore.com/2026/04/09/04bc6cf99089ae8a00f77e06c6b13579.exe?sg=d07915684956b8c61076e27523fffd6a&e=69d7aee9&fileName=Plain%20Craft%20Launcher%202.exe&fi=282007933" class="section-item-link" target="_blank">下载</a>
+                    </div>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">🔩</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">PCL CE</div>
+                            <div class="section-item-desc">PCL2_CE_Release_x64</div>
+                        </div>
+                        <a href="https://exe1.webgetstore.com/2026/04/09/bbd36deab3ed3f8996fb508b4cdc8080.exe?sg=9589f62d32e8125ac1faa13da4da88ed&e=69d7af0f&fileName=PCL2_CE_Release_x64.exe&fi=282007950" class="section-item-link" target="_blank">下载</a>
+                    </div>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">🐍</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">Python</div>
+                            <div class="section-item-desc">python-3.9.13-amd64</div>
+                        </div>
+                        <a href="https://exe1.webgetstore.com/2026/04/09/febfdf984123c5e7d1fd566b7d115710.exe?sg=f1fe1c4f612616ca97d04491baa9325c&e=69d7af33&fileName=python-3.9.13-amd64.exe&fi=282007923" class="section-item-link" target="_blank">下载</a>
+                    </div>
+                    <div class="section-item">
+                        <div class="section-item-icon" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">💾</div>
+                        <div class="section-item-info">
+                            <div class="section-item-title">Rufus</div>
+                            <div class="section-item-desc">rufus-4.13</div>
+                        </div>
+                        <a href="https://exe1.webgetstore.com/2026/04/09/603adbeba05c68cc00699d5591f64539.exe?sg=1cfc3434d061e87e0ffdc165426aeef1&e=69d7af63&fileName=rufus-4.13.exe&fi=282007888" class="section-item-link" target="_blank">下载</a>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer class="footer">
@@ -943,6 +1111,12 @@
             const password = document.getElementById('registerPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
+            // 验证输入
+            if (!username || !password) {
+                alert('请输入用户名和密码！');
+                return;
+            }
+            
             if (password !== confirmPassword) {
                 alert('两次输入的密码不一致！');
                 return;
@@ -962,13 +1136,73 @@
             }
             
             // 创建新用户
-            const newUser = { username, password, email: username + '@example.com', id: 'local_' + Date.now() };
+            const newUser = { 
+                username, 
+                password, 
+                email: username + '@example.com', 
+                id: 'local_' + Date.now(),
+                createdAt: new Date().toISOString()
+            };
             localUsers.push(newUser);
             localStorage.setItem('localUsers', JSON.stringify(localUsers));
             localStorage.setItem('user', JSON.stringify(newUser));
+            
+            // 持久化到文件（通过下载方式）
+            saveUserDataToFile();
+            
             showMainInterface(newUser);
             alert('注册成功！');
         });
+
+        // 保存用户数据到文件
+        function saveUserDataToFile() {
+            const userData = {
+                localUsers: JSON.parse(localStorage.getItem('localUsers') || '[]'),
+                kallpc6Requests: JSON.parse(localStorage.getItem('kallpc6Requests') || '[]'),
+                kallpc6Approved: JSON.parse(localStorage.getItem('kallpc6Approved') || '[]'),
+                kallpc6Downloaded: JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]'),
+                timestamp: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(userData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '元玩平台用户数据_' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // 从文件加载用户数据
+        function loadUserDataFromFile() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        try {
+                            const userData = JSON.parse(event.target.result);
+                            localStorage.setItem('localUsers', JSON.stringify(userData.localUsers || []));
+                            localStorage.setItem('kallpc6Requests', JSON.stringify(userData.kallpc6Requests || []));
+                            localStorage.setItem('kallpc6Approved', JSON.stringify(userData.kallpc6Approved || []));
+                            localStorage.setItem('kallpc6Downloaded', JSON.stringify(userData.kallpc6Downloaded || []));
+                            alert('用户数据加载成功！');
+                            location.reload();
+                        } catch (err) {
+                            alert('文件格式错误，无法加载数据！');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
 
         // 显示主界面
         function showMainInterface(user, isGuest = false) {
@@ -1026,6 +1260,9 @@
             `;
 
             const downloadRequests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            const approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+            const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
             
             adminPanel.innerHTML = `
                 <div style="max-width: 1200px; margin: 0 auto;">
@@ -1034,12 +1271,17 @@
                         <button onclick="closeAdminPanel()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">关闭</button>
                     </div>
                     
+                    <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                        <button onclick="saveUserDataToFile()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">导出数据</button>
+                        <button onclick="loadUserDataFromFile()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer;">导入数据</button>
+                    </div>
+                    
                     <div style="background: var(--glass); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
                         <h3 style="color: white; margin-bottom: 20px;">KALLPC 6.0 下载申请</h3>
                         <p style="color: var(--text-muted); margin-bottom: 20px;">当前待处理申请: ${downloadRequests.length}</p>
                         
                         ${downloadRequests.length === 0 ? 
-                            '<p style="color: var(--text-muted);">暂无下载申请</p>' :
+                            '<p style="color: var(--text-muted);">暂无下载申请</p>':
                             downloadRequests.map((req, index) => `
                                 <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
                                     <p style="color: white;"><strong>用户:</strong> ${req.username}</p>
@@ -1051,9 +1293,48 @@
                         }
                     </div>
 
+                    <div style="background: var(--glass); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
+                        <h3 style="color: white; margin-bottom: 20px;">已批准的下载</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">已批准用户: ${approvedUsers.length}</p>
+                        
+                        ${approvedUsers.length === 0 ? 
+                            '<p style="color: var(--text-muted);">暂无批准记录</p>':
+                            approvedUsers.map(user => `
+                                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                                    <p style="color: white;"><strong>用户:</strong> ${user.username}</p>
+                                    <p style="color: var(--text-muted);"><strong>邀请码:</strong> ${user.inviteCode}</p>
+                                    <p style="color: var(--text-muted);"><strong>批准时间:</strong> ${user.approvalTime}</p>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+
+                    <div style="background: var(--glass); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
+                        <h3 style="color: white; margin-bottom: 20px;">已下载的用户</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">已下载用户: ${downloadedUsers.length}</p>
+                        
+                        ${downloadedUsers.length === 0 ? 
+                            '<p style="color: var(--text-muted);">暂无下载记录</p>':
+                            `<ul style="list-style: none; padding: 0;">
+                                ${downloadedUsers.map(user => `
+                                    <li style="color: white; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">${user}</li>
+                                `).join('')}
+                            </ul>`
+                        }
+                    </div>
+
                     <div style="background: var(--glass); padding: 30px; border-radius: 16px;">
-                        <h3 style="color: white; margin-bottom: 20px;">用户管理</h3>
-                        <p style="color: var(--text-muted);">功能开发中...</p>
+                        <h3 style="color: white; margin-bottom: 20px;">注册用户</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 20px;">总注册用户: ${localUsers.length}</p>
+                        
+                        ${localUsers.length === 0 ? 
+                            '<p style="color: var(--text-muted);">暂无注册用户</p>':
+                            `<ul style="list-style: none; padding: 0;">
+                                ${localUsers.map(user => `
+                                    <li style="color: white; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">${user.username} (${user.email})</li>
+                                `).join('')}
+                            </ul>`
+                        }
                     </div>
                 </div>
             `;
