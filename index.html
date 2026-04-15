@@ -648,6 +648,10 @@
             <div class="navbar-content">
                 <div class="nav-logo">元玩</div>
                 <div class="nav-user">
+                    <button id="messageBtn" onclick="toggleMessagePanel()" style="padding: 8px 12px; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; color: #f59e0b; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; position: relative;">
+                        💬
+                        <span id="messageBadge" style="display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px;">1</span>
+                    </button>
                     <div class="user-avatar" id="userAvatar"></div>
                     <span class="user-name" id="userName"></span>
                     <button id="adminPanelBtn" onclick="openAdminPanel()" style="display: none; padding: 8px 20px; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; color: #3b82f6; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">后台管理</button>
@@ -932,6 +936,17 @@
             </div>
         </main>
 
+        <!-- 消息面板 -->
+        <div id="messagePanel" style="display: none; position: fixed; top: 80px; right: 32px; width: 400px; max-height: 600px; background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 16px; z-index: 50; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--glass-border);">
+                <h3 style="color: white; font-size: 1.25rem;">消息中心</h3>
+                <button onclick="toggleMessagePanel()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="messageList" style="padding: 16px; overflow-y: auto; max-height: 520px;">
+                <!-- 消息列表 -->
+            </div>
+        </div>
+
         <footer class="footer">
             <p>© 2026 元玩游戏平台 - 所有游戏均为模拟体验</p>
         </footer>
@@ -967,19 +982,11 @@
                 return;
             }
             
-            // 检查是否已经被批准
-            const approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
-            const approvedUser = approvedUsers.find(user => user.username === currentUsername);
-            if (approvedUser) {
-                updateKallpc6Button('approved', approvedUser.inviteCode);
-                return;
-            }
-            
-            // 检查是否已经申请过
+            // 检查是否已经申请过（申请后直接显示邀请码输入框）
             const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
             const existingRequest = requests.find(req => req.username === currentUsername);
             if (existingRequest) {
-                updateKallpc6Button('pending');
+                updateKallpc6Button('enter_invite_code');
                 return;
             }
             
@@ -991,8 +998,6 @@
         function updateKallpc6Button(status, inviteCode = '') {
             const btnContainer = document.getElementById('kallpc6BtnContainer');
             if (!btnContainer) return;
-            
-            const downloadLink = 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485';
             
             switch (status) {
                 case 'default':
@@ -1012,14 +1017,14 @@
                         </button>
                     `;
                     break;
-                case 'approved':
+                case 'enter_invite_code':
                     btnContainer.innerHTML = `
-                        <button class="game-btn" onclick="downloadKallpc6('${inviteCode}')">
-                            <span>立即下载</span>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M5 12h14M12 5l7 7-7 7"/>
-                            </svg>
-                        </button>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="inviteCodeInput" class="form-input" placeholder="请输入邀请码" style="flex: 1;" />
+                            <button class="game-btn" onclick="validateInviteCode()">
+                                <span>确定</span>
+                            </button>
+                        </div>
                     `;
                     break;
                 case 'downloaded':
@@ -1045,13 +1050,150 @@
             }
             
             // 打开下载链接
-            const downloadLink = 'https://exe1.webgetstore.com/2026/04/03/dc5d3fb7cd6443c15d73aa3e878b6dfc.exe?sg=966a3ffe056f4c66e3b8259d80f87655&e=69cfd1a9&fileName=kallpc.exe&fi=281140485';
+            const downloadLink = 'https://wwaou.lanzouv.com/iAviK3mcscwf';
             window.open(downloadLink, '_blank');
+            
+            // 自动复制密码到剪贴板
+            const password = 'gba5';
+            navigator.clipboard.writeText(password).then(() => {
+                console.log('密码已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
             
             // 更新按钮状态
             updateKallpc6Button('downloaded');
             
-            alert(`下载已开始！\n邀请码: ${inviteCode}`);
+            // 更新用户信息中的下载状态
+            updateUserDownloadStatus(currentUsername, true);
+            
+            alert(`下载已开始！\n邀请码: ${inviteCode}\n\n提取码已自动复制到剪贴板:\ngba5`);
+        }
+
+        // 验证邀请码
+        function validateInviteCode() {
+            const inputCode = document.getElementById('inviteCodeInput').value.trim().toUpperCase();
+            if (!inputCode) {
+                alert('请输入邀请码！');
+                return;
+            }
+            
+            // 确认用户协议
+            if (!confirm('请阅读并同意用户协议：\n\n* 本软件仅供个人学习使用\n* 请勿用于商业用途\n* 遵守相关法律法规\n\n是否同意以上协议？')) {
+                return;
+            }
+            
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            
+            // 检查是否已经下载过
+            const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            if (downloadedUsers.includes(currentUsername)) {
+                alert('您已经下载过KALLPC 6.0，不能重复下载！');
+                return;
+            }
+            
+            // 检查已批准的邀请码（邀请码需要与用户名匹配）
+            const approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+            const approvedUser = approvedUsers.find(user => user.username === currentUsername && user.inviteCode === inputCode);
+            
+            if (approvedUser) {
+                // 验证通过，开始下载
+                downloadKallpc6(inputCode);
+            } else {
+                alert('邀请码无效、已过期或与您的账号不匹配！');
+            }
+        }
+
+        // 更新用户下载状态
+        function updateUserDownloadStatus(username, downloaded) {
+            const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            const userIndex = localUsers.findIndex(u => u.username === username);
+            if (userIndex !== -1) {
+                localUsers[userIndex].kallpc6Downloaded = downloaded;
+                localStorage.setItem('localUsers', JSON.stringify(localUsers));
+            }
+        }
+
+        // 切换消息面板
+        function toggleMessagePanel() {
+            const panel = document.getElementById('messagePanel');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                loadMessages();
+                clearNewMessageBadge();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        // 加载消息列表
+        function loadMessages() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            const userMessages = messages.filter(m => m.to === currentUsername).sort((a, b) => new Date(b.time) - new Date(a.time));
+            
+            const messageList = document.getElementById('messageList');
+            if (userMessages.length === 0) {
+                messageList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">暂无消息</p>';
+            } else {
+                messageList.innerHTML = userMessages.map(msg => `
+                    <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: var(--primary); font-weight: 500;">${msg.from}</span>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">${msg.time}</span>
+                        </div>
+                        <p style="color: white;">${msg.content}</p>
+                        ${msg.inviteCode ? `<p style="color: #f59e0b; font-weight: 600; margin-top: 8px;">邀请码: ${msg.inviteCode}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // 发送消息给用户
+        function sendMessage(to, content, inviteCode = '') {
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            messages.push({
+                from: '管理员',
+                to: to,
+                content: content,
+                inviteCode: inviteCode,
+                time: new Date().toLocaleString(),
+                read: false
+            });
+            localStorage.setItem('messages', JSON.stringify(messages));
+        }
+
+        // 清除新消息徽章
+        function clearNewMessageBadge() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            const unreadMessages = messages.filter(m => m.to === currentUsername && !m.read);
+            
+            unreadMessages.forEach(m => m.read = true);
+            localStorage.setItem('messages', JSON.stringify(messages));
+            
+            document.getElementById('messageBadge').style.display = 'none';
+        }
+
+        // 检查新消息
+        function checkNewMessages() {
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const currentUsername = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '');
+            if (!currentUsername) return;
+            
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            const unreadMessages = messages.filter(m => m.to === currentUsername && !m.read);
+            
+            const badge = document.getElementById('messageBadge');
+            if (unreadMessages.length > 0) {
+                badge.textContent = unreadMessages.length;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
         }
 
         // 切换登录/注册标签
@@ -1093,8 +1235,13 @@
             
             // 本地存储登录
             const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
-            const localUser = localUsers.find(u => u.username === username && u.password === password);
-            if (localUser) {
+            const userIndex = localUsers.findIndex(u => u.username === username && u.password === password);
+            if (userIndex !== -1) {
+                // 更新最后登录时间
+                localUsers[userIndex].lastLogin = new Date().toLocaleString();
+                localStorage.setItem('localUsers', JSON.stringify(localUsers));
+                
+                const localUser = localUsers[userIndex];
                 localStorage.setItem('user', JSON.stringify(localUser));
                 showMainInterface(localUser);
                 alert('登录成功！');
@@ -1147,9 +1294,7 @@
             localStorage.setItem('localUsers', JSON.stringify(localUsers));
             localStorage.setItem('user', JSON.stringify(newUser));
             
-            // 持久化到文件（通过下载方式）
-            saveUserDataToFile();
-            
+            // 本地存储保存（纯localStorage，不生成文件）
             showMainInterface(newUser);
             alert('注册成功！');
         });
@@ -1213,6 +1358,7 @@
                 document.getElementById('userName').textContent = '游客';
                 document.getElementById('userAvatar').textContent = '游';
                 document.getElementById('adminPanelBtn').style.display = 'none';
+                document.getElementById('messageBtn').style.display = 'none';
                 localStorage.setItem('isGuest', 'true');
             } else {
                 // 提取用户名（从邮箱中）
@@ -1229,6 +1375,9 @@
                     document.getElementById('adminPanelBtn').style.display = 'none';
                 }
                 localStorage.setItem('isGuest', 'false');
+                
+                // 检查新消息
+                checkNewMessages();
             }
         }
 
@@ -1271,9 +1420,24 @@
                         <button onclick="closeAdminPanel()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">关闭</button>
                     </div>
                     
+                    <div style="background: var(--glass); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">当前赛季</p>
+                                <p style="color: #f59e0b; font-size: 1.5rem; font-weight: 600;">${localStorage.getItem('currentSeason') || 'S1'}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="color: var(--text-muted); font-size: 0.9rem;">上次更新时间</p>
+                                <p style="color: white;">${localStorage.getItem('lastSeasonUpdate') || '未更新'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="display: flex; gap: 10px; margin-bottom: 30px;">
                         <button onclick="saveUserDataToFile()" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">导出数据</button>
                         <button onclick="loadUserDataFromFile()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer;">导入数据</button>
+                        <button onclick="updateSeason()" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 8px; cursor: pointer;">更新赛季</button>
+                        <button onclick="resetAllData()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer;">重置所有数据</button>
                     </div>
                     
                     <div style="background: var(--glass); padding: 30px; border-radius: 16px; margin-bottom: 30px;">
@@ -1324,14 +1488,23 @@
                     </div>
 
                     <div style="background: var(--glass); padding: 30px; border-radius: 16px;">
-                        <h3 style="color: white; margin-bottom: 20px;">注册用户</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: white;">注册用户</h3>
+                            <button onclick="autoCleanInactiveUsers()" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">自动清理长期未登录</button>
+                        </div>
                         <p style="color: var(--text-muted); margin-bottom: 20px;">总注册用户: ${localUsers.length}</p>
                         
                         ${localUsers.length === 0 ? 
                             '<p style="color: var(--text-muted);">暂无注册用户</p>':
                             `<ul style="list-style: none; padding: 0;">
-                                ${localUsers.map(user => `
-                                    <li style="color: white; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">${user.username} (${user.email})</li>
+                                ${localUsers.map((user, index) => `
+                                    <li style="display: flex; justify-content: space-between; align-items: center; color: white; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                        <div>
+                                            <div>${user.username} (${user.email})</div>
+                                            <div style="color: var(--text-muted); font-size: 0.8rem;">最后登录: ${user.lastLogin || '从未登录'}</div>
+                                        </div>
+                                        <button onclick="deleteUser('${user.username}', ${index})" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">删除</button>
+                                    </li>
                                 `).join('')}
                             </ul>`
                         }
@@ -1371,7 +1544,10 @@
                 requests.splice(index, 1);
                 localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
                 
-                alert(`已批准 ${req.username} 的下载申请\n邀请码: ${newInviteCode}\n用户的"申请下载"按钮已变为"立即下载"`);
+                // 发送消息通知用户
+                sendMessage(req.username, '您的KALLPC 6.0下载申请已通过审核！请在游戏平台首页的KALLPC 6.0区域输入邀请码进行下载。', newInviteCode);
+                
+                alert(`已批准 ${req.username} 的下载申请\n邀请码: ${newInviteCode}\n用户已收到消息通知`);
                 closeAdminPanel();
                 showAdminPanel(); // 刷新界面
             }
@@ -1392,14 +1568,6 @@
             const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
             const username = currentUser.email ? currentUser.email.split('@')[0] : (currentUser.username || '游客');
             
-            // 检查是否已经申请过
-            const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
-            const existingRequest = requests.find(req => req.username === username);
-            if (existingRequest) {
-                alert('您已经提交过下载申请，请等待管理员审核。');
-                return;
-            }
-            
             // 检查是否已经下载过
             const downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
             if (downloadedUsers.includes(username)) {
@@ -1407,27 +1575,150 @@
                 return;
             }
             
-            // 生成邀请码（不显示给用户）
-            const inviteCode = generateInviteCode();
+            // 确认申请
+            if (confirm('请确认申请下载KALLPC 6.0？\n\n* 每个用户仅能下载一次\n* 下载前需要输入有效的邀请码\n* 请同意用户协议')) {
+                // 保存申请记录
+                const requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+                requests.push({
+                    username: username,
+                    time: new Date().toLocaleString(),
+                    status: 'pending'
+                });
+                localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
+                
+                // 切换到邀请码输入框
+                updateKallpc6Button('enter_invite_code');
+                
+                // 如果是管理员，提示有新的申请
+                if (localStorage.getItem('isAdmin') === 'true') {
+                    alert('【管理员提示】有新的KALLPC 6.0下载申请');
+                }
+            }
+        }
+
+        // 更新赛季
+        function updateSeason() {
+            const currentSeason = localStorage.getItem('currentSeason') || 'S1';
+            const seasonNumber = parseInt(currentSeason.replace('S', '')) + 1;
+            const newSeason = 'S' + seasonNumber;
             
-            // 保存申请到本地存储
-            requests.push({
-                username: username,
-                time: new Date().toLocaleString(),
-                inviteCode: inviteCode,
-                status: 'pending'
+            if (confirm(`确认更新赛季？\n\n当前赛季: ${currentSeason}\n新赛季: ${newSeason}\n\n更新后所有玩家数据将被重置！`)) {
+                // 重置所有数据
+                localStorage.setItem('kallpc6Requests', JSON.stringify([]));
+                localStorage.setItem('kallpc6Approved', JSON.stringify([]));
+                localStorage.setItem('kallpc6Downloaded', JSON.stringify([]));
+                localStorage.setItem('messages', JSON.stringify([]));
+                
+                // 更新赛季信息
+                localStorage.setItem('currentSeason', newSeason);
+                localStorage.setItem('lastSeasonUpdate', new Date().toLocaleString());
+                
+                alert(`赛季已更新！\n\n新赛季: ${newSeason}\n所有玩家数据已重置`);
+                location.reload();
+            }
+        }
+
+        // 重置所有数据
+        function resetAllData() {
+            if (confirm('警告！\n\n此操作将重置所有玩家数据，包括：\n- 下载申请记录\n- 已批准用户\n- 已下载用户\n- 消息记录\n\n确定要继续吗？')) {
+                // 重置所有数据
+                localStorage.setItem('kallpc6Requests', JSON.stringify([]));
+                localStorage.setItem('kallpc6Approved', JSON.stringify([]));
+                localStorage.setItem('kallpc6Downloaded', JSON.stringify([]));
+                localStorage.setItem('messages', JSON.stringify([]));
+                
+                alert('所有数据已重置！');
+                location.reload();
+            }
+        }
+
+        // 删除用户
+        function deleteUser(username, index) {
+            if (confirm(`确认删除用户 "${username}"？\n\n此操作将删除该用户的所有相关数据，包括下载申请、批准记录和消息。`)) {
+                // 删除用户信息
+                let localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+                localUsers.splice(index, 1);
+                localStorage.setItem('localUsers', JSON.stringify(localUsers));
+                
+                // 删除相关的下载申请
+                let requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+                requests = requests.filter(req => req.username !== username);
+                localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
+                
+                // 删除相关的批准记录
+                let approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+                approvedUsers = approvedUsers.filter(user => user.username !== username);
+                localStorage.setItem('kallpc6Approved', JSON.stringify(approvedUsers));
+                
+                // 删除相关的下载记录
+                let downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+                downloadedUsers = downloadedUsers.filter(user => user !== username);
+                localStorage.setItem('kallpc6Downloaded', JSON.stringify(downloadedUsers));
+                
+                // 删除相关的消息
+                let messages = JSON.parse(localStorage.getItem('messages') || '[]');
+                messages = messages.filter(msg => msg.to !== username);
+                localStorage.setItem('messages', JSON.stringify(messages));
+                
+                alert(`用户 "${username}" 已删除！`);
+                closeAdminPanel();
+                showAdminPanel();
+            }
+        }
+
+        // 自动清理长期未登录用户（超过30天未登录）
+        function autoCleanInactiveUsers() {
+            const inactiveDays = 30;
+            const now = new Date();
+            let localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+            let deletedCount = 0;
+            
+            const activeUsers = localUsers.filter(user => {
+                if (!user.lastLogin) {
+                    // 从未登录过的用户，视为可删除
+                    deletedCount++;
+                    return false;
+                }
+                
+                const lastLoginDate = new Date(user.lastLogin);
+                const daysDiff = Math.floor((now - lastLoginDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff >= inactiveDays) {
+                    deletedCount++;
+                    return false;
+                }
+                return true;
             });
+            
+            // 删除相关数据
+            const deletedUsernames = localUsers.filter(u => !activeUsers.includes(u)).map(u => u.username);
+            
+            // 删除相关的下载申请
+            let requests = JSON.parse(localStorage.getItem('kallpc6Requests') || '[]');
+            requests = requests.filter(req => !deletedUsernames.includes(req.username));
             localStorage.setItem('kallpc6Requests', JSON.stringify(requests));
             
-            // 同时保存当前邀请码
-            localStorage.setItem('currentKallpc6InviteCode', inviteCode);
+            // 删除相关的批准记录
+            let approvedUsers = JSON.parse(localStorage.getItem('kallpc6Approved') || '[]');
+            approvedUsers = approvedUsers.filter(user => !deletedUsernames.includes(user.username));
+            localStorage.setItem('kallpc6Approved', JSON.stringify(approvedUsers));
             
-            alert('下载申请已提交！\n请等待管理员审核。\n审核通过后，"申请下载"按钮会变为"立即下载"。');
+            // 删除相关的下载记录
+            let downloadedUsers = JSON.parse(localStorage.getItem('kallpc6Downloaded') || '[]');
+            downloadedUsers = downloadedUsers.filter(user => !deletedUsernames.includes(user));
+            localStorage.setItem('kallpc6Downloaded', JSON.stringify(downloadedUsers));
             
-            // 如果是管理员，提示有新的申请
-            if (localStorage.getItem('isAdmin') === 'true') {
-                alert('【管理员提示】有新的KALLPC 6.0下载申请，请进入后台管理查看。');
-            }
+            // 删除相关的消息
+            let messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            messages = messages.filter(msg => !deletedUsernames.includes(msg.to));
+            localStorage.setItem('messages', JSON.stringify(messages));
+            
+            // 更新用户列表
+            localStorage.setItem('localUsers', JSON.stringify(activeUsers));
+            
+            alert(`已自动清理 ${deletedCount} 个长期未登录的用户（超过${inactiveDays}天未登录）`);
+            closeAdminPanel();
+            showAdminPanel();
         }
 
         // 退出登录
